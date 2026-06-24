@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valuation Model</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 500px;
+            margin: 80px auto;
+            padding: 0 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #1a1a1a;
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+<h1>Valuation Model</h1>
+<p>Enter a stock ticker to run the model.</p>
+<div class="input-row">
+    <input type="text" id="ticker" placeholder="e.g. AAPL">
+    <button id="run-btn">Run Model</button>
+</div>
+</body>
+</html>

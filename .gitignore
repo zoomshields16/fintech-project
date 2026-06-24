@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+.venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.local
+
+# Excel temp files
+~$*.xlsx
+
+# macOS
+.DS_Store
+
+# IntelliJ
+.idea/
+
+# Build output
+dist/
+build/
