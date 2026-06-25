@@ -39,6 +39,16 @@
         button:hover {
             background: #1d4ed8;
         }
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 6px;
+            display: none;
+        }
+        #results div {
+            margin: 8px 0;
+        }
     </style>
 </head>
 <body>
@@ -48,5 +58,44 @@
     <input type="text" id="ticker" placeholder="e.g. AAPL">
     <button id="run-btn">Run Model</button>
 </div>
+
+<div id="results"></div>
+
+<script>
+    const button = document.getElementById("run-btn");
+    const resultsBox = document.getElementById("results");
+
+    button.addEventListener("click", async () => {
+        const ticker = document.getElementById("ticker").value;
+
+        if (!ticker) {
+            alert("Please enter a ticker");
+            return;
+        }
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/run-model", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ ticker: ticker })
+            });
+
+            const data = await response.json();
+
+            resultsBox.style.display = "block";
+            resultsBox.innerHTML = `
+                <div><strong>Ticker:</strong> ${data.ticker}</div>
+                <div><strong>Fair Value:</strong> $${data.fair_value}</div>
+                <div><strong>Current Price:</strong> $${data.current_price}</div>
+                <div><strong>Implied Upside:</strong> ${data.implied_upside}</div>
+            `;
+        } catch (error) {
+            resultsBox.style.display = "block";
+            resultsBox.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+        }
+    });
+</script>
 </body>
 </html>
