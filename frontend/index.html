@@ -134,6 +134,84 @@
             padding: 16px;
             border-radius: 6px;
         }
+
+        /* drivers input section */
+        #drivers-section {
+            display: none;
+            margin-top: 20px;
+            background: white;
+            border-radius: 6px;
+            padding: 16px 20px;
+        }
+        .drivers-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin: 0 0 12px 0;
+        }
+        .drivers-grid {
+            display: grid;
+            grid-template-columns: 210px repeat(5, 1fr);
+            gap: 6px 8px;
+            align-items: center;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+        .d-label { font-weight: 500; color: #333; }
+        .d-year { text-align: center; font-weight: 600; color: #555; font-size: 12px; }
+        .driver-input {
+            width: 100%;
+            padding: 5px 8px;
+            font-size: 13px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: right;
+            box-sizing: border-box;
+        }
+        .driver-input:focus { outline: none; border-color: #2563eb; }
+        .proj-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: #0f766e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .proj-btn:hover { background: #115e59; }
+
+        /* Group 2 driver table */
+        .g2-table { margin-bottom: 14px; }
+        .g2-header, .g2-row, .g2-dname {
+            display: grid;
+            grid-template-columns: 130px 70px repeat(5, 1fr);
+            gap: 4px 8px;
+            align-items: center;
+            font-size: 13px;
+        }
+        .g2-dname {
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-top: 10px;
+            grid-column: 1 / -1;
+        }
+        .g2-sub { font-size: 12px; color: #888; }
+        .g2-val { text-align: right; font-size: 12px; color: #555; background: #f8f8f8; padding: 4px 8px; border-radius: 3px; }
+        .g2-auto-row { opacity: 1; }
+        .g2-manual-row .g2-in { opacity: 0.35; }
+        .g2-manual-row.active .g2-in { opacity: 1; }
+        .g2-manual-row .g2-in:disabled { background: #f5f5f5; cursor: not-allowed; }
+        .g2-manual-row.active .g2-in:not(:disabled) { background: white; }
+        .g2-auto-row.active .g2-val { background: #e8f4e8; color: #166534; font-weight: 500; }
+        .g2-toggle { font-size: 12px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+        /* projected columns — light blue tint with separator on first proj col */
+        th.proj { background: #274f82; }
+        td.proj { background: #f0f6ff; }
+        tr.subtotal td.proj { background: #e2eeff; }
+        tr.sub-header td.proj { background: #eaf2fb; }
+        tr.check-row td.proj { background: #e2eeff; }
+        th.proj-sep, td.proj-sep { border-left: 3px solid #60a5fa !important; }
     </style>
 </head>
 <body>
@@ -144,13 +222,148 @@
     <button id="run-btn">Run Model</button>
 </div>
 
+<div id="drivers-section">
+    <p class="drivers-title">Projection Drivers — Group 1</p>
+    <div class="drivers-grid">
+        <div class="d-label"></div>
+        <div class="d-year">2026</div><div class="d-year">2027</div>
+        <div class="d-year">2028</div><div class="d-year">2029</div><div class="d-year">2030</div>
+
+        <div class="d-label">Revenue Growth %</div>
+        <input class="driver-input" id="d-rev-0" value="5.0">
+        <input class="driver-input" id="d-rev-1" value="5.0">
+        <input class="driver-input" id="d-rev-2" value="5.0">
+        <input class="driver-input" id="d-rev-3" value="5.0">
+        <input class="driver-input" id="d-rev-4" value="5.0">
+
+        <div class="d-label">COGS % of Revenue</div>
+        <input class="driver-input" id="d-cogs-0" value="53.0">
+        <input class="driver-input" id="d-cogs-1" value="53.0">
+        <input class="driver-input" id="d-cogs-2" value="53.0">
+        <input class="driver-input" id="d-cogs-3" value="53.0">
+        <input class="driver-input" id="d-cogs-4" value="53.0">
+
+        <div class="d-label">SG&amp;A % of Revenue</div>
+        <input class="driver-input" id="d-sga-0" value="6.6">
+        <input class="driver-input" id="d-sga-1" value="6.6">
+        <input class="driver-input" id="d-sga-2" value="6.6">
+        <input class="driver-input" id="d-sga-3" value="6.6">
+        <input class="driver-input" id="d-sga-4" value="6.6">
+
+        <div class="d-label">CapEx % of Revenue</div>
+        <input class="driver-input" id="d-capex-0" value="3.0">
+        <input class="driver-input" id="d-capex-1" value="3.0">
+        <input class="driver-input" id="d-capex-2" value="3.0">
+        <input class="driver-input" id="d-capex-3" value="3.0">
+        <input class="driver-input" id="d-capex-4" value="3.0">
+    </div>
+
+    <p class="drivers-title" style="margin-top:18px;">Manual Drivers — Group 2</p>
+    <div class="g2-table">
+        <div class="g2-header">
+            <div></div><div></div>
+            <div class="d-year">2026</div><div class="d-year">2027</div>
+            <div class="d-year">2028</div><div class="d-year">2029</div>
+            <div class="d-year">2030</div>
+        </div>
+        <!-- each driver: label row + auto row + manual row -->
+        <div class="g2-dname" colspan="7">R&amp;D % of Revenue</div>
+        <div class="g2-row g2-auto-row active" id="g2-rnd-auto-row">
+            <div></div><div class="g2-sub">Auto</div>
+            <div class="g2-val" id="g2-rnd-a0"></div><div class="g2-val" id="g2-rnd-a1"></div>
+            <div class="g2-val" id="g2-rnd-a2"></div><div class="g2-val" id="g2-rnd-a3"></div>
+            <div class="g2-val" id="g2-rnd-a4"></div>
+        </div>
+        <div class="g2-row g2-manual-row" id="g2-rnd-manual-row">
+            <label class="g2-toggle"><input type="checkbox" id="g2-rnd-on" onchange="toggleG2('rnd')"> Manual</label>
+            <div class="g2-sub">Manual</div>
+            <input class="driver-input g2-in" id="g2-rnd-0" disabled>
+            <input class="driver-input g2-in" id="g2-rnd-1" disabled>
+            <input class="driver-input g2-in" id="g2-rnd-2" disabled>
+            <input class="driver-input g2-in" id="g2-rnd-3" disabled>
+            <input class="driver-input g2-in" id="g2-rnd-4" disabled>
+        </div>
+
+        <div class="g2-dname">D&amp;A % of Revenue</div>
+        <div class="g2-row g2-auto-row active" id="g2-da-auto-row">
+            <div></div><div class="g2-sub">Auto</div>
+            <div class="g2-val" id="g2-da-a0"></div><div class="g2-val" id="g2-da-a1"></div>
+            <div class="g2-val" id="g2-da-a2"></div><div class="g2-val" id="g2-da-a3"></div>
+            <div class="g2-val" id="g2-da-a4"></div>
+        </div>
+        <div class="g2-row g2-manual-row" id="g2-da-manual-row">
+            <label class="g2-toggle"><input type="checkbox" id="g2-da-on" onchange="toggleG2('da')"> Manual</label>
+            <div class="g2-sub">Manual</div>
+            <input class="driver-input g2-in" id="g2-da-0" disabled>
+            <input class="driver-input g2-in" id="g2-da-1" disabled>
+            <input class="driver-input g2-in" id="g2-da-2" disabled>
+            <input class="driver-input g2-in" id="g2-da-3" disabled>
+            <input class="driver-input g2-in" id="g2-da-4" disabled>
+        </div>
+
+        <div class="g2-dname">Tax Rate %</div>
+        <div class="g2-row g2-auto-row active" id="g2-tax-auto-row">
+            <div></div><div class="g2-sub">Auto</div>
+            <div class="g2-val" id="g2-tax-a0"></div><div class="g2-val" id="g2-tax-a1"></div>
+            <div class="g2-val" id="g2-tax-a2"></div><div class="g2-val" id="g2-tax-a3"></div>
+            <div class="g2-val" id="g2-tax-a4"></div>
+        </div>
+        <div class="g2-row g2-manual-row" id="g2-tax-manual-row">
+            <label class="g2-toggle"><input type="checkbox" id="g2-tax-on" onchange="toggleG2('tax')"> Manual</label>
+            <div class="g2-sub">Manual</div>
+            <input class="driver-input g2-in" id="g2-tax-0" disabled>
+            <input class="driver-input g2-in" id="g2-tax-1" disabled>
+            <input class="driver-input g2-in" id="g2-tax-2" disabled>
+            <input class="driver-input g2-in" id="g2-tax-3" disabled>
+            <input class="driver-input g2-in" id="g2-tax-4" disabled>
+        </div>
+
+        <div class="g2-dname">SBC % of Revenue</div>
+        <div class="g2-row g2-auto-row active" id="g2-sbc-auto-row">
+            <div></div><div class="g2-sub">Auto</div>
+            <div class="g2-val" id="g2-sbc-a0"></div><div class="g2-val" id="g2-sbc-a1"></div>
+            <div class="g2-val" id="g2-sbc-a2"></div><div class="g2-val" id="g2-sbc-a3"></div>
+            <div class="g2-val" id="g2-sbc-a4"></div>
+        </div>
+        <div class="g2-row g2-manual-row" id="g2-sbc-manual-row">
+            <label class="g2-toggle"><input type="checkbox" id="g2-sbc-on" onchange="toggleG2('sbc')"> Manual</label>
+            <div class="g2-sub">Manual</div>
+            <input class="driver-input g2-in" id="g2-sbc-0" disabled>
+            <input class="driver-input g2-in" id="g2-sbc-1" disabled>
+            <input class="driver-input g2-in" id="g2-sbc-2" disabled>
+            <input class="driver-input g2-in" id="g2-sbc-3" disabled>
+            <input class="driver-input g2-in" id="g2-sbc-4" disabled>
+        </div>
+
+        <div class="g2-dname">Buyback % of Revenue</div>
+        <div class="g2-row g2-auto-row active" id="g2-buyback-auto-row">
+            <div></div><div class="g2-sub">Auto</div>
+            <div class="g2-val" id="g2-buyback-a0"></div><div class="g2-val" id="g2-buyback-a1"></div>
+            <div class="g2-val" id="g2-buyback-a2"></div><div class="g2-val" id="g2-buyback-a3"></div>
+            <div class="g2-val" id="g2-buyback-a4"></div>
+        </div>
+        <div class="g2-row g2-manual-row" id="g2-buyback-manual-row">
+            <label class="g2-toggle"><input type="checkbox" id="g2-buyback-on" onchange="toggleG2('buyback')"> Manual</label>
+            <div class="g2-sub">Manual</div>
+            <input class="driver-input g2-in" id="g2-buyback-0" disabled>
+            <input class="driver-input g2-in" id="g2-buyback-1" disabled>
+            <input class="driver-input g2-in" id="g2-buyback-2" disabled>
+            <input class="driver-input g2-in" id="g2-buyback-3" disabled>
+            <input class="driver-input g2-in" id="g2-buyback-4" disabled>
+        </div>
+    </div>
+    <button class="proj-btn" id="proj-btn">Run Projection</button>
+</div>
+
 <div id="results"></div>
 
 <script>
+    let lastHistData = null;
+
     function reconcileSummary(rec) {
         const mismatches = Object.entries(rec).filter(([, v]) => v !== 'MATCH');
         if (mismatches.length === 0) return '<span class="pass">✓ checks pass</span>';
-        return mismatches.map(([k, v]) => `<span class="fail">✗ ${k}</span>`).join(' ');
+        return mismatches.map(([k]) => `<span class="fail">✗ ${k}</span>`).join(' ');
     }
 
     function fmt(val) {
@@ -168,208 +381,326 @@
         return val < 0 ? `<span class="neg">(${str})</span>` : str;
     }
 
-    function gap() {
-        return '<tr class="section-gap"><td colspan="999"></td></tr>';
+    function gap() { return '<tr class="section-gap"><td colspan="999"></td></tr>'; }
+
+    function tdCls(y) {
+        if (!y.projected) return '';
+        return y.isSeparator ? ' class="proj proj-sep"' : ' class="proj"';
     }
 
-    function sectionHeader(label, colCount) {
-        return `<tr class="section-header"><td colspan="${colCount + 1}">${label}</td></tr>`;
+    function sectionHeader(label, allYears) {
+        return `<tr class="section-header"><td colspan="${allYears.length + 1}">${label}</td></tr>`;
     }
 
-    function row(label, key, years, formatter, isSubtotal) {
+    function subHeader(label, allYears) {
+        return `<tr class="sub-header"><td colspan="${allYears.length + 1}">${label}</td></tr>`;
+    }
+
+    function row(label, key, allYears, formatter, isSubtotal) {
         const cls = isSubtotal ? ' class="subtotal"' : '';
-        const cells = years.map(y => `<td>${formatter(y[key])}</td>`).join('');
+        const cells = allYears.map(y => `<td${tdCls(y)}>${formatter(y[key])}</td>`).join('');
         return `<tr${cls}><td>${label}</td>${cells}</tr>`;
     }
 
-    function zeroRow(label, colCount) {
-        const cells = Array(colCount).fill('<td>$-</td>').join('');
+    function zeroRow(label, allYears) {
+        const cells = allYears.map(y => `<td${tdCls(y)}>$-</td>`).join('');
         return `<tr><td>${label}</td>${cells}</tr>`;
     }
 
-    function subHeader(label, colCount) {
-        return `<tr class="sub-header"><td colspan="${colCount + 1}">${label}</td></tr>`;
-    }
+    function buildTable(headerLabel, allYears, bodyHtml) {
+        const headerCells = allYears.map(y => {
+            const cls = y.projected ? (y.isSeparator ? ' class="proj proj-sep"' : ' class="proj"') : '';
+            const label = y.date.slice(0, 4) + (y.projected ? 'E' : '');
+            return `<th${cls}>${label}</th>`;
+        }).join('');
 
-    function buildTable(ticker, headerLabel, years, bodyHtml, reconcileHtml) {
-        const headerCells = years.map(y => `<th>${y.date.slice(0, 4)}</th>`).join('');
+        const recCells = allYears.map(y => {
+            const content = y.projected ? '' : reconcileSummary(y.reconcile || {});
+            return `<td${tdCls(y)}>${content}</td>`;
+        }).join('');
+
         return `
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
                     <tbody>
                         ${bodyHtml}
-                        <tr class="reconcile-row"><td>Reconciliation</td>${reconcileHtml}</tr>
+                        <tr class="reconcile-row"><td>Reconciliation</td>${recCells}</tr>
                     </tbody>
                 </table>
             </div>`;
     }
 
+    function combineYears(histYears, projYears) {
+        // Display: historical (newest first) then projected (oldest first: 2026→2030)
+        // separator border on the first projected year (2026)
+        const proj = projYears.map((y, i) => ({ ...y, isSeparator: i === 0 }));
+        return [...histYears, ...proj];
+    }
+
+    function prefillDrivers(data) {
+        const lastIS = data.income_statement[0];
+        const lastCF = data.cash_flow[0];
+        const rev = lastIS.revenue;
+        if (!rev) return;
+
+        const cogs  = +(lastIS.cogs  / rev * 100).toFixed(1);
+        const sga   = +(lastIS.sga   / rev * 100).toFixed(1);
+        const capex = +(Math.abs(lastCF.capex || 0) / rev * 100).toFixed(1);
+
+        for (let i = 0; i < 5; i++) {
+            document.getElementById(`d-cogs-${i}`).value  = cogs;
+            document.getElementById(`d-sga-${i}`).value   = sga;
+            document.getElementById(`d-capex-${i}`).value = capex;
+        }
+
+        // Group 2 — pre-fill auto display values and manual input defaults
+        const s = data.suggested_drivers || {};
+        const pct = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
+        const pctVal = v => v != null ? (v * 100).toFixed(1) : '';
+        [['rnd', s.rnd_pct], ['da', s.da_pct], ['tax', s.tax_rate],
+         ['sbc', s.sbc_pct], ['buyback', s.buyback_pct]].forEach(([key, val]) => {
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`g2-${key}-a${i}`).textContent = pct(val);
+                document.getElementById(`g2-${key}-${i}`).value = pctVal(val);
+            }
+        });
+    }
+
+    function toggleG2(key) {
+        const isManual = document.getElementById(`g2-${key}-on`).checked;
+        const autoRow   = document.getElementById(`g2-${key}-auto-row`);
+        const manualRow = document.getElementById(`g2-${key}-manual-row`);
+        autoRow.classList.toggle('active', !isManual);
+        manualRow.classList.toggle('active', isManual);
+        for (let i = 0; i < 5; i++) {
+            document.getElementById(`g2-${key}-${i}`).disabled = !isManual;
+        }
+    }
+
+    function getG2Row(key, autoVal) {
+        const isManual = document.getElementById(`g2-${key}-on`).checked;
+        if (!isManual) {
+            // use auto value (same for all 5 years)
+            const v = autoVal != null ? autoVal : null;
+            return v != null ? [v, v, v, v, v] : null;
+        }
+        const vals = Array.from({length: 5}, (_, i) => {
+            const v = parseFloat(document.getElementById(`g2-${key}-${i}`).value);
+            return isNaN(v) ? null : v / 100;
+        });
+        return vals.every(v => v === null) ? null : vals.map(v => v ?? 0);
+    }
+
+    function renderResults(histData, projData) {
+        const isHist = [...histData.income_statement].slice(0, 5).reverse();
+        const cfHist = [...histData.cash_flow].slice(0, 5).reverse();
+        const bsHist = [...histData.balance_sheet].slice(0, 5).reverse();
+
+        const isAll = projData ? combineYears(isHist, projData.income_statement) : isHist;
+        const cfAll = projData ? combineYears(cfHist, projData.cash_flow)        : cfHist;
+        const bsAll = projData ? combineYears(bsHist, projData.balance_sheet)    : bsHist;
+
+        const isBody = `
+            ${row('Revenue',                                       'revenue',           isAll, fmt)}
+            ${row('Cost of Goods Sold',                           'cogs',              isAll, fmt)}
+            ${row('Gross Profit',                                  'gross_profit',      isAll, fmt, true)}
+            ${gap()}
+            ${row('Selling, General and Administrative Expense',  'sga',               isAll, fmt)}
+            ${row('Research and Development Expense',              'rnd',               isAll, fmt)}
+            ${row('Other Operating Expenses',                      'other_opex',        isAll, fmt)}
+            ${row('Total Operating Expenses',                      'total_opex',        isAll, fmt, true)}
+            ${gap()}
+            ${row('Operating Income (EBIT)',                       'operating_income',  isAll, fmt, true)}
+            ${gap()}
+            ${row('Interest Income',                               'interest_income',   isAll, fmt)}
+            ${row('Interest Expense',                              'interest_expense',  isAll, fmt)}
+            ${row('Other Income (Expense)',                        'other_income',      isAll, fmt)}
+            ${row('Pretax Income',                                 'pretax_income',     isAll, fmt, true)}
+            ${gap()}
+            ${row('Income Tax Expense',                            'income_tax',        isAll, fmt)}
+            ${row('Net Income',                                    'net_income',        isAll, fmt, true)}
+            ${gap()}
+            ${row('Earnings Per Share',                            'eps',               isAll, fmtEps)}
+            ${row('Diluted Earnings Per Share',                    'eps_diluted',       isAll, fmtEps)}
+        `;
+
+        const cfBody = `
+            ${sectionHeader('CASH FLOWS FROM OPERATING ACTIVITIES', cfAll)}
+            ${row('Net Income',                                             'net_income',            cfAll, fmt)}
+            ${row('Depreciation and Amortization',                          'depreciation',          cfAll, fmt)}
+            ${row('Stock-Based Compensation',                               'stock_comp',            cfAll, fmt)}
+            ${row('other adjustments',                                      'other_adjustments',     cfAll, fmt)}
+            ${row('Change in Accounts Receivable',                          'change_ar',             cfAll, fmt)}
+            ${row('Change in Inventory',                                    'change_inventory',      cfAll, fmt)}
+            ${zeroRow('Change in Prepaid Expenses and Other Current Assets', cfAll)}
+            ${row('Change in Accounts Payable',                             'change_ap',             cfAll, fmt)}
+            ${zeroRow('Change in Accrued Expenses',                          cfAll)}
+            ${row('Change in Other Operating activity',                     'other_wc',              cfAll, fmt)}
+            ${zeroRow('change in unearned revenue',                          cfAll)}
+            ${row('Net Cash Provided by Operating Activities',              'operating_cf',          cfAll, fmt, true)}
+            ${gap()}
+            ${sectionHeader('CASH FLOWS FROM INVESTING ACTIVITIES', cfAll)}
+            ${row('Capital Expenditures',                                   'capex',                 cfAll, fmt)}
+            ${zeroRow('Proceeds from Sale of Property and Equipment',        cfAll)}
+            ${row('Acquisitions',                                           'acquisitions',          cfAll, fmt)}
+            ${row('Purchases of Investments',                               'purchases_investments', cfAll, fmt)}
+            ${row('Proceeds from Sale of Investments',                      'sales_investments',     cfAll, fmt)}
+            ${row('Other Investing Activities',                             'other_investing',       cfAll, fmt)}
+            ${zeroRow('Reclass: Investing → Financing (per CF_Reclasses)',  cfAll)}
+            ${row('Net Cash Used in Investing Activities',                  'investing_cf',          cfAll, fmt, true)}
+            ${gap()}
+            ${sectionHeader('CASH FLOWS FROM FINANCING ACTIVITIES', cfAll)}
+            ${row('Proceeds from Long-Term Debt',                           'long_term_debt',        cfAll, fmt)}
+            ${zeroRow('Reclass: from Investing (per CF_Reclasses)',          cfAll)}
+            ${row('Proceeds from Short-Term Borrowings',                    'short_term_debt',       cfAll, fmt)}
+            ${zeroRow('Repayments of Short-Term Borrowings',                 cfAll)}
+            ${row('Payment of Dividends',                                   'dividends_paid',        cfAll, fmt)}
+            ${row('Share Repurchases',                                      'stock_repurchased',     cfAll, fmt)}
+            ${row('Issuance of Common Stock',                               'stock_issued',          cfAll, fmt)}
+            ${row('Other Financing Activities',                             'other_financing',       cfAll, fmt)}
+            ${row('Net Cash Provided by (Used in) Financing Activities',    'financing_cf',          cfAll, fmt, true)}
+            ${gap()}
+            ${row('Effect of Exchange Rate Changes',                        'fx_effect',             cfAll, fmt)}
+            ${row('Net Increase (Decrease) in Cash',                        'net_change_cash',       cfAll, fmt)}
+            ${row('Cash at Beginning of Period',                            'cash_beginning',        cfAll, fmt)}
+            ${row('Cash at End of Period',                                  'cash_end',              cfAll, fmt)}
+            ${gap()}
+            ${row('Free Cash Flow',                                         'free_cash_flow',        cfAll, fmt, true)}
+        `;
+
+        const bsBody = `
+            ${sectionHeader('ASSETS', bsAll)}
+            ${subHeader('Current Assets', bsAll)}
+            ${row('Cash and short term investments',             'cash_st_investments',    bsAll, fmt)}
+            ${row('Accounts Receivable',                         'accounts_receivable',    bsAll, fmt)}
+            ${row('Inventory',                                   'inventory',              bsAll, fmt)}
+            ${zeroRow('Prepaid Expenses and Other Current Assets', bsAll)}
+            ${row('other',                                       'other_current',          bsAll, fmt)}
+            ${row('Total Current Assets',                        'total_current_assets',   bsAll, fmt, true)}
+            ${gap()}
+            ${subHeader('Non-Current Assets', bsAll)}
+            ${row('Property, Plant and Equipment',               'ppe_net',                bsAll, fmt)}
+            ${row('Goodwill',                                    'goodwill',               bsAll, fmt)}
+            ${row('Intangible Assets',                           'intangible_assets',      bsAll, fmt)}
+            ${row('Long-Term Investments',                       'lt_investments',         bsAll, fmt)}
+            ${row('Other Non-Current Assets',                    'other_noncurrent',       bsAll, fmt)}
+            ${row('Total Non-Current Assets',                    'total_noncurrent_assets',bsAll, fmt, true)}
+            ${gap()}
+            ${row('Total Assets',                                'total_assets',           bsAll, fmt, true)}
+            ${gap()}
+            ${sectionHeader("LIABILITIES AND SHAREHOLDERS' EQUITY", bsAll)}
+            ${subHeader('Current Liabilities', bsAll)}
+            ${row('Accounts Payable',                            'accounts_payable',       bsAll, fmt)}
+            ${row('Accrued Expenses',                            'accrued_expenses',       bsAll, fmt)}
+            ${row('Current Portion of Long-Term Debt',           'current_ltd',            bsAll, fmt)}
+            ${row('Other Current Liabilities',                   'other_current_liab',     bsAll, fmt)}
+            ${row('Total Current Liabilities',                   'total_current_liab',     bsAll, fmt, true)}
+            ${gap()}
+            ${subHeader('Non-Current Liabilities', bsAll)}
+            ${row('Long-Term Debt',                              'long_term_debt',         bsAll, fmt)}
+            ${row('Deferred Tax Liabilities',                    'deferred_tax_liab',      bsAll, fmt)}
+            ${row('Other Long-Term Liabilities',                 'other_lt_liab',          bsAll, fmt)}
+            ${zeroRow('unearned revenue',                         bsAll)}
+            ${row('Total Non-Current Liabilities',               'total_noncurrent_liab',  bsAll, fmt, true)}
+            ${gap()}
+            ${row('Total Liabilities',                           'total_liabilities',      bsAll, fmt, true)}
+            ${gap()}
+            ${subHeader("Shareholders' Equity", bsAll)}
+            ${row('Common Stock',                                'common_stock',           bsAll, fmt)}
+            ${row('Additional Paid-In Capital',                  'apic',                   bsAll, fmt)}
+            ${row('Retained Earnings',                           'retained_earnings',      bsAll, fmt)}
+            ${row('Treasury Stock',                              'treasury_stock',         bsAll, fmt)}
+            ${row('Accumulated Other Comprehensive Income',      'aoci',                   bsAll, fmt)}
+            ${row('other',                                       'other_equity',           bsAll, fmt)}
+            ${row("Total Shareholders' Equity",                  'total_equity',           bsAll, fmt, true)}
+            ${gap()}
+            ${row("Total Liabilities and Shareholders' Equity",  'total_lae',              bsAll, fmt, true)}
+            ${gap()}
+            <tr class="check-row">
+                <td>Assets - (L + SE)</td>
+                ${bsAll.map(y => `<td${tdCls(y)}>${fmt(y.check_balance)}</td>`).join('')}
+            </tr>
+        `;
+
+        document.getElementById('results').innerHTML = `
+            <div class="company-header">
+                <span class="name">${histData.company_name} (${histData.ticker})</span>
+                <span class="price">Price: $${histData.stock_price}</span>
+            </div>
+            <p class="statement-label">Income Statement</p>
+            ${buildTable(histData.ticker, isAll, isBody)}
+            <p class="statement-label">Cash Flow Statement</p>
+            ${buildTable(histData.ticker, cfAll, cfBody)}
+            <p class="statement-label">Balance Sheet</p>
+            ${buildTable(histData.ticker, bsAll, bsBody)}
+        `;
+    }
+
     document.getElementById('run-btn').addEventListener('click', async () => {
         const ticker = document.getElementById('ticker').value.trim().toUpperCase();
         const resultsBox = document.getElementById('results');
-
         if (!ticker) { alert('Please enter a ticker'); return; }
 
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = '<p>Loading...</p>';
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/run-model', {
+            const resp = await fetch('http://127.0.0.1:8000/api/run-model', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ticker })
             });
+            const data = await resp.json();
+            if (data.error) { resultsBox.innerHTML = `<div class="error-box">${data.error}</div>`; return; }
 
-            const data = await response.json();
-
-            if (data.error) {
-                resultsBox.innerHTML = `<div class="error-box">${data.error}</div>`;
-                return;
-            }
-
-            const isYears = data.income_statement;
-            const isReconcile = isYears.map(y => `<td>${reconcileSummary(y.reconcile)}</td>`).join('');
-            const isBody = `
-                ${row('Revenue',                                        'revenue',          isYears, fmt)}
-                ${row('Cost of Goods Sold',                            'cogs',             isYears, fmt)}
-                ${row('Gross Profit',                                   'gross_profit',     isYears, fmt, true)}
-                ${gap()}
-                ${row('Selling, General and Administrative Expense',   'sga',              isYears, fmt)}
-                ${row('Research and Development Expense',               'rnd',              isYears, fmt)}
-                ${row('Other Operating Expenses',                       'other_opex',       isYears, fmt)}
-                ${row('Total Operating Expenses',                       'total_opex',       isYears, fmt, true)}
-                ${gap()}
-                ${row('Operating Income (EBIT)',                        'operating_income', isYears, fmt, true)}
-                ${gap()}
-                ${row('Interest Income',                                'interest_income',  isYears, fmt)}
-                ${row('Interest Expense',                               'interest_expense', isYears, fmt)}
-                ${row('Other Income (Expense)',                         'other_income',     isYears, fmt)}
-                ${row('Pretax Income',                                  'pretax_income',    isYears, fmt, true)}
-                ${gap()}
-                ${row('Income Tax Expense',                             'income_tax',       isYears, fmt)}
-                ${row('Net Income',                                     'net_income',       isYears, fmt, true)}
-                ${gap()}
-                ${row('Earnings Per Share',                             'eps',              isYears, fmtEps)}
-                ${row('Diluted Earnings Per Share',                     'eps_diluted',      isYears, fmtEps)}
-            `;
-
-            const cfYears = data.cash_flow;
-            const cfReconcile = cfYears.map(y => `<td>${reconcileSummary(y.reconcile)}</td>`).join('');
-            const cfBody = `
-                ${sectionHeader('CASH FLOWS FROM OPERATING ACTIVITIES', cfYears.length)}
-                ${row('Net Income',                                              'net_income',            cfYears, fmt)}
-                ${row('Depreciation and Amortization',                           'depreciation',          cfYears, fmt)}
-                ${row('Stock-Based Compensation',                                'stock_comp',            cfYears, fmt)}
-                ${row('other adjustments',                                       'other_adjustments',     cfYears, fmt)}
-                ${row('Change in Accounts Receivable',                           'change_ar',             cfYears, fmt)}
-                ${row('Change in Inventory',                                     'change_inventory',      cfYears, fmt)}
-                ${zeroRow('Change in Prepaid Expenses and Other Current Assets', cfYears.length)}
-                ${row('Change in Accounts Payable',                              'change_ap',             cfYears, fmt)}
-                ${zeroRow('Change in Accrued Expenses',                          cfYears.length)}
-                ${row('Change in Other Operating activity',                      'other_wc',              cfYears, fmt)}
-                ${zeroRow('change in unearned revenue',                          cfYears.length)}
-                ${row('Net Cash Provided by Operating Activities',               'operating_cf',          cfYears, fmt, true)}
-                ${gap()}
-                ${sectionHeader('CASH FLOWS FROM INVESTING ACTIVITIES', cfYears.length)}
-                ${row('Capital Expenditures',                                    'capex',                 cfYears, fmt)}
-                ${zeroRow('Proceeds from Sale of Property and Equipment',        cfYears.length)}
-                ${row('Acquisitions',                                            'acquisitions',          cfYears, fmt)}
-                ${row('Purchases of Investments',                                'purchases_investments', cfYears, fmt)}
-                ${row('Proceeds from Sale of Investments',                       'sales_investments',     cfYears, fmt)}
-                ${row('Other Investing Activities',                              'other_investing',       cfYears, fmt)}
-                ${zeroRow('Reclass: Investing → Financing (per CF_Reclasses)', cfYears.length)}
-                ${row('Net Cash Used in Investing Activities',                   'investing_cf',          cfYears, fmt, true)}
-                ${gap()}
-                ${sectionHeader('CASH FLOWS FROM FINANCING ACTIVITIES', cfYears.length)}
-                ${row('Proceeds from Long-Term Debt',                            'long_term_debt',        cfYears, fmt)}
-                ${zeroRow('Reclass: from Investing (per CF_Reclasses)',          cfYears.length)}
-                ${row('Proceeds from Short-Term Borrowings',                     'short_term_debt',       cfYears, fmt)}
-                ${zeroRow('Repayments of Short-Term Borrowings',                 cfYears.length)}
-                ${row('Payment of Dividends',                                    'dividends_paid',        cfYears, fmt)}
-                ${row('Share Repurchases',                                       'stock_repurchased',     cfYears, fmt)}
-                ${row('Issuance of Common Stock',                                'stock_issued',          cfYears, fmt)}
-                ${row('Other Financing Activities',                              'other_financing',       cfYears, fmt)}
-                ${row('Net Cash Provided by (Used in) Financing Activities',     'financing_cf',          cfYears, fmt, true)}
-                ${gap()}
-                ${row('Effect of Exchange Rate Changes',                         'fx_effect',             cfYears, fmt)}
-                ${row('Net Increase (Decrease) in Cash',                         'net_change_cash',       cfYears, fmt)}
-                ${row('Cash at Beginning of Period',                             'cash_beginning',        cfYears, fmt)}
-                ${row('Cash at End of Period',                                   'cash_end',              cfYears, fmt)}
-                ${gap()}
-                ${row('Free Cash Flow',                                          'free_cash_flow',        cfYears, fmt, true)}
-            `;
-
-            const bsYears = data.balance_sheet;
-            const bsReconcile = bsYears.map(y => `<td>${reconcileSummary(y.reconcile)}</td>`).join('');
-            const bsBody = `
-                ${sectionHeader('ASSETS', bsYears.length)}
-                ${subHeader('Current Assets', bsYears.length)}
-                ${row('Cash and short term investments',              'cash_st_investments',     bsYears, fmt)}
-                ${row('Accounts Receivable',                          'accounts_receivable',     bsYears, fmt)}
-                ${row('Inventory',                                    'inventory',               bsYears, fmt)}
-                ${zeroRow('Prepaid Expenses and Other Current Assets', bsYears.length)}
-                ${row('other',                                        'other_current',           bsYears, fmt)}
-                ${row('Total Current Assets',                         'total_current_assets',    bsYears, fmt, true)}
-                ${gap()}
-                ${subHeader('Non-Current Assets', bsYears.length)}
-                ${row('Property, Plant and Equipment',                'ppe_net',                 bsYears, fmt)}
-                ${row('Goodwill',                                     'goodwill',                bsYears, fmt)}
-                ${row('Intangible Assets',                            'intangible_assets',       bsYears, fmt)}
-                ${row('Long-Term Investments',                        'lt_investments',          bsYears, fmt)}
-                ${row('Other Non-Current Assets',                     'other_noncurrent',        bsYears, fmt)}
-                ${row('Total Non-Current Assets',                     'total_noncurrent_assets', bsYears, fmt, true)}
-                ${gap()}
-                ${row('Total Assets',                                 'total_assets',            bsYears, fmt, true)}
-                ${gap()}
-                ${sectionHeader("LIABILITIES AND SHAREHOLDERS' EQUITY", bsYears.length)}
-                ${subHeader('Current Liabilities', bsYears.length)}
-                ${row('Accounts Payable',                             'accounts_payable',        bsYears, fmt)}
-                ${row('Accrued Expenses',                             'accrued_expenses',        bsYears, fmt)}
-                ${row('Current Portion of Long-Term Debt',            'current_ltd',             bsYears, fmt)}
-                ${row('Other Current Liabilities',                    'other_current_liab',      bsYears, fmt)}
-                ${row('Total Current Liabilities',                    'total_current_liab',      bsYears, fmt, true)}
-                ${gap()}
-                ${subHeader('Non-Current Liabilities', bsYears.length)}
-                ${row('Long-Term Debt',                               'long_term_debt',          bsYears, fmt)}
-                ${row('Deferred Tax Liabilities',                     'deferred_tax_liab',       bsYears, fmt)}
-                ${row('Other Long-Term Liabilities',                  'other_lt_liab',           bsYears, fmt)}
-                ${zeroRow('unearned revenue',                         bsYears.length)}
-                ${row('Total Non-Current Liabilities',                'total_noncurrent_liab',   bsYears, fmt, true)}
-                ${gap()}
-                ${row('Total Liabilities',                            'total_liabilities',       bsYears, fmt, true)}
-                ${gap()}
-                ${subHeader("Shareholders' Equity", bsYears.length)}
-                ${row('Common Stock',                                 'common_stock',            bsYears, fmt)}
-                ${row('Additional Paid-In Capital',                   'apic',                    bsYears, fmt)}
-                ${row('Retained Earnings',                            'retained_earnings',       bsYears, fmt)}
-                ${row('Treasury Stock',                               'treasury_stock',          bsYears, fmt)}
-                ${row('Accumulated Other Comprehensive Income',       'aoci',                    bsYears, fmt)}
-                ${row('other',                                        'other_equity',            bsYears, fmt)}
-                ${row("Total Shareholders' Equity",                   'total_equity',            bsYears, fmt, true)}
-                ${gap()}
-                ${row("Total Liabilities and Shareholders' Equity",   'total_lae',               bsYears, fmt, true)}
-                ${gap()}
-                <tr class="check-row">
-                    <td>Assets - SE + Liabilities</td>
-                    ${bsYears.map(y => `<td>${fmt(y.check_balance)}</td>`).join('')}
-                </tr>
-            `;
-
-            resultsBox.innerHTML = `
-                <div class="company-header">
-                    <span class="name">${data.company_name} (${data.ticker})</span>
-                    <span class="price">Price: $${data.stock_price}</span>
-                </div>
-                <p class="statement-label">Income Statement</p>
-                ${buildTable(data.ticker, data.ticker, isYears, isBody, isReconcile)}
-                <p class="statement-label">Cash Flow Statement</p>
-                ${buildTable(data.ticker, data.ticker, cfYears, cfBody, cfReconcile)}
-                <p class="statement-label">Balance Sheet</p>
-                ${buildTable(data.ticker, data.ticker, bsYears, bsBody, bsReconcile)}
-            `;
+            lastHistData = data;
+            prefillDrivers(data);
+            ['rnd','da','tax','sbc','buyback'].forEach(k => {
+                document.getElementById(`g2-${k}-auto-row`).classList.add('active');
+                document.getElementById(`g2-${k}-on`).checked = false;
+            });
+            document.getElementById('drivers-section').style.display = 'block';
+            resultsBox.style.display = 'block';
+            renderResults(data, null);
         } catch (err) {
             resultsBox.innerHTML = `<div class="error-box">Error: ${err.message}</div>`;
+        }
+    });
+
+    document.getElementById('proj-btn').addEventListener('click', async () => {
+        if (!lastHistData) return;
+
+        function getRow(prefix) {
+            return Array.from({ length: 5 }, (_, i) =>
+                (parseFloat(document.getElementById(`d-${prefix}-${i}`).value) || 0) / 100
+            );
+        }
+
+        const s = lastHistData.suggested_drivers || {};
+        const drivers = {
+            revenue_growth: getRow('rev'),
+            cogs_pct:       getRow('cogs'),
+            sga_pct:        getRow('sga'),
+            capex_pct:      getRow('capex'),
+            rnd_pct:        getG2Row('rnd',    s.rnd_pct),
+            da_pct:         getG2Row('da',     s.da_pct),
+            tax_rate:       getG2Row('tax',    s.tax_rate),
+            sbc_pct:        getG2Row('sbc',    s.sbc_pct),
+            buyback_pct:    getG2Row('buyback', s.buyback_pct),
+        };
+
+        try {
+            const resp = await fetch('http://127.0.0.1:8000/api/run-projection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker: lastHistData.ticker, drivers })
+            });
+            const projData = await resp.json();
+            if (projData.error) { alert(projData.error); return; }
+            renderResults(lastHistData, projData);
+        } catch (err) {
+            alert('Projection failed: ' + err.message);
         }
     });
 </script>

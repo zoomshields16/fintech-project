@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List, Optional
 from fmp_test import get_financials, extract_profile
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import pull_bs_accounts, compute_bs_formula_lines, reconcile_bs
+from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
 
 app = FastAPI()
 
@@ -23,6 +25,13 @@ class ModelRequest(BaseModel):
 @app.get("/")
 def home():
     return {"message": "Backend is running"}
+
+
+def _avg_pct(numerators, denominators, n=4):
+    """4-year average of abs(num)/abs(den), skipping None/zero pairs."""
+    pairs = list(zip(numerators[:n], denominators[:n]))
+    vals = [abs(a) / abs(b) for a, b in pairs if a and b]
+    return round(sum(vals) / len(vals), 4) if vals else None
 
 
 @app.post("/api/run-model")
@@ -169,6 +178,19 @@ def run_model(request: ModelRequest):
             "reconcile":               bs_checks,
         })
 
+    valid_is = [y for y in income_years if "error" not in y]
+    valid_cf = [y for y in cash_flow_years if "error" not in y]
+    is_rev = [y.get("revenue") for y in valid_is]
+
+    suggested_drivers = {
+        "rnd_pct":     _avg_pct([y.get("rnd") for y in valid_is], is_rev),
+        "da_pct":      _avg_pct([y.get("depreciation") for y in valid_cf], is_rev),
+        "tax_rate":    _avg_pct([y.get("income_tax") for y in valid_is],
+                                [y.get("pretax_income") for y in valid_is]),
+        "sbc_pct":     _avg_pct([y.get("stock_comp") for y in valid_cf], is_rev),
+        "buyback_pct": _avg_pct([abs(y.get("stock_repurchased") or 0) for y in valid_cf], is_rev),
+    }
+
     return {
         "ticker": ticker,
         "company_name": profile["company_name"],
@@ -176,4 +198,87 @@ def run_model(request: ModelRequest):
         "income_statement": income_years,
         "cash_flow": cash_flow_years,
         "balance_sheet": bs_years,
+        "suggested_drivers": suggested_drivers,
+    }
+
+
+class Drivers(BaseModel):
+    # Group 1 — per-year lists (5 values each)
+    revenue_growth: List[float]
+    cogs_pct: List[float]
+    sga_pct: List[float]
+    capex_pct: List[float]
+    # Group 2 — per-year lists (5 values); None = fall back to last actual year
+    rnd_pct:     Optional[List[float]] = None
+    da_pct:      Optional[List[float]] = None
+    tax_rate:    Optional[List[float]] = None
+    sbc_pct:     Optional[List[float]] = None
+    buyback_pct: Optional[List[float]] = None
+
+
+class ProjectionRequest(BaseModel):
+    ticker: str
+    drivers: Drivers
+
+
+@app.post("/api/run-projection")
+def run_projection(request: ProjectionRequest):
+    ticker = request.ticker.upper()
+    drivers = {
+        "revenue_growth": request.drivers.revenue_growth,
+        "cogs_pct":       request.drivers.cogs_pct,
+        "sga_pct":        request.drivers.sga_pct,
+        "capex_pct":      request.drivers.capex_pct,
+        "rnd_pct":        request.drivers.rnd_pct,
+        "da_pct":         request.drivers.da_pct,
+        "tax_rate":       request.drivers.tax_rate,
+        "sbc_pct":        request.drivers.sbc_pct,
+        "buyback_pct":    request.drivers.buyback_pct,
+    }
+
+    try:
+        data = get_financials(ticker)
+    except Exception as e:
+        return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
+
+    # Build last actual year from the most recent IS, CF, BS records
+    is_records  = data["income_statement"]
+    cf_records  = data["cash_flow"]
+    bs_records  = data["balance_sheet"]
+
+    if not is_records or not cf_records or not bs_records:
+        return {"error": "Insufficient historical data to project"}
+
+    # Pull most recent actual year for each statement
+    last_is_raw = is_records[0]
+    last_cf_raw = cf_records[0]
+    last_bs_raw = bs_records[0]
+
+    last_is = pull_detail_accounts(last_is_raw)
+    last_is_formulas = compute_formula_lines(last_is)
+    last_is["pretax_income"]    = last_is_formulas["pretax_income"]
+    last_is["net_income"]       = last_is_formulas["net_income"]
+    last_is["gross_profit"]     = last_is_formulas["gross_profit"]
+    last_is["operating_income"] = last_is_formulas["operating_income"]
+    last_is["total_opex"]       = last_is_formulas["total_operating_expenses"]
+
+    last_cf = pull_cf_accounts(last_cf_raw)
+    last_cf_formulas = compute_cf_formula_lines(last_cf)
+    last_cf["other_adjustments"] = last_cf_formulas["other_adjustments"]
+
+    last_bs = pull_bs_accounts(last_bs_raw)
+
+    # Derive base year from the most recent IS date
+    date_str = last_is.get("date") or last_is_raw.get("date", "")
+    base_year = int(date_str[:4]) if date_str else 2025
+
+    proj_is = project_income_statement(last_is, drivers, base_year)
+    proj_cf = project_cash_flow(proj_is, last_cf, drivers)
+    proj_bs = project_balance_sheet(proj_is, proj_cf, last_bs)
+
+    return {
+        "ticker":           ticker,
+        "income_statement": proj_is,
+        "cash_flow":        proj_cf,
+        "balance_sheet":    proj_bs,
     }
