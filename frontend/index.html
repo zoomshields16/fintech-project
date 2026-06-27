@@ -7,14 +7,12 @@
     <style>
         body {
             font-family: -apple-system, sans-serif;
-            max-width: 500px;
-            margin: 80px auto;
+            max-width: 1100px;
+            margin: 60px auto;
             padding: 0 20px;
             background: #f5f5f5;
         }
-        h1 {
-            color: #1a1a1a;
-        }
+        h1 { color: #1a1a1a; }
         .input-row {
             display: flex;
             gap: 10px;
@@ -36,18 +34,89 @@
             border-radius: 6px;
             cursor: pointer;
         }
-        button:hover {
-            background: #1d4ed8;
-        }
-        #results {
-            margin-top: 30px;
-            padding: 20px;
+        button:hover { background: #1d4ed8; }
+        #results { margin-top: 30px; display: none; }
+
+        .company-header {
             background: white;
             border-radius: 6px;
-            display: none;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        #results div {
-            margin: 8px 0;
+        .company-header .name { font-size: 18px; font-weight: 600; }
+        .company-header .price { font-size: 16px; color: #555; }
+
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+        th {
+            background: #1e3a5f;
+            color: white;
+            padding: 8px 12px;
+            text-align: right;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        th:first-child { text-align: left; min-width: 220px; }
+        td {
+            padding: 7px 12px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        td:first-child { text-align: left; color: #333; }
+
+        /* section dividers */
+        tr.section-gap td { padding: 4px 0; border: none; background: #f5f5f5; }
+
+        /* subtotal rows */
+        tr.subtotal td { font-weight: 600; border-top: 1px solid #ddd; }
+
+        /* negative numbers */
+        .neg { color: #dc2626; }
+
+        /* section headers inside table */
+        tr.section-header td {
+            background: #e8eef5;
+            color: #1e3a5f;
+            font-weight: 600;
+            padding: 6px 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* reconcile row */
+        tr.reconcile-row td {
+            font-size: 11px;
+            color: #aaa;
+            padding: 4px 12px;
+            background: #fafafa;
+            border-top: 1px solid #f0f0f0;
+        }
+        .pass { color: #16a34a; }
+        .fail { color: #dc2626; font-weight: 600; }
+
+        .statement-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin: 24px 0 8px 0;
+        }
+
+        .error-box {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -62,38 +131,167 @@
 <div id="results"></div>
 
 <script>
-    const button = document.getElementById("run-btn");
-    const resultsBox = document.getElementById("results");
+    function reconcileSummary(rec) {
+        const mismatches = Object.entries(rec).filter(([, v]) => v !== 'MATCH');
+        if (mismatches.length === 0) return '<span class="pass">✓ checks pass</span>';
+        return mismatches.map(([k, v]) => `<span class="fail">✗ ${k}</span>`).join(' ');
+    }
 
-    button.addEventListener("click", async () => {
-        const ticker = document.getElementById("ticker").value;
+    function fmt(val) {
+        if (val == null) return '—';
+        if (val === 0) return '$-';
+        const b = val / 1e9;
+        const str = '$' + Math.abs(b).toFixed(2) + 'B';
+        return val < 0 ? `<span class="neg">(${str})</span>` : str;
+    }
 
-        if (!ticker) {
-            alert("Please enter a ticker");
-            return;
-        }
+    function fmtEps(val) {
+        if (val == null) return '—';
+        if (val === 0) return '$-';
+        const str = '$' + Math.abs(val).toFixed(2);
+        return val < 0 ? `<span class="neg">(${str})</span>` : str;
+    }
+
+    function gap() {
+        return '<tr class="section-gap"><td colspan="999"></td></tr>';
+    }
+
+    function sectionHeader(label, colCount) {
+        return `<tr class="section-header"><td colspan="${colCount + 1}">${label}</td></tr>`;
+    }
+
+    function row(label, key, years, formatter, isSubtotal) {
+        const cls = isSubtotal ? ' class="subtotal"' : '';
+        const cells = years.map(y => `<td>${formatter(y[key])}</td>`).join('');
+        return `<tr${cls}><td>${label}</td>${cells}</tr>`;
+    }
+
+    function zeroRow(label, colCount) {
+        const cells = Array(colCount).fill('<td>$-</td>').join('');
+        return `<tr><td>${label}</td>${cells}</tr>`;
+    }
+
+    function buildTable(ticker, headerLabel, years, bodyHtml, reconcileHtml) {
+        const headerCells = years.map(y => `<th>${y.date.slice(0, 4)}</th>`).join('');
+        return `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
+                    <tbody>
+                        ${bodyHtml}
+                        <tr class="reconcile-row"><td>Reconciliation</td>${reconcileHtml}</tr>
+                    </tbody>
+                </table>
+            </div>`;
+    }
+
+    document.getElementById('run-btn').addEventListener('click', async () => {
+        const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+        const resultsBox = document.getElementById('results');
+
+        if (!ticker) { alert('Please enter a ticker'); return; }
+
+        resultsBox.style.display = 'block';
+        resultsBox.innerHTML = '<p>Loading...</p>';
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/run-model", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ ticker: ticker })
+            const response = await fetch('http://127.0.0.1:8000/api/run-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker })
             });
 
             const data = await response.json();
 
-            resultsBox.style.display = "block";
-            resultsBox.innerHTML = `
-                <div><strong>Ticker:</strong> ${data.ticker}</div>
-                <div><strong>Fair Value:</strong> $${data.fair_value}</div>
-                <div><strong>Current Price:</strong> $${data.current_price}</div>
-                <div><strong>Implied Upside:</strong> ${data.implied_upside}</div>
+            if (data.error) {
+                resultsBox.innerHTML = `<div class="error-box">${data.error}</div>`;
+                return;
+            }
+
+            const isYears = data.income_statement;
+            const isReconcile = isYears.map(y => `<td>${reconcileSummary(y.reconcile)}</td>`).join('');
+            const isBody = `
+                ${row('Revenue',                                        'revenue',          isYears, fmt)}
+                ${row('Cost of Goods Sold',                            'cogs',             isYears, fmt)}
+                ${row('Gross Profit',                                   'gross_profit',     isYears, fmt, true)}
+                ${gap()}
+                ${row('Selling, General and Administrative Expense',   'sga',              isYears, fmt)}
+                ${row('Research and Development Expense',               'rnd',              isYears, fmt)}
+                ${row('Other Operating Expenses',                       'other_opex',       isYears, fmt)}
+                ${row('Total Operating Expenses',                       'total_opex',       isYears, fmt, true)}
+                ${gap()}
+                ${row('Operating Income (EBIT)',                        'operating_income', isYears, fmt, true)}
+                ${gap()}
+                ${row('Interest Income',                                'interest_income',  isYears, fmt)}
+                ${row('Interest Expense',                               'interest_expense', isYears, fmt)}
+                ${row('Other Income (Expense)',                         'other_income',     isYears, fmt)}
+                ${row('Pretax Income',                                  'pretax_income',    isYears, fmt, true)}
+                ${gap()}
+                ${row('Income Tax Expense',                             'income_tax',       isYears, fmt)}
+                ${row('Net Income',                                     'net_income',       isYears, fmt, true)}
+                ${gap()}
+                ${row('Earnings Per Share',                             'eps',              isYears, fmtEps)}
+                ${row('Diluted Earnings Per Share',                     'eps_diluted',      isYears, fmtEps)}
             `;
-        } catch (error) {
-            resultsBox.style.display = "block";
-            resultsBox.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+
+            const cfYears = data.cash_flow;
+            const cfReconcile = cfYears.map(y => `<td>${reconcileSummary(y.reconcile)}</td>`).join('');
+            const cfBody = `
+                ${sectionHeader('CASH FLOWS FROM OPERATING ACTIVITIES', cfYears.length)}
+                ${row('Net Income',                                              'net_income',            cfYears, fmt)}
+                ${row('Depreciation and Amortization',                           'depreciation',          cfYears, fmt)}
+                ${row('Stock-Based Compensation',                                'stock_comp',            cfYears, fmt)}
+                ${row('other adjustments',                                       'other_adjustments',     cfYears, fmt)}
+                ${row('Change in Accounts Receivable',                           'change_ar',             cfYears, fmt)}
+                ${row('Change in Inventory',                                     'change_inventory',      cfYears, fmt)}
+                ${zeroRow('Change in Prepaid Expenses and Other Current Assets', cfYears.length)}
+                ${row('Change in Accounts Payable',                              'change_ap',             cfYears, fmt)}
+                ${zeroRow('Change in Accrued Expenses',                          cfYears.length)}
+                ${row('Change in Other Operating activity',                      'other_wc',              cfYears, fmt)}
+                ${zeroRow('change in unearned revenue',                          cfYears.length)}
+                ${row('Net Cash Provided by Operating Activities',               'operating_cf',          cfYears, fmt, true)}
+                ${gap()}
+                ${sectionHeader('CASH FLOWS FROM INVESTING ACTIVITIES', cfYears.length)}
+                ${row('Capital Expenditures',                                    'capex',                 cfYears, fmt)}
+                ${zeroRow('Proceeds from Sale of Property and Equipment',        cfYears.length)}
+                ${row('Acquisitions',                                            'acquisitions',          cfYears, fmt)}
+                ${row('Purchases of Investments',                                'purchases_investments', cfYears, fmt)}
+                ${row('Proceeds from Sale of Investments',                       'sales_investments',     cfYears, fmt)}
+                ${row('Other Investing Activities',                              'other_investing',       cfYears, fmt)}
+                ${zeroRow('Reclass: Investing → Financing (per CF_Reclasses)', cfYears.length)}
+                ${row('Net Cash Used in Investing Activities',                   'investing_cf',          cfYears, fmt, true)}
+                ${gap()}
+                ${sectionHeader('CASH FLOWS FROM FINANCING ACTIVITIES', cfYears.length)}
+                ${row('Proceeds from Long-Term Debt',                            'long_term_debt',        cfYears, fmt)}
+                ${zeroRow('Reclass: from Investing (per CF_Reclasses)',          cfYears.length)}
+                ${row('Proceeds from Short-Term Borrowings',                     'short_term_debt',       cfYears, fmt)}
+                ${zeroRow('Repayments of Short-Term Borrowings',                 cfYears.length)}
+                ${row('Payment of Dividends',                                    'dividends_paid',        cfYears, fmt)}
+                ${row('Share Repurchases',                                       'stock_repurchased',     cfYears, fmt)}
+                ${row('Issuance of Common Stock',                                'stock_issued',          cfYears, fmt)}
+                ${row('Other Financing Activities',                              'other_financing',       cfYears, fmt)}
+                ${row('Net Cash Provided by (Used in) Financing Activities',     'financing_cf',          cfYears, fmt, true)}
+                ${gap()}
+                ${row('Effect of Exchange Rate Changes',                         'fx_effect',             cfYears, fmt)}
+                ${row('Net Increase (Decrease) in Cash',                         'net_change_cash',       cfYears, fmt)}
+                ${row('Cash at Beginning of Period',                             'cash_beginning',        cfYears, fmt)}
+                ${row('Cash at End of Period',                                   'cash_end',              cfYears, fmt)}
+                ${gap()}
+                ${row('Free Cash Flow',                                          'free_cash_flow',        cfYears, fmt, true)}
+            `;
+
+            resultsBox.innerHTML = `
+                <div class="company-header">
+                    <span class="name">${data.company_name} (${data.ticker})</span>
+                    <span class="price">Price: $${data.stock_price}</span>
+                </div>
+                <p class="statement-label">Income Statement</p>
+                ${buildTable(data.ticker, data.ticker, isYears, isBody, isReconcile)}
+                <p class="statement-label">Cash Flow Statement</p>
+                ${buildTable(data.ticker, data.ticker, cfYears, cfBody, cfReconcile)}
+            `;
+        } catch (err) {
+            resultsBox.innerHTML = `<div class="error-box">Error: ${err.message}</div>`;
         }
     });
 </script>

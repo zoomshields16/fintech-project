@@ -22,3 +22,7 @@ env/
 # Build output
 dist/
 build/
+
+# Carson's model file (contains API key - never commit)
+*.xlsm
+reference/

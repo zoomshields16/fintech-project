@@ -20,7 +20,7 @@ def fmp_get(endpoint, ticker=None, extra_params=None):
 
 
 def get_financials(ticker):
-    statement_params = {"period": "annual", "limit": 3}
+    statement_params = {"period": "annual", "limit": 10}
     return {
         "income_statement": fmp_get("stable/income-statement", ticker, statement_params),
         "balance_sheet": fmp_get("stable/balance-sheet-statement", ticker, statement_params),

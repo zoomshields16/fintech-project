@@ -2,6 +2,8 @@
 # Each "detail" line lists the FMP field names that mean that line.
 # The code tries each synonym until one is found in the company's data.
 
+from statement_engine import find_value_first_match as find_value
+
 DETAIL_ACCOUNTS = {
     "date": ["fiscalYear", "date", "period"],
     "revenue": ["revenue", "totalRevenue", "sales", "netSales"],
@@ -27,13 +29,6 @@ CHECK_ACCOUNTS = {
     "ebitda_reported": ["ebitda"],
 }
 
-
-def find_value(record, synonyms):
-    """Try each synonym name; return the first one present in the record."""
-    for name in synonyms:
-        if name in record and record[name] is not None:
-            return record[name]
-    return None
 
 def pull_detail_accounts(income_record):
     """Pull every Direct Detail Account from one year's income statement."""
