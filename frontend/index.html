@@ -87,11 +87,22 @@
         tr.section-header td {
             background: #e8eef5;
             color: #1e3a5f;
-            font-weight: 600;
+            font-weight: 700;
             padding: 6px 12px;
             font-size: 12px;
-            text-transform: uppercase;
             letter-spacing: 0.04em;
+        }
+        tr.sub-header td {
+            background: #f4f7fa;
+            color: #2d4a6e;
+            font-weight: 600;
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+        tr.check-row td {
+            font-weight: 600;
+            border-top: 2px solid #1e3a5f;
+            color: #1e3a5f;
         }
 
         /* reconcile row */
@@ -101,7 +112,12 @@
             padding: 4px 12px;
             background: #fafafa;
             border-top: 1px solid #f0f0f0;
+            white-space: normal;
         }
+
+        /* subtle column separator on data columns */
+        th + th { border-left: 1px solid rgba(255,255,255,0.15); }
+        td + td { border-left: 1px solid #f0f0f0; }
         .pass { color: #16a34a; }
         .fail { color: #dc2626; font-weight: 600; }
 
@@ -169,6 +185,10 @@
     function zeroRow(label, colCount) {
         const cells = Array(colCount).fill('<td>$-</td>').join('');
         return `<tr><td>${label}</td>${cells}</tr>`;
+    }
+
+    function subHeader(label, colCount) {
+        return `<tr class="sub-header"><td colspan="${colCount + 1}">${label}</td></tr>`;
     }
 
     function buildTable(ticker, headerLabel, years, bodyHtml, reconcileHtml) {
@@ -280,6 +300,62 @@
                 ${row('Free Cash Flow',                                          'free_cash_flow',        cfYears, fmt, true)}
             `;
 
+            const bsYears = data.balance_sheet;
+            const bsReconcile = bsYears.map(y => `<td>${reconcileSummary(y.reconcile)}</td>`).join('');
+            const bsBody = `
+                ${sectionHeader('ASSETS', bsYears.length)}
+                ${subHeader('Current Assets', bsYears.length)}
+                ${row('Cash and short term investments',              'cash_st_investments',     bsYears, fmt)}
+                ${row('Accounts Receivable',                          'accounts_receivable',     bsYears, fmt)}
+                ${row('Inventory',                                    'inventory',               bsYears, fmt)}
+                ${zeroRow('Prepaid Expenses and Other Current Assets', bsYears.length)}
+                ${row('other',                                        'other_current',           bsYears, fmt)}
+                ${row('Total Current Assets',                         'total_current_assets',    bsYears, fmt, true)}
+                ${gap()}
+                ${subHeader('Non-Current Assets', bsYears.length)}
+                ${row('Property, Plant and Equipment',                'ppe_net',                 bsYears, fmt)}
+                ${row('Goodwill',                                     'goodwill',                bsYears, fmt)}
+                ${row('Intangible Assets',                            'intangible_assets',       bsYears, fmt)}
+                ${row('Long-Term Investments',                        'lt_investments',          bsYears, fmt)}
+                ${row('Other Non-Current Assets',                     'other_noncurrent',        bsYears, fmt)}
+                ${row('Total Non-Current Assets',                     'total_noncurrent_assets', bsYears, fmt, true)}
+                ${gap()}
+                ${row('Total Assets',                                 'total_assets',            bsYears, fmt, true)}
+                ${gap()}
+                ${sectionHeader("LIABILITIES AND SHAREHOLDERS' EQUITY", bsYears.length)}
+                ${subHeader('Current Liabilities', bsYears.length)}
+                ${row('Accounts Payable',                             'accounts_payable',        bsYears, fmt)}
+                ${row('Accrued Expenses',                             'accrued_expenses',        bsYears, fmt)}
+                ${row('Current Portion of Long-Term Debt',            'current_ltd',             bsYears, fmt)}
+                ${row('Other Current Liabilities',                    'other_current_liab',      bsYears, fmt)}
+                ${row('Total Current Liabilities',                    'total_current_liab',      bsYears, fmt, true)}
+                ${gap()}
+                ${subHeader('Non-Current Liabilities', bsYears.length)}
+                ${row('Long-Term Debt',                               'long_term_debt',          bsYears, fmt)}
+                ${row('Deferred Tax Liabilities',                     'deferred_tax_liab',       bsYears, fmt)}
+                ${row('Other Long-Term Liabilities',                  'other_lt_liab',           bsYears, fmt)}
+                ${zeroRow('unearned revenue',                         bsYears.length)}
+                ${row('Total Non-Current Liabilities',                'total_noncurrent_liab',   bsYears, fmt, true)}
+                ${gap()}
+                ${row('Total Liabilities',                            'total_liabilities',       bsYears, fmt, true)}
+                ${gap()}
+                ${subHeader("Shareholders' Equity", bsYears.length)}
+                ${row('Common Stock',                                 'common_stock',            bsYears, fmt)}
+                ${row('Additional Paid-In Capital',                   'apic',                    bsYears, fmt)}
+                ${row('Retained Earnings',                            'retained_earnings',       bsYears, fmt)}
+                ${row('Treasury Stock',                               'treasury_stock',          bsYears, fmt)}
+                ${row('Accumulated Other Comprehensive Income',       'aoci',                    bsYears, fmt)}
+                ${row('other',                                        'other_equity',            bsYears, fmt)}
+                ${row("Total Shareholders' Equity",                   'total_equity',            bsYears, fmt, true)}
+                ${gap()}
+                ${row("Total Liabilities and Shareholders' Equity",   'total_lae',               bsYears, fmt, true)}
+                ${gap()}
+                <tr class="check-row">
+                    <td>Assets - SE + Liabilities</td>
+                    ${bsYears.map(y => `<td>${fmt(y.check_balance)}</td>`).join('')}
+                </tr>
+            `;
+
             resultsBox.innerHTML = `
                 <div class="company-header">
                     <span class="name">${data.company_name} (${data.ticker})</span>
@@ -289,6 +365,8 @@
                 ${buildTable(data.ticker, data.ticker, isYears, isBody, isReconcile)}
                 <p class="statement-label">Cash Flow Statement</p>
                 ${buildTable(data.ticker, data.ticker, cfYears, cfBody, cfReconcile)}
+                <p class="statement-label">Balance Sheet</p>
+                ${buildTable(data.ticker, data.ticker, bsYears, bsBody, bsReconcile)}
             `;
         } catch (err) {
             resultsBox.innerHTML = `<div class="error-box">Error: ${err.message}</div>`;

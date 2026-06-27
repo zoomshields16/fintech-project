@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from fmp_test import get_financials, extract_profile
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
+from balance_sheet import pull_bs_accounts, compute_bs_formula_lines, reconcile_bs
 
 app = FastAPI()
 
@@ -116,10 +117,63 @@ def run_model(request: ModelRequest):
             "reconcile":            cf_checks,
         })
 
+    bs_years = []
+    for record in data["balance_sheet"]:
+        try:
+            bs_accounts = pull_bs_accounts(record)
+            bs_formulas = compute_bs_formula_lines(bs_accounts)
+            bs_checks = reconcile_bs(record, bs_formulas)
+        except Exception as e:
+            bs_years.append({"date": record.get("date"), "error": str(e)})
+            continue
+        bs_years.append({
+            "date": record.get("date", ""),
+            # Current Assets
+            "cash_st_investments":     bs_accounts["cash_st_investments"],
+            "accounts_receivable":     bs_accounts["accounts_receivable"],
+            "inventory":               bs_accounts["inventory"],
+            "prepaid":                 bs_accounts["prepaid"],
+            "other_current":           bs_accounts["other_current"],
+            "total_current_assets":    bs_formulas["total_current_assets"],
+            # Non-Current Assets
+            "ppe_net":                 bs_accounts["ppe_net"],
+            "goodwill":                bs_accounts["goodwill"],
+            "intangible_assets":       bs_accounts["intangible_assets"],
+            "lt_investments":          bs_accounts["lt_investments"],
+            "other_noncurrent":        bs_accounts["other_noncurrent"],
+            "total_noncurrent_assets": bs_formulas["total_noncurrent_assets"],
+            "total_assets":            bs_formulas["total_assets"],
+            # Current Liabilities
+            "accounts_payable":        bs_accounts["accounts_payable"],
+            "accrued_expenses":        bs_accounts["accrued_expenses"],
+            "current_ltd":             bs_accounts["current_ltd"],
+            "other_current_liab":      bs_accounts["other_current_liab"],
+            "total_current_liab":      bs_formulas["total_current_liab"],
+            # Non-Current Liabilities
+            "long_term_debt":          bs_accounts["long_term_debt"],
+            "deferred_tax_liab":       bs_accounts["deferred_tax_liab"],
+            "other_lt_liab":           bs_accounts["other_lt_liab"],
+            "unearned_revenue_lt":     bs_accounts["unearned_revenue_lt"],
+            "total_noncurrent_liab":   bs_formulas["total_noncurrent_liab"],
+            "total_liabilities":       bs_formulas["total_liabilities"],
+            # Shareholders' Equity
+            "common_stock":            bs_accounts["common_stock"],
+            "apic":                    bs_accounts["apic"],
+            "retained_earnings":       bs_accounts["retained_earnings"],
+            "treasury_stock":          bs_accounts["treasury_stock"],
+            "aoci":                    bs_accounts["aoci"],
+            "other_equity":            bs_accounts["other_equity"],
+            "total_equity":            bs_formulas["total_equity"],
+            "total_lae":               bs_formulas["total_lae"],
+            "check_balance":           bs_formulas["check_balance"],
+            "reconcile":               bs_checks,
+        })
+
     return {
         "ticker": ticker,
         "company_name": profile["company_name"],
         "stock_price": profile["stock_price"],
         "income_statement": income_years,
         "cash_flow": cash_flow_years,
+        "balance_sheet": bs_years,
     }
