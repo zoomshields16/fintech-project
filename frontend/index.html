@@ -85,7 +85,7 @@
         .arrow-icon { width: 18px; height: 18px; }
 
         .hero-metrics {
-            display: flex; align-items: center; gap: 0; margin-top: 72px;
+            display: flex; align-items: center; gap: 0; margin: 72px auto 0;
             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
             border-radius: 14px; padding: 24px 0; width: 100%; max-width: 560px;
         }
@@ -136,8 +136,34 @@
         .feat h4 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 5px; }
         .feat p { font-size: 13px; color: #64748b; line-height: 1.7; }
 
+        /* ── Ticker CTA Section ──────────────────────────────────── */
+        .ticker-section { background: #f8fafc; }
+        .ticker-section .section-inner { text-align: center; }
+        .ticker-section .section-h2 { margin: 0 auto 14px; }
+        .ticker-section .section-lead { margin: 0 auto 40px; text-align: center; }
+        .ticker-cta-row {
+            display: flex; gap: 10px; justify-content: center;
+            max-width: 500px; margin: 0 auto;
+        }
+        .ticker-cta-input {
+            flex: 1; padding: 14px 18px; font-size: 20px; font-weight: 700;
+            border: 2px solid #e5e7eb; border-radius: 9px;
+            text-transform: uppercase; letter-spacing: 0.05em; outline: none;
+            transition: border-color 0.15s;
+        }
+        .ticker-cta-input:focus { border-color: #7c3aed; }
+        .ticker-cta-btn {
+            padding: 14px 26px; font-size: 16px; font-weight: 700;
+            background: #7c3aed; color: white; border: none;
+            border-radius: 9px; cursor: pointer; white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .ticker-cta-btn:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+
         /* ── About ───────────────────────────────────────────────── */
-        .about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 700px; }
+        .about-section-inner { text-align: center; }
+        .about-section-inner .section-lead { margin: 0 auto 56px; }
+        .about-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 700px; margin: 0 auto; }
         .about-card {
             background: white; border: 1px solid #e5e7eb; border-radius: 16px;
             padding: 36px 28px; text-align: center; transition: box-shadow 0.2s;
@@ -151,9 +177,10 @@
             overflow: hidden;
         }
         .headshot img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .about-name { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
-        .about-school { font-size: 13px; font-weight: 600; color: #7c3aed; margin-bottom: 3px; }
-        .about-major { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
+        .about-name     { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+        .about-school   { font-size: 13px; font-weight: 600; color: #7c3aed; margin-bottom: 4px; }
+        .about-location { font-size: 13px; color: #64748b; margin-bottom: 4px; }
+        .about-major    { font-size: 13px; color: #94a3b8; margin-bottom: 24px; }
         .li-btn {
             display: inline-flex; align-items: center; gap: 8px;
             background: #0a66c2; color: white; padding: 9px 20px;
@@ -190,7 +217,7 @@
         <a href="#how-it-works">How It Works</a>
         <a href="#features">Features</a>
         <a href="#about">About Us</a>
-        <a class="nav-cta" href="app.html">Launch App →</a>
+        <a class="nav-cta" href="#analyze">Start Analyzing →</a>
     </div>
 </nav>
 
@@ -204,7 +231,7 @@
         <h1>Stock Valuation From<br><em>First Principles</em></h1>
         <p class="hero-sub">Pull live financials, build your own 3-statement model, and run a full DCF — every assumption is yours, every formula is visible.</p>
         <div class="cta-row">
-            <a class="btn-primary" href="app.html">
+            <a class="btn-primary" href="#analyze">
                 Start Analyzing
                 <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -237,10 +264,10 @@
 
 <!-- How It Works -->
 <section class="section" id="how-it-works">
-    <div class="section-inner">
+    <div class="section-inner" style="text-align:center">
         <div class="eyebrow">How It Works</div>
         <h2 class="section-h2">From ticker to valuation<br>in three steps</h2>
-        <p class="section-lead">No black box. Every assumption is yours to set, every formula is visible.</p>
+        <p class="section-lead" style="margin: 0 auto 56px; text-align:center">No black box. Every assumption is yours to set, every formula is visible.</p>
         <div class="steps">
             <div class="step">
                 <div class="step-num">01</div>
@@ -271,6 +298,19 @@
                 <h3>Run the DCF</h3>
                 <p>CAPM-based WACC auto-computed from live beta and treasury data. Outputs intrinsic value with a 25-scenario sensitivity matrix across WACC and terminal growth rate.</p>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- Ticker Entry -->
+<section class="section ticker-section" id="analyze">
+    <div class="section-inner">
+        <div class="eyebrow">Start Your Analysis</div>
+        <h2 class="section-h2">Enter a ticker to begin</h2>
+        <p class="section-lead">We pull 5 years of live financials so you can build your model immediately.</p>
+        <div class="ticker-cta-row">
+            <input class="ticker-cta-input" type="text" id="home-ticker" placeholder="AAPL" maxlength="10">
+            <button class="ticker-cta-btn" id="home-go-btn">Start Analyzing →</button>
         </div>
     </div>
 </section>
@@ -360,7 +400,7 @@
 
 <!-- About Us -->
 <section class="section" id="about">
-    <div class="section-inner">
+    <div class="section-inner about-section-inner">
         <div class="eyebrow">About Us</div>
         <h2 class="section-h2">Who built this</h2>
         <p class="section-lead">We built The Retail Analyst because we wanted to understand stock valuation properly — not just plug numbers into a black box.</p>
@@ -372,7 +412,8 @@
                 </div>
                 <div class="about-name">Zoom Shields</div>
                 <div class="about-school">Southern Methodist University</div>
-                <div class="about-major">Computer Science &amp; Data Science · Dallas, TX</div>
+                <div class="about-location">Dallas, TX</div>
+                <div class="about-major">Computer Science &amp; Data Science</div>
                 <a class="li-btn" href="https://www.linkedin.com/in/zoom-shields-89059a33b/" target="_blank">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/>
@@ -388,7 +429,8 @@
                 </div>
                 <div class="about-name">Carson Adams</div>
                 <div class="about-school">Oklahoma State University</div>
-                <div class="about-major">Finance · Stillwater, OK</div>
+                <div class="about-location">Stillwater, OK</div>
+                <div class="about-major">Finance</div>
                 <a class="li-btn" href="https://www.linkedin.com/in/carson-adams-aa8b7928b/" target="_blank">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/>
@@ -405,8 +447,8 @@
 <section class="cta-band">
     <h2>Ready to value a stock?</h2>
     <p>Enter a ticker and run a full DCF in under a minute.</p>
-    <a class="btn-primary" href="app.html">
-        Launch App
+    <a class="btn-primary" href="#analyze">
+        Start Analyzing
         <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
@@ -417,11 +459,20 @@
 <footer>
     <p>
         © 2026 The Retail Analyst
-        &nbsp;·&nbsp;<a href="app.html">Launch App</a>
+        &nbsp;·&nbsp;<a href="#analyze">Start Analyzing</a>
         &nbsp;·&nbsp;<a href="#how-it-works">How It Works</a>
         &nbsp;·&nbsp;<a href="#about">About Us</a>
     </p>
 </footer>
 
+<script>
+    document.getElementById('home-go-btn').addEventListener('click', () => {
+        const t = document.getElementById('home-ticker').value.trim().toUpperCase();
+        if (t) window.location.href = `app.html?ticker=${encodeURIComponent(t)}`;
+    });
+    document.getElementById('home-ticker').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('home-go-btn').click();
+    });
+</script>
 </body>
 </html>

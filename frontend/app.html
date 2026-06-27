@@ -558,6 +558,15 @@
             document.getElementById('fetch-status').textContent = '';
         });
 
+        // Auto-fetch if ticker passed via URL from homepage
+        const params = new URLSearchParams(window.location.search);
+        const paramTicker = params.get('ticker');
+        if (paramTicker) {
+            document.getElementById('ticker').value = paramTicker.toUpperCase();
+            fetchData();
+            return;
+        }
+
         // Restore Step 2 if returning from model.html
         const cached = localStorage.getItem('model_hist');
         if (cached) {

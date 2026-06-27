@@ -91,4 +91,4 @@ if __name__ == "__main__":
     checks = reconcile(latest_year, formulas)
     print("\n--- Reconciliation vs FMP reported ---")
     for line, status in checks.items():
-        print(f"{line}: {status}")
+    print(f"{line}: {status}")
