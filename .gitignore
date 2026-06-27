@@ -26,3 +26,13 @@ build/
 # Carson's model file (contains API key - never commit)
 *.xlsm
 reference/
+
+# Personal headshots / photos (privacy - keep off GitHub)
+# NOTE: these must be uploaded directly to the host (e.g. Vercel) for the
+# About section to display on the live site.
+frontend/assets/*.jpg
+frontend/assets/*.jpeg
+frontend/assets/*.png
+frontend/assets/*.webp
+frontend/assets/*.gif
+!frontend/assets/.gitkeep
