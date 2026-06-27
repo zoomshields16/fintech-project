@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCF Valuation</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 1100px;
+            margin: 60px auto;
+            padding: 0 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #1a1a1a; margin-bottom: 4px; }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2563eb;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        .company-header {
+            background: white;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .company-header .name { font-size: 18px; font-weight: 600; }
+        .company-header .price { font-size: 15px; color: #555; }
+
+        .card {
+            background: white;
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin: 0 0 14px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* WACC inputs grid */
+        .wacc-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px 20px;
+        }
+        .wacc-field label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .wacc-field input {
+            width: 100%;
+            padding: 7px 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .wacc-field input:focus { outline: none; border-color: #7c3aed; }
+        .wacc-field .computed {
+            font-size: 13px;
+            padding: 7px 10px;
+            background: #f4f7fa;
+            border-radius: 4px;
+            color: #1e3a5f;
+            font-weight: 600;
+        }
+
+        .run-dcf-btn {
+            padding: 10px 24px;
+            font-size: 14px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 14px;
+        }
+        .run-dcf-btn:hover { background: #6d28d9; }
+
+        /* Results layout */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Output summary stat cards */
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 6px;
+            padding: 14px 16px;
+            text-align: center;
+        }
+        .stat-card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+        .stat-card .value { font-size: 22px; font-weight: 700; color: #1e3a5f; margin-top: 4px; }
+        .stat-card .value.undervalued { color: #16a34a; }
+        .stat-card .value.overvalued  { color: #dc2626; }
+
+        /* DCF schedule table */
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+        th {
+            background: #1e3a5f;
+            color: white;
+            padding: 8px 12px;
+            text-align: right;
+            font-weight: 500;
+        }
+        th:first-child { text-align: left; min-width: 200px; }
+        td {
+            padding: 7px 12px;
+            text-align: right;
+        }
+        td:first-child { text-align: left; color: #333; }
+        th + th { border-left: 1px solid rgba(255,255,255,0.15); }
+        td + td { border-left: 1px solid #f0f0f0; }
+        tr.subtotal td { font-weight: 600; border-top: 1px solid #ddd; }
+        tr.tv-row td { background: #f0f6ff; }
+        tr.total-row td { font-weight: 700; background: #e8eef5; color: #1e3a5f; }
+
+        /* Sensitivity tables — 2×2 grid matching Carson's layout */
+        .sens-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 28px;
+        }
+        .sens-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .sens-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .sens-table th {
+            background: #1e3a5f;
+            color: white;
+            padding: 5px 7px;
+            text-align: right;
+            font-weight: 500;
+        }
+        .sens-table th:first-child { text-align: center; min-width: 56px; }
+        .sens-table td {
+            padding: 4px 7px;
+            border: 1px solid #e5e7eb;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .sens-table td.row-label {
+            background: #1e3a5f;
+            color: white;
+            font-weight: 600;
+            text-align: right;
+        }
+        .sens-table .highlight { background: #d1fae5 !important; color: #065f46; font-weight: 700; }
+        .sens-table .base-col  { background: #f0f6ff; }
+
+        .error-box {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 6px;
+        }
+        .loading { color: #555; padding: 20px 0; }
+        #dcf-results { display: none; }
+        .neg { color: #dc2626; }
+    </style>
+</head>
+<body>
+<a class="back-link" href="index.html">← Back to Model</a>
+<h1>DCF Valuation</h1>
+
+<div id="no-data" style="display:none" class="error-box">
+    No projection data found. Please run a projection on the
+    <a href="index.html" style="color:#1d4ed8">Model page</a> first.
+</div>
+
+<div id="main-content" style="display:none">
+    <div class="company-header" id="company-header"></div>
+
+    <!-- WACC Inputs -->
+    <div class="card">
+        <p class="card-title">WACC Schedule</p>
+        <div class="wacc-grid">
+            <div class="wacc-field">
+                <label>Risk-Free Rate (10Y Treasury)</label>
+                <input type="number" id="in-rf" step="0.01" placeholder="e.g. 4.38">
+            </div>
+            <div class="wacc-field">
+                <label>Beta (Levered)</label>
+                <input type="number" id="in-beta" step="0.01" placeholder="e.g. 1.20">
+            </div>
+            <div class="wacc-field">
+                <label>Market Risk Premium</label>
+                <input type="number" id="in-mrp" step="0.01" placeholder="e.g. 4.75">
+            </div>
+            <div class="wacc-field">
+                <label>Pre-Tax Cost of Debt</label>
+                <input type="number" id="in-cod" step="0.01" placeholder="e.g. 4.00">
+            </div>
+            <div class="wacc-field">
+                <label>Effective Tax Rate</label>
+                <input type="number" id="in-tax" step="0.01" placeholder="e.g. 21.00">
+            </div>
+            <div class="wacc-field">
+                <label>Terminal Growth Rate</label>
+                <input type="number" id="in-tgr" step="0.1" value="2.5">
+            </div>
+            <div class="wacc-field">
+                <label>WACC Override (leave blank to auto-compute)</label>
+                <input type="number" id="in-wacc" step="0.01" placeholder="blank = auto">
+            </div>
+        </div>
+        <button class="run-dcf-btn" id="run-dcf-btn">Run DCF</button>
+    </div>
+
+    <div id="dcf-results">
+        <!-- Stat cards row -->
+        <div class="stat-cards" id="stat-cards"></div>
+
+        <!-- DCF schedule + EV bridge side by side -->
+        <div class="results-grid">
+            <div>
+                <p class="card-title" style="margin-bottom:8px">DCF Cash Flow Schedule</p>
+                <div class="table-wrap" id="schedule-table"></div>
+            </div>
+            <div>
+                <p class="card-title" style="margin-bottom:8px">WACC Components</p>
+                <div id="wacc-breakdown"></div>
+                <p class="card-title" style="margin-top:16px;margin-bottom:8px">Enterprise Value Bridge</p>
+                <div id="ev-bridge"></div>
+            </div>
+        </div>
+
+        <!-- Sensitivity tables — 2×2 -->
+        <div class="card" style="margin-top:0">
+            <p class="card-title">Sensitivity Analysis</p>
+            <div class="sens-grid">
+                <div>
+                    <p class="sens-title">Enterprise Value</p>
+                    <div class="table-wrap" id="sens-ev"></div>
+                </div>
+                <div>
+                    <p class="sens-title">Equity Value Per Share</p>
+                    <div class="table-wrap" id="sens-ps"></div>
+                </div>
+                <div>
+                    <p class="sens-title">Equity Value</p>
+                    <div class="table-wrap" id="sens-eq"></div>
+                </div>
+                <div>
+                    <p class="sens-title">Premium (Discount) To Stock Price</p>
+                    <div class="table-wrap" id="sens-pr"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://127.0.0.1:8000';
+    let inputData = null;
+    let lastResult = null;
+
+    function pct(v, decimals = 2) {
+        return v != null ? (v * 100).toFixed(decimals) + '%' : '—';
+    }
+    function fmtB(v) {
+        if (v == null) return '—';
+        const b = v / 1e9;
+        const s = '$' + Math.abs(b).toFixed(2) + 'B';
+        return v < 0 ? `<span class="neg">(${s})</span>` : s;
+    }
+    function fmtM(v) {
+        if (v == null) return '—';
+        const m = v / 1e6;
+        const s = '$' + Math.abs(m).toFixed(0) + 'M';
+        return v < 0 ? `<span class="neg">(${s})</span>` : s;
+    }
+    function fmtPs(v) {
+        if (v == null) return '—';
+        return (v < 0 ? `<span class="neg">(${Math.abs(v).toFixed(2)})</span>` : '$' + v.toFixed(2));
+    }
+
+    function buildScheduleTable(data) {
+        const years = data.proj_years;
+        const ufcf  = data.ufcf;
+        const r     = lastResult;
+        const wacc  = r.wacc_inputs.wacc;
+        const tgr   = r.terminal_growth_rate;
+
+        const headers = years.map(y => `<th>${y}E</th>`).join('');
+
+        // Rows
+        const ufcfCells = ufcf.map(v => `<td>${fmtM(v)}</td>`).join('');
+
+        // Terminal value — only in year 5
+        const tvCells = years.map((_, i) =>
+            i === years.length - 1 ? `<td>${fmtM(r.terminal_value)}</td>` : `<td>—</td>`
+        ).join('');
+
+        // Total CF = UFCF + TV (last year)
+        const totalCells = years.map((v, i) => {
+            const total = i === years.length - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
+            return `<td>${fmtM(total)}</td>`;
+        }).join('');
+
+        // Discount factor
+        const dfCells = years.map((_, i) =>
+            `<td>${(1 / Math.pow(1 + wacc, i + 1)).toFixed(4)}</td>`
+        ).join('');
+
+        // PV per year: for years 1-4 just discount UFCF; for year 5 discount total CF
+        const pvCells = years.map((_, i) => {
+            const cf = i === years.length - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
+            return `<td>${fmtM(cf / Math.pow(1 + wacc, i + 1))}</td>`;
+        }).join('');
+
+        return `
+        <table>
+            <thead><tr><th>($M)</th>${headers}</tr></thead>
+            <tbody>
+                <tr><td>Unlevered Free Cash Flow</td>${ufcfCells}</tr>
+                <tr class="tv-row"><td>Terminal Value</td>${tvCells}</tr>
+                <tr class="total-row"><td>Total Cash Flow</td>${totalCells}</tr>
+                <tr><td>Discount Factor</td>${dfCells}</tr>
+                <tr class="subtotal"><td>PV of Cash Flow</td>${pvCells}</tr>
+            </tbody>
+        </table>`;
+    }
+
+    function buildWaccBreakdown(r) {
+        const wi = r.wacc_inputs;
+        const rows = [
+            ['Risk-Free Rate',        pct(wi.risk_free_rate)],
+            ['Levered Beta',          wi.beta != null ? wi.beta.toFixed(3) : '—'],
+            ['Market Risk Premium',   pct(wi.market_risk_premium)],
+            ['Equity Risk Premium',   pct(wi.equity_risk_premium)],
+            ['Cost of Equity',        pct(wi.cost_of_equity)],
+            ['Pre-Tax Cost of Debt',  pct(wi.pre_tax_cost_debt)],
+            ['Tax Rate',              pct(wi.tax_rate)],
+            ['After-Tax Cost of Debt',pct(wi.after_tax_cost_debt)],
+            ['Weight Equity',         pct(wi.weight_equity)],
+            ['Weight Debt',           pct(wi.weight_debt)],
+            ['<strong>WACC</strong>', `<strong>${pct(wi.wacc)}</strong>`],
+        ];
+        return `<table>
+            <thead><tr><th style="text-align:left">Input</th><th>Value</th></tr></thead>
+            <tbody>${rows.map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function buildEvBridge(r) {
+        const rows = [
+            ['Enterprise Value',   fmtB(r.enterprise_value)],
+            ['(−) Total Debt',     fmtM(r.total_debt)],
+            ['(+) Cash',           fmtM(r.cash)],
+            ['= Equity Value',     fmtB(r.equity_value)],
+            ['÷ Shares Outstanding', r.shares_outstanding ? (r.shares_outstanding / 1e6).toFixed(0) + 'M' : '—'],
+            ['<strong>= Equity Per Share</strong>', `<strong>${fmtPs(r.equity_value_per_share)}</strong>`],
+        ];
+        return `<table>
+            <thead><tr><th style="text-align:left">Item</th><th>Value</th></tr></thead>
+            <tbody>${rows.map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    // Number formatters matching Carson's Excel output
+    function fmtEvCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
+    function fmtPsCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
+    function fmtPrCell(v)  { return v != null ? (v * 100).toFixed(2) + '%' : '—'; }
+
+    function buildSensTable(matrix, wacc_steps, tgr_steps, fmt_fn, base_wacc, base_tgr) {
+        const tgrHeaders = tgr_steps.map(g => {
+            const isBaseCol = Math.abs(g - base_tgr) < 0.0001;
+            return `<th class="${isBaseCol ? 'base-col' : ''}">${(g * 100).toFixed(1)}%</th>`;
+        }).join('');
+
+        const bodyRows = matrix.map((row, ri) => {
+            const w = wacc_steps[ri];
+            const isBaseRow = Math.abs(w - base_wacc) < 0.0001;
+            const cells = row.map((v, ci) => {
+                const isBaseCol  = Math.abs(tgr_steps[ci] - base_tgr) < 0.0001;
+                const isBaseCell = isBaseRow && isBaseCol;
+                const cls = isBaseCell ? 'highlight' : (isBaseCol ? 'base-col' : '');
+                return `<td class="${cls}">${fmt_fn(v)}</td>`;
+            }).join('');
+            const wLabel = (w * 100).toFixed(2).replace(/\.?0+$/, '') + '%';
+            return `<tr><td class="row-label${isBaseRow ? ' highlight' : ''}">${wLabel}</td>${cells}</tr>`;
+        }).join('');
+
+        return `<table class="sens-table">
+            <thead><tr><th>WACC / TGR</th>${tgrHeaders}</tr></thead>
+            <tbody>${bodyRows}</tbody>
+        </table>`;
+    }
+
+    function renderResults(r) {
+        lastResult = r;
+        const premium = r.premium_discount;
+        const isUnder = premium != null && premium > 0;
+
+        // Stat cards
+        document.getElementById('stat-cards').innerHTML = `
+            <div class="stat-card">
+                <div class="label">WACC</div>
+                <div class="value">${pct(r.wacc_inputs.wacc)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Enterprise Value</div>
+                <div class="value">${fmtB(r.enterprise_value)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Equity Value / Share</div>
+                <div class="value">${fmtPs(r.equity_value_per_share)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Current Price</div>
+                <div class="value">$${r.stock_price}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">PV of Discrete</div>
+                <div class="value">${fmtB(r.pv_discrete)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">${isUnder ? 'Upside' : 'Downside'}</div>
+                <div class="value ${isUnder ? 'undervalued' : 'overvalued'}">
+                    ${premium != null ? (isUnder ? '+' : '') + (premium * 100).toFixed(1) + '%' : '—'}
+                </div>
+            </div>
+        `;
+
+        // Schedule
+        document.getElementById('schedule-table').innerHTML = buildScheduleTable(inputData);
+
+        // WACC + EV bridge
+        document.getElementById('wacc-breakdown').innerHTML = buildWaccBreakdown(r);
+        document.getElementById('ev-bridge').innerHTML = buildEvBridge(r);
+
+        // Sensitivity tables — 4 tables in 2×2 grid
+        const sens = r.sensitivity;
+        const bw   = r.wacc_inputs.wacc;
+        const bg   = r.terminal_growth_rate;
+        document.getElementById('sens-ev').innerHTML = buildSensTable(
+            sens.enterprise_value_table, sens.wacc_steps, sens.tgr_steps, fmtEvCell, bw, bg
+        );
+        document.getElementById('sens-ps').innerHTML = buildSensTable(
+            sens.equity_per_share_table, sens.wacc_steps, sens.tgr_steps, fmtPsCell, bw, bg
+        );
+        document.getElementById('sens-eq').innerHTML = buildSensTable(
+            sens.equity_value_table, sens.wacc_steps, sens.tgr_steps, fmtEvCell, bw, bg
+        );
+        document.getElementById('sens-pr').innerHTML = buildSensTable(
+            sens.premium_discount_table, sens.wacc_steps, sens.tgr_steps, fmtPrCell, bw, bg
+        );
+
+        document.getElementById('dcf-results').style.display = 'block';
+    }
+
+    async function runDcf() {
+        if (!inputData) return;
+
+        const getRaw = id => {
+            const v = parseFloat(document.getElementById(id).value);
+            return isNaN(v) ? null : v;
+        };
+
+        const rf   = getRaw('in-rf');
+        const beta = getRaw('in-beta');
+        const mrp  = getRaw('in-mrp');
+        const cod  = getRaw('in-cod');
+        const tax  = getRaw('in-tax');
+        const tgr  = getRaw('in-tgr');
+        const wacc = getRaw('in-wacc');
+
+        const body = {
+            ticker:                    inputData.ticker,
+            ufcf:                      inputData.ufcf,
+            terminal_growth_rate:      tgr != null ? tgr / 100 : 0.025,
+            risk_free_rate_override:   rf   != null ? rf / 100   : null,
+            beta_override:             beta,
+            market_risk_premium_override: mrp != null ? mrp / 100 : null,
+            pre_tax_cost_debt_override: cod != null ? cod / 100 : null,
+            tax_rate_override:         tax != null ? tax / 100 : null,
+            wacc_override:             wacc != null ? wacc / 100 : null,
+        };
+
+        const btn = document.getElementById('run-dcf-btn');
+        btn.disabled = true;
+        btn.textContent = 'Running…';
+
+        try {
+            const resp = await fetch(`${API}/api/run-dcf`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await resp.json();
+            if (data.error) {
+                alert('DCF error: ' + data.error);
+                return;
+            }
+
+            // Pre-fill WACC inputs from returned values (only on first run)
+            if (!lastResult) {
+                const wi = data.wacc_inputs;
+                if (wi.risk_free_rate  && !document.getElementById('in-rf').value)
+                    document.getElementById('in-rf').value   = (wi.risk_free_rate * 100).toFixed(2);
+                if (wi.beta            && !document.getElementById('in-beta').value)
+                    document.getElementById('in-beta').value = wi.beta.toFixed(3);
+                if (wi.market_risk_premium && !document.getElementById('in-mrp').value)
+                    document.getElementById('in-mrp').value  = (wi.market_risk_premium * 100).toFixed(2);
+                if (wi.pre_tax_cost_debt && !document.getElementById('in-cod').value)
+                    document.getElementById('in-cod').value  = (wi.pre_tax_cost_debt * 100).toFixed(2);
+                if (wi.tax_rate       && !document.getElementById('in-tax').value)
+                    document.getElementById('in-tax').value  = (wi.tax_rate * 100).toFixed(2);
+            }
+
+            renderResults(data);
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Run DCF';
+        }
+    }
+
+    // Init — load from localStorage
+    window.addEventListener('load', () => {
+        const raw = localStorage.getItem('dcf_input');
+        if (!raw) {
+            document.getElementById('no-data').style.display = 'block';
+            return;
+        }
+        try {
+            inputData = JSON.parse(raw);
+        } catch {
+            document.getElementById('no-data').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('main-content').style.display = 'block';
+        document.getElementById('company-header').innerHTML = `
+            <span class="name">${inputData.company_name} (${inputData.ticker})</span>
+            <span class="price">Current Price: $${inputData.stock_price}</span>
+        `;
+
+        document.getElementById('run-dcf-btn').addEventListener('click', runDcf);
+
+        // Auto-run on page load
+        runDcf();
+    });
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@ from income_statement import pull_detail_accounts, compute_formula_lines, reconc
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import pull_bs_accounts, compute_bs_formula_lines, reconcile_bs
 from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
+from dcf_engine import compute_wacc, run_dcf, sensitivity_tables
 
 app = FastAPI()
 
@@ -281,4 +282,128 @@ def run_projection(request: ProjectionRequest):
         "income_statement": proj_is,
         "cash_flow":        proj_cf,
         "balance_sheet":    proj_bs,
+    }
+
+
+class DCFRequest(BaseModel):
+    ticker: str
+    ufcf: List[float]                         # 5 projected UFCF values
+    terminal_growth_rate: float = 0.025
+    # Optional user overrides — backend computes defaults from FMP if absent
+    wacc_override:             Optional[float] = None
+    risk_free_rate_override:   Optional[float] = None
+    beta_override:             Optional[float] = None
+    market_risk_premium_override: Optional[float] = None
+    pre_tax_cost_debt_override: Optional[float] = None
+    tax_rate_override:         Optional[float] = None
+
+
+@app.post("/api/run-dcf")
+def run_dcf_endpoint(request: DCFRequest):
+    ticker = request.ticker.upper()
+    try:
+        data = get_financials(ticker)
+    except Exception as e:
+        return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
+
+    profile   = extract_profile(data["profile"])
+    ev_data   = data.get("enterprise_values", [])
+    treas     = data.get("treasury_rates", [])
+    mrp_data  = data.get("market_risk_premium", [])
+    is_recs   = data.get("income_statement", [])
+
+    # --- FMP inputs ---
+    ev_raw          = ev_data[0] if ev_data else {}
+    treas_raw       = treas[0]   if treas   else {}
+    mrp_match       = next((r for r in mrp_data if r.get("country") == "United States"), {})
+
+    shares_outstanding = ev_raw.get("numberOfShares") or 0
+    cash               = ev_raw.get("minusCashAndCashEquivalents") or 0
+    total_debt         = ev_raw.get("addTotalDebt") or 0
+    stock_price        = profile.get("stock_price") or 0
+    market_cap         = profile.get("market_cap") or (stock_price * shares_outstanding)
+    beta               = profile.get("beta") or 1.0
+
+    # Risk-free rate: 10Y Treasury (stored as percentage in FMP)
+    rf_raw = treas_raw.get("year10") or treas_raw.get("tenYear") or 0
+    risk_free_rate = rf_raw / 100 if rf_raw > 1 else rf_raw  # normalize if stored as 4.38 vs 0.0438
+
+    mrp = mrp_match.get("totalEquityRiskPremium") or 0.0475  # default 4.75% if FMP returns None
+
+    # Approximate pre-tax cost of debt: interest_expense / total_debt
+    pre_tax_cost_debt = 0.04  # default 4%
+    if is_recs and total_debt and total_debt > 0:
+        avg_interest = 0.0
+        count = 0
+        for rec in is_recs[:4]:
+            ie = abs(rec.get("interestExpense") or 0)
+            if ie > 0:
+                avg_interest += ie
+                count += 1
+        if count > 0:
+            pre_tax_cost_debt = (avg_interest / count) / total_debt
+
+    # Effective tax rate from most recent IS
+    effective_tax = 0.21
+    if is_recs:
+        pt = is_recs[0].get("incomeBeforeTax") or 0
+        tx = abs(is_recs[0].get("incomeTaxExpense") or 0)
+        if pt and pt > 0:
+            effective_tax = tx / pt
+
+    # Apply user overrides
+    risk_free_rate   = request.risk_free_rate_override    if request.risk_free_rate_override    is not None else risk_free_rate
+    beta             = request.beta_override              if request.beta_override              is not None else beta
+    mrp              = request.market_risk_premium_override if request.market_risk_premium_override is not None else mrp
+    pre_tax_cost_debt = request.pre_tax_cost_debt_override if request.pre_tax_cost_debt_override is not None else pre_tax_cost_debt
+    effective_tax    = request.tax_rate_override          if request.tax_rate_override          is not None else effective_tax
+
+    # Compute WACC (or use override)
+    wacc_components = compute_wacc(
+        beta, risk_free_rate, mrp,
+        total_debt, market_cap, pre_tax_cost_debt, effective_tax,
+    )
+    wacc = request.wacc_override if request.wacc_override is not None else wacc_components.get("wacc", 0.08)
+
+    net_debt = total_debt - cash  # negative = net cash position
+
+    # Base DCF
+    tgr  = request.terminal_growth_rate
+    ufcf = request.ufcf
+
+    dcf_result = run_dcf(ufcf, wacc, tgr, shares_outstanding, net_debt)
+    sens       = sensitivity_tables(ufcf, wacc, shares_outstanding, net_debt, stock_price)
+
+    premium = None
+    if stock_price and dcf_result.get("equity_value_per_share"):
+        premium = (dcf_result["equity_value_per_share"] / stock_price) - 1
+
+    return {
+        "ticker":        ticker,
+        "company_name":  profile.get("company_name"),
+        "stock_price":   stock_price,
+        # WACC inputs
+        "wacc_inputs": {
+            "risk_free_rate":     risk_free_rate,
+            "beta":               beta,
+            "market_risk_premium": mrp,
+            "pre_tax_cost_debt":  pre_tax_cost_debt,
+            "tax_rate":           effective_tax,
+            "total_debt":         total_debt,
+            "market_cap":         market_cap,
+            **wacc_components,
+            "wacc":               wacc,
+        },
+        # EV bridge
+        "shares_outstanding": shares_outstanding,
+        "cash":               cash,
+        "total_debt":         total_debt,
+        "net_debt":           net_debt,
+        # DCF schedule
+        "ufcf":                    ufcf,
+        "terminal_growth_rate":    tgr,
+        **dcf_result,
+        "premium_discount":        premium,
+        # Sensitivity
+        "sensitivity": sens,
     }

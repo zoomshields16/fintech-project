@@ -698,7 +698,28 @@
             });
             const projData = await resp.json();
             if (projData.error) { alert(projData.error); return; }
+
+            // Save to localStorage so dcf.html can consume it
+            localStorage.setItem('dcf_input', JSON.stringify({
+                ticker:      lastHistData.ticker,
+                company_name: lastHistData.company_name,
+                stock_price: lastHistData.stock_price,
+                ufcf:        projData.cash_flow.map(y => y.free_cash_flow),
+                proj_years:  projData.cash_flow.map(y => y.date.slice(0, 4)),
+            }));
+
             renderResults(lastHistData, projData);
+
+            // Show DCF link
+            let dcfBtn = document.getElementById('dcf-nav-btn');
+            if (!dcfBtn) {
+                dcfBtn = document.createElement('a');
+                dcfBtn.id = 'dcf-nav-btn';
+                dcfBtn.href = 'dcf.html';
+                dcfBtn.style.cssText = 'display:inline-block;margin-top:16px;padding:10px 22px;background:#7c3aed;color:white;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;';
+                dcfBtn.textContent = 'Go to DCF Valuation →';
+                document.getElementById('results').prepend(dcfBtn);
+            }
         } catch (err) {
             alert('Projection failed: ' + err.message);
         }
