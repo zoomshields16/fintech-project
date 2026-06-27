@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Retail Analyst — Model Inputs</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+            background: #f5f5f5;
+        }
+
+        /* ── Site topbar ── */
+        .site-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 0;
+        }
+        .site-topbar-logo { color: #0f172a; font-size: 16px; font-weight: 800; text-decoration: none; }
+        .site-topbar-logo span { color: #7c3aed; }
+        .site-topbar-links { display: flex; gap: 20px; }
+        .site-topbar-links a { color: #64748b; text-decoration: none; font-size: 13px; font-weight: 500; }
+        .site-topbar-links a:hover { color: #0f172a; }
+
+        /* ── Step 1 hero ── */
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+        }
+        .hero h1 { font-size: 30px; color: #1a1a1a; margin: 0 0 8px; }
+        .hero p  { color: #666; font-size: 15px; margin: 0 0 32px; }
+        .ticker-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .ticker-input {
+            flex: 1;
+            padding: 13px 16px;
+            font-size: 18px;
+            font-weight: 600;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .ticker-input:focus { outline: none; border-color: #7c3aed; }
+        .fetch-btn {
+            padding: 13px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .fetch-btn:hover { background: #162d4a; }
+        .status-msg { margin-top: 12px; font-size: 14px; color: #555; min-height: 20px; }
+
+        /* ── Step 2 ── */
+        #step2 { padding-top: 24px; }
+        .top-nav {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .back-link {
+            background: none; border: none; color: #2563eb;
+            font-size: 13px; cursor: pointer; text-decoration: underline; padding: 0;
+        }
+        .co-header {
+            display: flex; flex-direction: column; gap: 1px;
+        }
+        .co-name  { font-size: 17px; font-weight: 700; color: #0f172a; }
+        .co-price { font-size: 13px; color: #555; }
+
+        /* ── Cards ── */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-sub {
+            font-size: 12px;
+            color: #888;
+            margin: 0 0 16px 0;
+        }
+        .badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 100px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .badge-req { background: #dcfce7; color: #166534; }
+        .badge-opt { background: #eff6ff; color: #1d4ed8; }
+
+        /* ── Group 1 driver grid ── */
+        .g1-grid {
+            display: grid;
+            grid-template-columns: 200px repeat(5, 1fr);
+            gap: 6px 8px;
+            align-items: center;
+            font-size: 13px;
+        }
+        .g1-header-row div { text-align: center; font-size: 11px; font-weight: 700; color: #888; letter-spacing: 0.04em; }
+        .g1-header-row div:first-child { text-align: left; }
+        .g1-label { font-weight: 500; color: #333; }
+        .d-in {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 13px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: right;
+            box-sizing: border-box;
+        }
+        .d-in:focus { outline: none; border-color: #7c3aed; }
+
+        /* ── Group 2 driver rows ── */
+        .g2-block { margin-bottom: 12px; }
+        .g2-block:last-child { margin-bottom: 0; }
+        .g2-name {
+            font-size: 12px; font-weight: 700; color: #1e3a5f;
+            margin-bottom: 5px;
+        }
+        .g2-grid {
+            display: grid;
+            grid-template-columns: 90px 60px repeat(5, 1fr);
+            gap: 4px 8px;
+            align-items: center;
+            font-size: 12px;
+        }
+        .g2-sub { color: #888; font-size: 11px; }
+        .g2-val {
+            text-align: right; background: #f8f8f8;
+            padding: 4px 6px; border-radius: 3px; color: #555;
+        }
+        .g2-val.active { background: #dcfce7; color: #166534; font-weight: 600; }
+        .g2-toggle { font-size: 11px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .g2-in {
+            width: 100%; padding: 4px 6px; font-size: 12px;
+            border: 1px solid #ddd; border-radius: 3px; text-align: right;
+        }
+        .g2-in:disabled { background: #f5f5f5; color: #bbb; cursor: not-allowed; }
+        .g2-in:not(:disabled):focus { outline: none; border-color: #7c3aed; }
+
+        /* ── Buttons ── */
+        .run-btn {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 700;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        .run-btn:hover { background: #6d28d9; }
+
+        .error-box { background: #fee2e2; color: #dc2626; padding: 14px; border-radius: 6px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<nav class="site-topbar">
+    <a class="site-topbar-logo" href="index.html">The Retail <span>Analyst</span></a>
+    <div class="site-topbar-links">
+        <a href="index.html#about">About Us</a>
+        <a href="index.html">← Home</a>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════ STEP 1 ══════════════════════════════ -->
+<div id="step1">
+    <div class="hero">
+        <h1>Valuation Model</h1>
+        <p>Enter a stock ticker to load financials and configure your projection.</p>
+        <div class="ticker-row">
+            <input class="ticker-input" type="text" id="ticker" placeholder="AAPL" maxlength="10">
+            <button class="fetch-btn" id="fetch-btn">Fetch Data →</button>
+        </div>
+        <div class="status-msg" id="fetch-status"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════ STEP 2 ══════════════════════════════ -->
+<div id="step2" style="display:none">
+
+    <div class="top-nav">
+        <button class="back-link" id="back-btn">← Change Ticker</button>
+        <div class="co-header">
+            <span class="co-name"  id="co-name"></span>
+            <span class="co-price" id="co-price"></span>
+        </div>
+    </div>
+
+    <!-- Group 1 — Required -->
+    <div class="card">
+        <p class="card-title">Group 1 — Projection Drivers <span class="badge badge-req">Required</span></p>
+        <p class="card-sub">Pre-filled from the most recent actual year. Adjust each year as needed.</p>
+        <div class="g1-grid">
+            <!-- Header row -->
+            <div class="g1-header-row" style="display:contents">
+                <div></div>
+                <div>2026</div><div>2027</div><div>2028</div><div>2029</div><div>2030</div>
+            </div>
+            <!-- Revenue Growth -->
+            <div class="g1-label">Revenue Growth %</div>
+            <input class="d-in" id="d-rev-0"><input class="d-in" id="d-rev-1">
+            <input class="d-in" id="d-rev-2"><input class="d-in" id="d-rev-3"><input class="d-in" id="d-rev-4">
+            <!-- COGS -->
+            <div class="g1-label">COGS % of Revenue</div>
+            <input class="d-in" id="d-cogs-0"><input class="d-in" id="d-cogs-1">
+            <input class="d-in" id="d-cogs-2"><input class="d-in" id="d-cogs-3"><input class="d-in" id="d-cogs-4">
+            <!-- SG&A -->
+            <div class="g1-label">SG&amp;A % of Revenue</div>
+            <input class="d-in" id="d-sga-0"><input class="d-in" id="d-sga-1">
+            <input class="d-in" id="d-sga-2"><input class="d-in" id="d-sga-3"><input class="d-in" id="d-sga-4">
+            <!-- CapEx -->
+            <div class="g1-label">CapEx % of Revenue</div>
+            <input class="d-in" id="d-capex-0"><input class="d-in" id="d-capex-1">
+            <input class="d-in" id="d-capex-2"><input class="d-in" id="d-capex-3"><input class="d-in" id="d-capex-4">
+        </div>
+    </div>
+
+    <!-- Group 2 — Optional -->
+    <div class="card">
+        <p class="card-title">Group 2 — Additional Drivers <span class="badge badge-opt">Optional</span></p>
+        <p class="card-sub">Auto uses a 4-year historical average. Toggle Manual to override year-by-year.</p>
+
+        <!-- R&D -->
+        <div class="g2-block">
+            <div class="g2-name">R&amp;D % of Revenue</div>
+            <div class="g2-grid" id="g2-rnd-auto">
+                <div></div><div class="g2-sub">Auto</div>
+                <div class="g2-val" id="g2-rnd-a0"></div><div class="g2-val" id="g2-rnd-a1"></div>
+                <div class="g2-val" id="g2-rnd-a2"></div><div class="g2-val" id="g2-rnd-a3"></div>
+                <div class="g2-val" id="g2-rnd-a4"></div>
+            </div>
+            <div class="g2-grid" id="g2-rnd-man">
+                <label class="g2-toggle"><input type="checkbox" id="g2-rnd-on" onchange="toggleG2('rnd')"> Manual</label>
+                <div class="g2-sub">Override</div>
+                <input class="g2-in" id="g2-rnd-0" disabled><input class="g2-in" id="g2-rnd-1" disabled>
+                <input class="g2-in" id="g2-rnd-2" disabled><input class="g2-in" id="g2-rnd-3" disabled>
+                <input class="g2-in" id="g2-rnd-4" disabled>
+            </div>
+        </div>
+
+        <!-- D&A -->
+        <div class="g2-block">
+            <div class="g2-name">D&amp;A % of Revenue</div>
+            <div class="g2-grid" id="g2-da-auto">
+                <div></div><div class="g2-sub">Auto</div>
+                <div class="g2-val" id="g2-da-a0"></div><div class="g2-val" id="g2-da-a1"></div>
+                <div class="g2-val" id="g2-da-a2"></div><div class="g2-val" id="g2-da-a3"></div>
+                <div class="g2-val" id="g2-da-a4"></div>
+            </div>
+            <div class="g2-grid" id="g2-da-man">
+                <label class="g2-toggle"><input type="checkbox" id="g2-da-on" onchange="toggleG2('da')"> Manual</label>
+                <div class="g2-sub">Override</div>
+                <input class="g2-in" id="g2-da-0" disabled><input class="g2-in" id="g2-da-1" disabled>
+                <input class="g2-in" id="g2-da-2" disabled><input class="g2-in" id="g2-da-3" disabled>
+                <input class="g2-in" id="g2-da-4" disabled>
+            </div>
+        </div>
+
+        <!-- Tax Rate -->
+        <div class="g2-block">
+            <div class="g2-name">Tax Rate %</div>
+            <div class="g2-grid" id="g2-tax-auto">
+                <div></div><div class="g2-sub">Auto</div>
+                <div class="g2-val" id="g2-tax-a0"></div><div class="g2-val" id="g2-tax-a1"></div>
+                <div class="g2-val" id="g2-tax-a2"></div><div class="g2-val" id="g2-tax-a3"></div>
+                <div class="g2-val" id="g2-tax-a4"></div>
+            </div>
+            <div class="g2-grid" id="g2-tax-man">
+                <label class="g2-toggle"><input type="checkbox" id="g2-tax-on" onchange="toggleG2('tax')"> Manual</label>
+                <div class="g2-sub">Override</div>
+                <input class="g2-in" id="g2-tax-0" disabled><input class="g2-in" id="g2-tax-1" disabled>
+                <input class="g2-in" id="g2-tax-2" disabled><input class="g2-in" id="g2-tax-3" disabled>
+                <input class="g2-in" id="g2-tax-4" disabled>
+            </div>
+        </div>
+
+        <!-- SBC -->
+        <div class="g2-block">
+            <div class="g2-name">SBC % of Revenue</div>
+            <div class="g2-grid" id="g2-sbc-auto">
+                <div></div><div class="g2-sub">Auto</div>
+                <div class="g2-val" id="g2-sbc-a0"></div><div class="g2-val" id="g2-sbc-a1"></div>
+                <div class="g2-val" id="g2-sbc-a2"></div><div class="g2-val" id="g2-sbc-a3"></div>
+                <div class="g2-val" id="g2-sbc-a4"></div>
+            </div>
+            <div class="g2-grid" id="g2-sbc-man">
+                <label class="g2-toggle"><input type="checkbox" id="g2-sbc-on" onchange="toggleG2('sbc')"> Manual</label>
+                <div class="g2-sub">Override</div>
+                <input class="g2-in" id="g2-sbc-0" disabled><input class="g2-in" id="g2-sbc-1" disabled>
+                <input class="g2-in" id="g2-sbc-2" disabled><input class="g2-in" id="g2-sbc-3" disabled>
+                <input class="g2-in" id="g2-sbc-4" disabled>
+            </div>
+        </div>
+
+        <!-- Buyback -->
+        <div class="g2-block">
+            <div class="g2-name">Buyback % of Revenue</div>
+            <div class="g2-grid" id="g2-buyback-auto">
+                <div></div><div class="g2-sub">Auto</div>
+                <div class="g2-val" id="g2-buyback-a0"></div><div class="g2-val" id="g2-buyback-a1"></div>
+                <div class="g2-val" id="g2-buyback-a2"></div><div class="g2-val" id="g2-buyback-a3"></div>
+                <div class="g2-val" id="g2-buyback-a4"></div>
+            </div>
+            <div class="g2-grid" id="g2-buyback-man">
+                <label class="g2-toggle"><input type="checkbox" id="g2-buyback-on" onchange="toggleG2('buyback')"> Manual</label>
+                <div class="g2-sub">Override</div>
+                <input class="g2-in" id="g2-buyback-0" disabled><input class="g2-in" id="g2-buyback-1" disabled>
+                <input class="g2-in" id="g2-buyback-2" disabled><input class="g2-in" id="g2-buyback-3" disabled>
+                <input class="g2-in" id="g2-buyback-4" disabled>
+            </div>
+        </div>
+    </div>
+
+    <button class="run-btn" id="run-btn">Run Projection →</button>
+    <div class="status-msg" id="proj-status" style="text-align:center;margin-top:10px"></div>
+
+</div>
+
+<script>
+    const API = 'http://127.0.0.1:8000';
+    let histData = null;
+
+    // ── Carson bottom-up UFCF (NOPAT + D&A + CapEx + ΔNWC) ─────────────────
+    function computeCarsonUFCF(hist, proj) {
+        const lastBS  = hist.balance_sheet[0];
+        const lastNWC = (lastBS.accounts_receivable || 0)
+                      + (lastBS.inventory           || 0)
+                      - (lastBS.accounts_payable    || 0);
+        const projNWC = proj.balance_sheet.map(bs =>
+            (bs.accounts_receivable || 0) + (bs.inventory || 0) - (bs.accounts_payable || 0)
+        );
+        return proj.income_statement.map((isYr, i) => {
+            const cfYr   = proj.cash_flow[i];
+            const ebit   = isYr.operating_income || 0;
+            const pretax = isYr.pretax_income    || 0;
+            const tax    = isYr.income_tax        || 0;
+            const tRate  = pretax > 0 ? tax / pretax : 0;
+            const nopat  = ebit * (1 - tRate);
+            const da     = cfYr.depreciation || 0;
+            const capex  = cfYr.capex        || 0;
+            const prior  = i === 0 ? lastNWC : projNWC[i - 1];
+            const dNwc   = prior - projNWC[i];
+            return nopat + da + capex + dNwc;
+        });
+    }
+
+    // ── Populate driver inputs from fetched data ──────────────────────────────
+    function prefillDrivers(data) {
+        const lastIS = data.income_statement[0];
+        const lastCF = data.cash_flow[0];
+        const rev    = lastIS.revenue || 1;
+
+        const cogs  = +(lastIS.cogs  / rev * 100).toFixed(1);
+        const sga   = +(lastIS.sga   / rev * 100).toFixed(1);
+        const capex = +(Math.abs(lastCF.capex || 0) / rev * 100).toFixed(1);
+
+        for (let i = 0; i < 5; i++) {
+            document.getElementById(`d-rev-${i}`).value   = '5.0';
+            document.getElementById(`d-cogs-${i}`).value  = cogs;
+            document.getElementById(`d-sga-${i}`).value   = sga;
+            document.getElementById(`d-capex-${i}`).value = capex;
+        }
+
+        const s   = data.suggested_drivers || {};
+        const pct = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
+        const val = v => v != null ? (v * 100).toFixed(1) : '';
+
+        [['rnd', s.rnd_pct], ['da', s.da_pct], ['tax', s.tax_rate],
+         ['sbc', s.sbc_pct], ['buyback', s.buyback_pct]].forEach(([key, autoVal]) => {
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`g2-${key}-a${i}`).textContent = pct(autoVal);
+                document.getElementById(`g2-${key}-${i}`).value        = val(autoVal);
+            }
+        });
+    }
+
+    // ── Toggle Group 2 auto ↔ manual ─────────────────────────────────────────
+    function toggleG2(key) {
+        const isManual = document.getElementById(`g2-${key}-on`).checked;
+        for (let i = 0; i < 5; i++) {
+            const inp = document.getElementById(`g2-${key}-${i}`);
+            inp.disabled = !isManual;
+        }
+        for (let i = 0; i < 5; i++) {
+            const el = document.getElementById(`g2-${key}-a${i}`);
+            el.classList.toggle('active', !isManual);
+        }
+    }
+
+    function getG2Row(key, autoVal) {
+        const isManual = document.getElementById(`g2-${key}-on`).checked;
+        if (!isManual) return autoVal != null ? [autoVal, autoVal, autoVal, autoVal, autoVal] : null;
+        const vals = Array.from({ length: 5 }, (_, i) => {
+            const v = parseFloat(document.getElementById(`g2-${key}-${i}`).value);
+            return isNaN(v) ? null : v / 100;
+        });
+        return vals.every(v => v === null) ? null : vals.map(v => v ?? 0);
+    }
+
+    // ── Step 1 → Step 2 ──────────────────────────────────────────────────────
+    async function fetchData() {
+        const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+        if (!ticker) { alert('Please enter a ticker symbol.'); return; }
+
+        const statusEl = document.getElementById('fetch-status');
+        const btn      = document.getElementById('fetch-btn');
+        statusEl.textContent = 'Fetching financial data…';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`${API}/api/run-model`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker }),
+            });
+            const data = await resp.json();
+            if (data.error) { statusEl.textContent = 'Error: ' + data.error; return; }
+
+            histData = data;
+            localStorage.setItem('model_hist', JSON.stringify(data));
+
+            document.getElementById('co-name').textContent  = `${data.company_name} (${data.ticker})`;
+            document.getElementById('co-price').textContent = `Current Price: $${data.stock_price}`;
+
+            prefillDrivers(data);
+            ['rnd','da','tax','sbc','buyback'].forEach(k => {
+                document.getElementById(`g2-${k}-on`).checked = false;
+                for (let i = 0; i < 5; i++) {
+                    document.getElementById(`g2-${k}-${i}`).disabled = true;
+                    document.getElementById(`g2-${k}-a${i}`).classList.add('active');
+                }
+            });
+
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+        } catch (err) {
+            statusEl.textContent = 'Network error: ' + err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // ── Run Projection ────────────────────────────────────────────────────────
+    async function runProjection() {
+        if (!histData) return;
+
+        // Validate all Group 1 fields
+        const g1Keys = ['rev','cogs','sga','capex'];
+        for (const k of g1Keys) {
+            for (let i = 0; i < 5; i++) {
+                const v = document.getElementById(`d-${k}-${i}`).value.trim();
+                if (v === '' || isNaN(parseFloat(v))) {
+                    alert(`Please fill in all Group 1 driver fields (missing ${k.toUpperCase()} year ${i + 1}).`);
+                    return;
+                }
+            }
+        }
+
+        function getRow(prefix) {
+            return Array.from({ length: 5 }, (_, i) =>
+                parseFloat(document.getElementById(`d-${prefix}-${i}`).value) / 100
+            );
+        }
+
+        const s = histData.suggested_drivers || {};
+        const drivers = {
+            revenue_growth: getRow('rev'),
+            cogs_pct:       getRow('cogs'),
+            sga_pct:        getRow('sga'),
+            capex_pct:      getRow('capex'),
+            rnd_pct:        getG2Row('rnd',     s.rnd_pct),
+            da_pct:         getG2Row('da',      s.da_pct),
+            tax_rate:       getG2Row('tax',     s.tax_rate),
+            sbc_pct:        getG2Row('sbc',     s.sbc_pct),
+            buyback_pct:    getG2Row('buyback', s.buyback_pct),
+        };
+
+        const statusEl = document.getElementById('proj-status');
+        const btn      = document.getElementById('run-btn');
+        statusEl.textContent = 'Running projection…';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch(`${API}/api/run-projection`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker: histData.ticker, drivers }),
+            });
+            const projData = await resp.json();
+            if (projData.error) { statusEl.textContent = 'Error: ' + projData.error; return; }
+
+            localStorage.setItem('model_proj', JSON.stringify(projData));
+            localStorage.setItem('dcf_input', JSON.stringify({
+                ticker:       histData.ticker,
+                company_name: histData.company_name,
+                stock_price:  histData.stock_price,
+                ufcf:         computeCarsonUFCF(histData, projData),
+                proj_years:   projData.income_statement.map(y => y.date.slice(0, 4)),
+            }));
+
+            window.location.href = 'model.html';
+        } catch (err) {
+            statusEl.textContent = 'Network error: ' + err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    window.addEventListener('load', () => {
+        document.getElementById('fetch-btn').addEventListener('click', fetchData);
+        document.getElementById('ticker').addEventListener('keydown', e => {
+            if (e.key === 'Enter') fetchData();
+        });
+        document.getElementById('run-btn').addEventListener('click', runProjection);
+
+        document.getElementById('back-btn').addEventListener('click', () => {
+            localStorage.removeItem('model_hist');
+            localStorage.removeItem('model_proj');
+            localStorage.removeItem('dcf_input');
+            histData = null;
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('ticker').value = '';
+            document.getElementById('fetch-status').textContent = '';
+        });
+
+        // Restore Step 2 if returning from model.html
+        const cached = localStorage.getItem('model_hist');
+        if (cached) {
+            try {
+                histData = JSON.parse(cached);
+                document.getElementById('co-name').textContent  = `${histData.company_name} (${histData.ticker})`;
+                document.getElementById('co-price').textContent = `Current Price: $${histData.stock_price}`;
+                prefillDrivers(histData);
+                ['rnd','da','tax','sbc','buyback'].forEach(k => {
+                    document.getElementById(`g2-${k}-on`).checked = false;
+                    for (let i = 0; i < 5; i++) {
+                        document.getElementById(`g2-${k}-${i}`).disabled = true;
+                        document.getElementById(`g2-${k}-a${i}`).classList.add('active');
+                    }
+                });
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+            } catch { /* ignore corrupt cache */ }
+        }
+    });
+</script>
+</body>
+</html>

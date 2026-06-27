@@ -311,6 +311,7 @@ def run_dcf_endpoint(request: DCFRequest):
     treas     = data.get("treasury_rates", [])
     mrp_data  = data.get("market_risk_premium", [])
     is_recs   = data.get("income_statement", [])
+    bs_recs_raw = data.get("balance_sheet", [])
 
     # --- FMP inputs ---
     ev_raw          = ev_data[0] if ev_data else {}
@@ -367,6 +368,32 @@ def run_dcf_endpoint(request: DCFRequest):
 
     net_debt = total_debt - cash  # negative = net cash position
 
+    # --- Interest Rate Schedule ---
+    recent_bs_raw  = bs_recs_raw[0] if bs_recs_raw else {}
+    current_ltd_bs = recent_bs_raw.get("shortTermDebt") or 0
+    lt_debt_bs     = recent_bs_raw.get("longTermDebt") or 0
+    lt_leases_bs   = recent_bs_raw.get("capitalLeaseObligations") or 0
+    total_debt_bs  = current_ltd_bs + lt_debt_bs + lt_leases_bs
+
+    interest_history = []
+    for i, is_rec in enumerate(is_recs[:5]):
+        year_str   = (is_rec.get("date") or "")[:4]
+        bs_rec     = bs_recs_raw[i]     if i < len(bs_recs_raw)     else {}
+        bs_prev    = bs_recs_raw[i + 1] if (i + 1) < len(bs_recs_raw) else {}
+        end_debt   = (bs_rec.get("longTermDebt")  or 0) + (bs_rec.get("shortTermDebt") or 0)
+        begin_debt = (bs_prev.get("longTermDebt") or 0) + (bs_prev.get("shortTermDebt") or 0)
+        avg_debt   = (begin_debt + end_debt) / 2 if (begin_debt + end_debt) > 0 else 0
+        int_exp    = abs(is_rec.get("interestExpense") or 0)
+        impl_rate  = int_exp / avg_debt if avg_debt > 0 else None
+        interest_history.append({
+            "year":             year_str,
+            "beginning_debt":   begin_debt,
+            "ending_debt":      end_debt,
+            "avg_debt":         avg_debt,
+            "interest_expense": int_exp,
+            "implied_rate":     impl_rate,
+        })
+
     # Base DCF
     tgr  = request.terminal_growth_rate
     ufcf = request.ufcf
@@ -406,4 +433,15 @@ def run_dcf_endpoint(request: DCFRequest):
         "premium_discount":        premium,
         # Sensitivity
         "sensitivity": sens,
+        # Interest Rate Schedule
+        "interest_rate_schedule": {
+            "current_ltd":            current_ltd_bs,
+            "lt_debt":                lt_debt_bs,
+            "lt_leases":              lt_leases_bs,
+            "total_debt":             total_debt_bs,
+            "cash":                   cash,
+            "net_debt":               net_debt,
+            "history":                interest_history,
+            "pre_tax_cost_debt_used": pre_tax_cost_debt,
+        },
     }

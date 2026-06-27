@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Retail Analyst — DCF Valuation Tool</title>
+    <title>EquityView — DCF Valuation Platform</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: white; }
@@ -17,7 +17,7 @@
             height: 64px; display: flex; align-items: center;
             justify-content: space-between; padding: 0 48px;
         }
-        .nav-logo { color: white; font-size: 17px; font-weight: 800; text-decoration: none; letter-spacing: -0.3px; }
+        .nav-logo { color: white; font-size: 19px; font-weight: 800; text-decoration: none; letter-spacing: -0.3px; }
         .nav-logo span { color: #a78bfa; }
         .nav-links { display: flex; align-items: center; gap: 32px; }
         .nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
@@ -37,11 +37,13 @@
             text-align: center; padding: 130px 20px 100px;
             position: relative; overflow: hidden;
         }
+        /* purple glow */
         .hero::before {
             content: ''; position: absolute; inset: 0;
             background: radial-gradient(ellipse 80% 55% at 50% 45%, rgba(109,40,217,0.18) 0%, transparent 70%);
             pointer-events: none;
         }
+        /* grid texture */
         .hero::after {
             content: ''; position: absolute; inset: 0;
             background-image:
@@ -84,6 +86,7 @@
         .btn-secondary:hover { color: white; }
         .arrow-icon { width: 18px; height: 18px; }
 
+        /* hero metrics */
         .hero-metrics {
             display: flex; align-items: center; gap: 0; margin-top: 72px;
             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
@@ -94,14 +97,13 @@
         .hero-metric .num { font-size: 30px; font-weight: 800; color: white; letter-spacing: -1px; }
         .hero-metric .lbl { font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
 
-        /* ── Sections ────────────────────────────────────────────── */
+        /* ── How It Works ────────────────────────────────────────── */
         .section { padding: 100px 20px; }
         .section-inner { max-width: 1100px; margin: 0 auto; }
         .eyebrow { font-size: 12px; font-weight: 700; color: #7c3aed; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }
         .section-h2 { font-size: 44px; font-weight: 800; color: #0f172a; line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px; }
         .section-lead { font-size: 17px; color: #64748b; line-height: 1.75; max-width: 500px; margin-bottom: 56px; }
 
-        /* ── How It Works ────────────────────────────────────────── */
         .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
         .step {
             background: white; border: 1px solid #e5e7eb; border-radius: 14px;
@@ -163,7 +165,7 @@
         .li-btn:hover { background: #0958a8; }
         .li-btn svg { width: 14px; height: 14px; }
 
-        /* ── CTA Band ────────────────────────────────────────────── */
+        /* ── CTA Banner ──────────────────────────────────────────── */
         .cta-band {
             background: linear-gradient(135deg, #1e3a5f 0%, #4c1d95 100%);
             padding: 80px 20px; text-align: center;
@@ -185,12 +187,12 @@
 
 <!-- Nav -->
 <nav>
-    <a class="nav-logo" href="index.html">The Retail <span>Analyst</span></a>
+    <a class="nav-logo" href="home.html">Equity<span>View</span></a>
     <div class="nav-links">
         <a href="#how-it-works">How It Works</a>
         <a href="#features">Features</a>
         <a href="#about">About Us</a>
-        <a class="nav-cta" href="app.html">Launch App →</a>
+        <a class="nav-cta" href="index.html">Launch App →</a>
     </div>
 </nav>
 
@@ -201,11 +203,11 @@
             <span class="hero-badge-dot"></span>
             Bottom-Up DCF Analysis
         </div>
-        <h1>Stock Valuation From<br><em>First Principles</em></h1>
-        <p class="hero-sub">Pull live financials, build your own 3-statement model, and run a full DCF — every assumption is yours, every formula is visible.</p>
+        <h1>Institutional-Grade<br><em>Stock Valuation</em></h1>
+        <p class="hero-sub">Build 3-statement financial models and run discounted cash flow analysis on any public company — powered by live market data.</p>
         <div class="cta-row">
-            <a class="btn-primary" href="app.html">
-                Start Analyzing
+            <a class="btn-primary" href="index.html">
+                Start Your Analysis
                 <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
@@ -240,7 +242,7 @@
     <div class="section-inner">
         <div class="eyebrow">How It Works</div>
         <h2 class="section-h2">From ticker to valuation<br>in three steps</h2>
-        <p class="section-lead">No black box. Every assumption is yours to set, every formula is visible.</p>
+        <p class="section-lead">The same process used by Wall Street analysts — made accessible and transparent.</p>
         <div class="steps">
             <div class="step">
                 <div class="step-num">01</div>
@@ -250,7 +252,7 @@
                     <path d="M20 14l4 4-4 4"/>
                 </svg>
                 <h3>Enter a Ticker</h3>
-                <p>Type any US-listed ticker and we pull 5 years of historical income statements, balance sheets, and cash flow statements in real time via the FMP API.</p>
+                <p>Type any US-listed stock ticker. We pull 5 years of historical income statements, balance sheets, and cash flow statements in real time via the FMP API.</p>
             </div>
             <div class="step">
                 <div class="step-num">02</div>
@@ -259,7 +261,7 @@
                     <path d="M4 16h36M12 16v20M20 16v20M28 16v20"/>
                 </svg>
                 <h3>Build Your 3-Statement Model</h3>
-                <p>Set revenue growth, margins, and capex assumptions. The engine projects IS, CF, and BS for 5 years — with working capital, D&amp;A, PPE, and ratio schedules below.</p>
+                <p>Set revenue growth, margins, and capex assumptions. The engine projects IS, CF, and BS for 5 years with full schedule support — working capital, D&amp;A, PPE, and more.</p>
             </div>
             <div class="step">
                 <div class="step-num">03</div>
@@ -269,7 +271,7 @@
                     <path d="M6 38h32"/>
                 </svg>
                 <h3>Run the DCF</h3>
-                <p>CAPM-based WACC auto-computed from live beta and treasury data. Outputs intrinsic value with a 25-scenario sensitivity matrix across WACC and terminal growth rate.</p>
+                <p>CAPM-based WACC auto-computed from live beta and treasury data. Get intrinsic value with a 25-scenario sensitivity matrix across WACC and terminal growth rate.</p>
             </div>
         </div>
     </div>
@@ -279,8 +281,8 @@
 <section class="section feat-bg" id="features">
     <div class="section-inner">
         <div class="eyebrow">Features</div>
-        <h2 class="section-h2">Built from scratch</h2>
-        <p class="section-lead" style="margin-bottom:48px">Every component is written from the ground up — no shortcuts, no hidden assumptions.</p>
+        <h2 class="section-h2">Built the right way</h2>
+        <p class="section-lead" style="margin-bottom:48px">Every component follows the methodology taught in top finance programs.</p>
         <div class="feat-grid">
             <div class="feat">
                 <div class="feat-icon">
@@ -290,7 +292,7 @@
                 </div>
                 <div>
                     <h4>Live FMP Data</h4>
-                    <p>Financials pulled directly from Financial Modeling Prep — real data, updated daily, no estimates.</p>
+                    <p>Financials sourced from Financial Modeling Prep's API — the same data behind professional valuation tools.</p>
                 </div>
             </div>
             <div class="feat">
@@ -314,7 +316,7 @@
                 </div>
                 <div>
                     <h4>CAPM WACC</h4>
-                    <p>Beta, 10Y treasury rate, and market risk premium fetched automatically. Override any input to run your own scenario.</p>
+                    <p>Beta, 10Y treasury rate, and market risk premium auto-fetched. Override any input for custom scenarios.</p>
                 </div>
             </div>
             <div class="feat">
@@ -325,7 +327,7 @@
                 </div>
                 <div>
                     <h4>25-Point Sensitivity Matrix</h4>
-                    <p>5×5 WACC vs. terminal growth rate table across 4 outputs: enterprise value, equity value, per-share price, and premium/discount.</p>
+                    <p>5×5 WACC vs. TGR table across 4 metrics: enterprise value, equity value, per-share price, and premium/discount.</p>
                 </div>
             </div>
             <div class="feat">
@@ -337,7 +339,7 @@
                 </div>
                 <div>
                     <h4>Full DCF Schedules</h4>
-                    <p>WACC schedule, discounted CF schedule, and interest rate schedule — each step shown explicitly so you can follow the math.</p>
+                    <p>WACC schedule, discounted CF schedule, and interest rate schedule — matching institutional output format.</p>
                 </div>
             </div>
             <div class="feat">
@@ -351,7 +353,7 @@
                 </div>
                 <div>
                     <h4>Supporting Schedules</h4>
-                    <p>Working capital, D&amp;A, PPE, UFCF build-up, and key ratios below the 3-statement model.</p>
+                    <p>Working capital, D&amp;A, PPE, UFCF build-up, and key ratios — all calculated and displayed below the model.</p>
                 </div>
             </div>
         </div>
@@ -362,12 +364,13 @@
 <section class="section" id="about">
     <div class="section-inner">
         <div class="eyebrow">About Us</div>
-        <h2 class="section-h2">Who built this</h2>
-        <p class="section-lead">We built The Retail Analyst because we wanted to understand stock valuation properly — not just plug numbers into a black box.</p>
+        <h2 class="section-h2">Built by finance students,<br>for finance students</h2>
+        <p class="section-lead">We built EquityView because we wanted a tool that taught the methodology — not just handed us a number.</p>
         <div class="about-cards">
+            <!-- Zoom's card -->
             <div class="about-card">
                 <div class="headshot">
-                    <!-- Swap with: <img src="assets/zoom.jpg" alt="Zoom Shields"> -->
+                    <!-- To add headshot: <img src="assets/zoom.jpg" alt="Zoom Shields"> -->
                     ZS
                 </div>
                 <div class="about-name">Zoom Shields</div>
@@ -381,9 +384,10 @@
                     LinkedIn
                 </a>
             </div>
+            <!-- Carson's card -->
             <div class="about-card">
                 <div class="headshot">
-                    <!-- Swap with: <img src="assets/carson.jpg" alt="Carson Adams"> -->
+                    <!-- To add headshot: <img src="assets/carson.jpg" alt="Carson Adams"> -->
                     CA
                 </div>
                 <div class="about-name">Carson Adams</div>
@@ -404,8 +408,8 @@
 <!-- Bottom CTA -->
 <section class="cta-band">
     <h2>Ready to value a stock?</h2>
-    <p>Enter a ticker and run a full DCF in under a minute.</p>
-    <a class="btn-primary" href="app.html">
+    <p>Enter a ticker and get an intrinsic value estimate in under a minute.</p>
+    <a class="btn-primary" href="index.html">
         Launch App
         <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -416,8 +420,8 @@
 <!-- Footer -->
 <footer>
     <p>
-        © 2026 The Retail Analyst
-        &nbsp;·&nbsp;<a href="app.html">Launch App</a>
+        © 2026 EquityView
+        &nbsp;·&nbsp;<a href="index.html">Launch App</a>
         &nbsp;·&nbsp;<a href="#how-it-works">How It Works</a>
         &nbsp;·&nbsp;<a href="#about">About Us</a>
     </p>

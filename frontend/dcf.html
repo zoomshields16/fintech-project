@@ -7,212 +7,157 @@
     <style>
         body {
             font-family: -apple-system, sans-serif;
-            max-width: 1100px;
-            margin: 60px auto;
-            padding: 0 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
             background: #f5f5f5;
         }
         h1 { color: #1a1a1a; margin-bottom: 4px; }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #2563eb;
-            font-size: 14px;
-            text-decoration: none;
+        .site-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 28px;
         }
-        .back-link:hover { text-decoration: underline; }
+        .site-topbar-logo { color: #0f172a; font-size: 16px; font-weight: 800; text-decoration: none; }
+        .site-topbar-logo span { color: #7c3aed; }
+        .site-topbar-links { display: flex; gap: 20px; align-items: center; }
+        .site-topbar-links a { color: #64748b; text-decoration: none; font-size: 13px; font-weight: 500; }
+        .site-topbar-links a:hover { color: #0f172a; }
 
         .company-header {
-            background: white;
-            border-radius: 6px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: white; border-radius: 6px; padding: 16px 20px;
+            margin-bottom: 16px; display: flex;
+            justify-content: space-between; align-items: center;
         }
         .company-header .name { font-size: 18px; font-weight: 600; }
         .company-header .price { font-size: 15px; color: #555; }
 
-        .card {
-            background: white;
-            border-radius: 6px;
-            padding: 20px 24px;
-            margin-bottom: 16px;
-        }
+        .card { background: white; border-radius: 6px; padding: 20px 24px; margin-bottom: 16px; }
         .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #1e3a5f;
-            margin: 0 0 14px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+            font-size: 14px; font-weight: 700; color: #1e3a5f;
+            margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.04em;
         }
 
-        /* WACC inputs grid */
-        .wacc-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px 20px;
-        }
-        .wacc-field label {
-            display: block;
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 4px;
-        }
+        /* --- WACC inputs --- */
+        .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; }
+        .wacc-field label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
         .wacc-field input {
-            width: 100%;
-            padding: 7px 10px;
-            font-size: 14px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            width: 100%; padding: 7px 10px; font-size: 14px;
+            border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
         }
         .wacc-field input:focus { outline: none; border-color: #7c3aed; }
-        .wacc-field .computed {
-            font-size: 13px;
-            padding: 7px 10px;
-            background: #f4f7fa;
-            border-radius: 4px;
-            color: #1e3a5f;
-            font-weight: 600;
-        }
-
         .run-dcf-btn {
-            padding: 10px 24px;
-            font-size: 14px;
-            background: #7c3aed;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 14px;
+            padding: 10px 24px; font-size: 14px; background: #7c3aed;
+            color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 14px;
         }
         .run-dcf-btn:hover { background: #6d28d9; }
 
-        /* Results layout */
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        /* Output summary stat cards */
-        .stat-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 6px;
-            padding: 14px 16px;
-            text-align: center;
-        }
+        /* --- stat cards --- */
+        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: white; border-radius: 6px; padding: 14px 16px; text-align: center; }
         .stat-card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
         .stat-card .value { font-size: 22px; font-weight: 700; color: #1e3a5f; margin-top: 4px; }
         .stat-card .value.undervalued { color: #16a34a; }
         .stat-card .value.overvalued  { color: #dc2626; }
 
-        /* DCF schedule table */
+        /* --- shared table base --- */
         .table-wrap { overflow-x: auto; }
         table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 6px;
-            overflow: hidden;
-            font-size: 13px;
+            width: 100%; border-collapse: collapse;
+            background: white; font-size: 13px;
         }
         th {
-            background: #1e3a5f;
-            color: white;
-            padding: 8px 12px;
-            text-align: right;
-            font-weight: 500;
+            background: #1e3a5f; color: white; padding: 8px 12px;
+            text-align: right; font-weight: 500;
         }
-        th:first-child { text-align: left; min-width: 200px; }
-        td {
-            padding: 7px 12px;
-            text-align: right;
-        }
+        th:first-child { text-align: left; }
+        td { padding: 6px 12px; text-align: right; }
         td:first-child { text-align: left; color: #333; }
         th + th { border-left: 1px solid rgba(255,255,255,0.15); }
         td + td { border-left: 1px solid #f0f0f0; }
-        tr.subtotal td { font-weight: 600; border-top: 1px solid #ddd; }
-        tr.tv-row td { background: #f0f6ff; }
+        tr + tr td { border-top: 1px solid #f5f5f5; }
+        tr.subtotal td { font-weight: 600; border-top: 1px solid #ddd !important; }
+        tr.tv-row td   { background: #f0f6ff; }
         tr.total-row td { font-weight: 700; background: #e8eef5; color: #1e3a5f; }
+        tr.wacc-final-row td { background: #1e3a5f; color: white; font-weight: 700; }
 
-        /* Sensitivity tables — 2×2 grid matching Carson's layout */
-        .sens-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px 28px;
+        /* --- WACC schedule 3-panel --- */
+        .schedule-three-col {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 18px;
         }
+        .schedule-panel-title {
+            font-size: 11px; font-weight: 700; color: #1e3a5f;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            padding-bottom: 6px; border-bottom: 2px solid #1e3a5f; margin-bottom: 10px;
+        }
+        .panel-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .panel-table td { padding: 5px 0; border: none; color: #444; }
+        .panel-table td:last-child { text-align: right; font-weight: 600; color: #1e3a5f; }
+        .panel-table tr:last-child td {
+            font-size: 14px; font-weight: 700; color: #1e3a5f;
+            border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 4px;
+        }
+        .sched-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+
+        /* --- DCF schedule summary --- */
+        .dcf-summary-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;
+        }
+
+        /* --- Interest Rate schedule --- */
+        .ir-two-col { display: grid; grid-template-columns: 1fr 1.7fr; gap: 24px; }
+        .ir-note { margin-top: 10px; font-size: 12px; color: #555; }
+
+        /* --- Sensitivity tables --- */
+        .sens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px; }
         .sens-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1e3a5f;
-            margin: 0 0 8px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
+            font-size: 13px; font-weight: 700; color: #1e3a5f;
+            margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.03em;
         }
-        .sens-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-        }
+        .sens-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .sens-table th {
-            background: #1e3a5f;
-            color: white;
-            padding: 5px 7px;
-            text-align: right;
-            font-weight: 500;
+            background: #1e3a5f; color: white; padding: 5px 7px;
+            text-align: right; font-weight: 500;
         }
         .sens-table th:first-child { text-align: center; min-width: 56px; }
         .sens-table td {
-            padding: 4px 7px;
-            border: 1px solid #e5e7eb;
-            text-align: right;
-            white-space: nowrap;
+            padding: 4px 7px; border: 1px solid #e5e7eb;
+            text-align: right; white-space: nowrap;
         }
-        .sens-table td.row-label {
-            background: #1e3a5f;
-            color: white;
-            font-weight: 600;
-            text-align: right;
-        }
+        .sens-table td.row-label { background: #1e3a5f; color: white; font-weight: 600; text-align: right; }
         .sens-table .highlight { background: #d1fae5 !important; color: #065f46; font-weight: 700; }
         .sens-table .base-col  { background: #f0f6ff; }
 
-        .error-box {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 16px;
-            border-radius: 6px;
-        }
-        .loading { color: #555; padding: 20px 0; }
+        .error-box { background: #fee2e2; color: #dc2626; padding: 16px; border-radius: 6px; }
+        .loading { color: #555; padding: 10px 0; }
         #dcf-results { display: none; }
         .neg { color: #dc2626; }
+        .pos { color: #16a34a; }
     </style>
 </head>
 <body>
-<a class="back-link" href="index.html">← Back to Model</a>
+
+<nav class="site-topbar">
+    <a class="site-topbar-logo" href="index.html">The Retail <span>Analyst</span></a>
+    <div class="site-topbar-links">
+        <a href="model.html">← Back to Model</a>
+        <a href="index.html#about">About Us</a>
+        <a href="index.html">Home</a>
+    </div>
+</nav>
+
 <h1>DCF Valuation</h1>
 
 <div id="no-data" style="display:none" class="error-box">
     No projection data found. Please run a projection on the
-    <a href="index.html" style="color:#1d4ed8">Model page</a> first.
+    <a href="app.html" style="color:#1d4ed8">input page</a> first.
 </div>
 
 <div id="main-content" style="display:none">
     <div class="company-header" id="company-header"></div>
 
-    <!-- WACC Inputs -->
+    <!-- DCF Parameters -->
     <div class="card">
-        <p class="card-title">WACC Schedule</p>
+        <p class="card-title">DCF Parameters</p>
         <div class="wacc-grid">
             <div class="wacc-field">
                 <label>Risk-Free Rate (10Y Treasury)</label>
@@ -247,25 +192,11 @@
     </div>
 
     <div id="dcf-results">
-        <!-- Stat cards row -->
+        <!-- Summary stat cards -->
         <div class="stat-cards" id="stat-cards"></div>
 
-        <!-- DCF schedule + EV bridge side by side -->
-        <div class="results-grid">
-            <div>
-                <p class="card-title" style="margin-bottom:8px">DCF Cash Flow Schedule</p>
-                <div class="table-wrap" id="schedule-table"></div>
-            </div>
-            <div>
-                <p class="card-title" style="margin-bottom:8px">WACC Components</p>
-                <div id="wacc-breakdown"></div>
-                <p class="card-title" style="margin-top:16px;margin-bottom:8px">Enterprise Value Bridge</p>
-                <div id="ev-bridge"></div>
-            </div>
-        </div>
-
-        <!-- Sensitivity tables — 2×2 -->
-        <div class="card" style="margin-top:0">
+        <!-- Sensitivity Analysis -->
+        <div class="card">
             <p class="card-title">Sensitivity Analysis</p>
             <div class="sens-grid">
                 <div>
@@ -285,6 +216,24 @@
                     <div class="table-wrap" id="sens-pr"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Schedule 1: WACC Schedule -->
+        <div class="card">
+            <p class="card-title">WACC Schedule</p>
+            <div id="wacc-schedule"></div>
+        </div>
+
+        <!-- Schedule 2: Discounted Cash Flows Schedule -->
+        <div class="card">
+            <p class="card-title">Discounted Cash Flows Schedule</p>
+            <div id="dcf-schedule"></div>
+        </div>
+
+        <!-- Schedule 3: Interest Rate Schedule -->
+        <div class="card">
+            <p class="card-title">Interest Rate Schedule</p>
+            <div id="ir-schedule"></div>
         </div>
     </div>
 </div>
@@ -311,97 +260,187 @@
     }
     function fmtPs(v) {
         if (v == null) return '—';
-        return (v < 0 ? `<span class="neg">(${Math.abs(v).toFixed(2)})</span>` : '$' + v.toFixed(2));
+        return v < 0 ? `<span class="neg">($${Math.abs(v).toFixed(2)})</span>` : '$' + v.toFixed(2);
     }
 
-    function buildScheduleTable(data) {
-        const years = data.proj_years;
-        const ufcf  = data.ufcf;
-        const r     = lastResult;
-        const wacc  = r.wacc_inputs.wacc;
-        const tgr   = r.terminal_growth_rate;
-
-        const headers = years.map(y => `<th>${y}E</th>`).join('');
-
-        // Rows
-        const ufcfCells = ufcf.map(v => `<td>${fmtM(v)}</td>`).join('');
-
-        // Terminal value — only in year 5
-        const tvCells = years.map((_, i) =>
-            i === years.length - 1 ? `<td>${fmtM(r.terminal_value)}</td>` : `<td>—</td>`
-        ).join('');
-
-        // Total CF = UFCF + TV (last year)
-        const totalCells = years.map((v, i) => {
-            const total = i === years.length - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
-            return `<td>${fmtM(total)}</td>`;
-        }).join('');
-
-        // Discount factor
-        const dfCells = years.map((_, i) =>
-            `<td>${(1 / Math.pow(1 + wacc, i + 1)).toFixed(4)}</td>`
-        ).join('');
-
-        // PV per year: for years 1-4 just discount UFCF; for year 5 discount total CF
-        const pvCells = years.map((_, i) => {
-            const cf = i === years.length - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
-            return `<td>${fmtM(cf / Math.pow(1 + wacc, i + 1))}</td>`;
-        }).join('');
-
-        return `
-        <table>
-            <thead><tr><th>($M)</th>${headers}</tr></thead>
-            <tbody>
-                <tr><td>Unlevered Free Cash Flow</td>${ufcfCells}</tr>
-                <tr class="tv-row"><td>Terminal Value</td>${tvCells}</tr>
-                <tr class="total-row"><td>Total Cash Flow</td>${totalCells}</tr>
-                <tr><td>Discount Factor</td>${dfCells}</tr>
-                <tr class="subtotal"><td>PV of Cash Flow</td>${pvCells}</tr>
-            </tbody>
-        </table>`;
-    }
-
-    function buildWaccBreakdown(r) {
-        const wi = r.wacc_inputs;
-        const rows = [
-            ['Risk-Free Rate',        pct(wi.risk_free_rate)],
-            ['Levered Beta',          wi.beta != null ? wi.beta.toFixed(3) : '—'],
-            ['Market Risk Premium',   pct(wi.market_risk_premium)],
-            ['Equity Risk Premium',   pct(wi.equity_risk_premium)],
-            ['Cost of Equity',        pct(wi.cost_of_equity)],
-            ['Pre-Tax Cost of Debt',  pct(wi.pre_tax_cost_debt)],
-            ['Tax Rate',              pct(wi.tax_rate)],
-            ['After-Tax Cost of Debt',pct(wi.after_tax_cost_debt)],
-            ['Weight Equity',         pct(wi.weight_equity)],
-            ['Weight Debt',           pct(wi.weight_debt)],
-            ['<strong>WACC</strong>', `<strong>${pct(wi.wacc)}</strong>`],
-        ];
-        return `<table>
-            <thead><tr><th style="text-align:left">Input</th><th>Value</th></tr></thead>
-            <tbody>${rows.map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('')}</tbody>
-        </table>`;
-    }
-
-    function buildEvBridge(r) {
-        const rows = [
-            ['Enterprise Value',   fmtB(r.enterprise_value)],
-            ['(−) Total Debt',     fmtM(r.total_debt)],
-            ['(+) Cash',           fmtM(r.cash)],
-            ['= Equity Value',     fmtB(r.equity_value)],
-            ['÷ Shares Outstanding', r.shares_outstanding ? (r.shares_outstanding / 1e6).toFixed(0) + 'M' : '—'],
-            ['<strong>= Equity Per Share</strong>', `<strong>${fmtPs(r.equity_value_per_share)}</strong>`],
-        ];
-        return `<table>
-            <thead><tr><th style="text-align:left">Item</th><th>Value</th></tr></thead>
-            <tbody>${rows.map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('')}</tbody>
-        </table>`;
-    }
-
-    // Number formatters matching Carson's Excel output
+    // Sensitivity formatters matching Carson's integer style
     function fmtEvCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
     function fmtPsCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
     function fmtPrCell(v)  { return v != null ? (v * 100).toFixed(2) + '%' : '—'; }
 
+    // ─── Schedule 1: WACC Schedule ───────────────────────────────────────────
+    function buildWaccSchedule(r) {
+        const wi = r.wacc_inputs;
+        const totalCap = (wi.total_debt || 0) + (wi.market_cap || 0);
+        return `
+        <div class="schedule-three-col">
+            <div>
+                <div class="schedule-panel-title">Risk Premium for Equity</div>
+                <table class="panel-table">
+                    <tr><td>Market Risk Premium</td><td>${pct(wi.market_risk_premium)}</td></tr>
+                    <tr><td>Levered Beta</td><td>${wi.beta != null ? wi.beta.toFixed(3) : '—'}</td></tr>
+                    <tr><td>Equity Risk Premium</td><td>${pct(wi.equity_risk_premium)}</td></tr>
+                </table>
+            </div>
+            <div>
+                <div class="schedule-panel-title">Cost of Debt</div>
+                <table class="panel-table">
+                    <tr><td>Pre-Tax Cost of Debt</td><td>${pct(wi.pre_tax_cost_debt)}</td></tr>
+                    <tr><td>Tax Rate</td><td>${pct(wi.tax_rate)}</td></tr>
+                    <tr><td>After-Tax Cost of Debt</td><td>${pct(wi.after_tax_cost_debt)}</td></tr>
+                </table>
+            </div>
+            <div>
+                <div class="schedule-panel-title">Cost of Equity (CAPM)</div>
+                <table class="panel-table">
+                    <tr><td>Risk-Free Rate</td><td>${pct(wi.risk_free_rate)}</td></tr>
+                    <tr><td>Equity Risk Premium</td><td>${pct(wi.equity_risk_premium)}</td></tr>
+                    <tr><td>Cost of Equity</td><td>${pct(wi.cost_of_equity)}</td></tr>
+                </table>
+            </div>
+        </div>
+        <hr class="sched-divider">
+        <table>
+            <thead>
+                <tr>
+                    <th>Capital Structure</th>
+                    <th>Amount</th>
+                    <th>Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Total Debt</td><td>${fmtM(wi.total_debt)}</td><td>${pct(wi.weight_debt)}</td></tr>
+                <tr><td>Market Capitalization</td><td>${fmtM(wi.market_cap)}</td><td>${pct(wi.weight_equity)}</td></tr>
+                <tr class="subtotal"><td>Total Capital</td><td>${fmtM(totalCap)}</td><td>100.00%</td></tr>
+                <tr class="wacc-final-row"><td>WACC</td><td></td><td>${pct(wi.wacc)}</td></tr>
+            </tbody>
+        </table>`;
+    }
+
+    // ─── Schedule 2: Discounted Cash Flows Schedule ──────────────────────────
+    function buildDcfSchedule(data, r) {
+        const years = data.proj_years;
+        const ufcf  = data.ufcf;
+        const wacc  = r.wacc_inputs.wacc;
+        const n     = years.length;
+
+        const headers    = years.map(y => `<th>${y}E</th>`).join('');
+        const ufcfCells  = ufcf.map(v => `<td>${fmtM(v)}</td>`).join('');
+        const tvCells    = years.map((_, i) =>
+            i === n - 1 ? `<td>${fmtM(r.terminal_value)}</td>` : `<td>—</td>`
+        ).join('');
+        const totalCells = years.map((_, i) => {
+            const total = i === n - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
+            return `<td>${fmtM(total)}</td>`;
+        }).join('');
+        const dfCells = years.map((_, i) =>
+            `<td>${(1 / Math.pow(1 + wacc, i + 1)).toFixed(4)}</td>`
+        ).join('');
+        const pvCells = years.map((_, i) => {
+            const cf = i === n - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
+            return `<td>${fmtM(cf / Math.pow(1 + wacc, i + 1))}</td>`;
+        }).join('');
+
+        const totalEv   = r.enterprise_value;
+        const pvDiscPct = totalEv ? r.pv_discrete / totalEv : 0;
+        const pvTermPct = totalEv ? r.pv_terminal / totalEv : 0;
+
+        const isUnder  = r.premium_discount != null && r.premium_discount > 0;
+        const prClass  = isUnder ? 'pos' : 'neg';
+        const prSign   = isUnder ? '+' : '';
+        const prValue  = r.premium_discount != null
+            ? `<span class="${prClass}">${prSign}${(r.premium_discount * 100).toFixed(1)}%</span>`
+            : '—';
+
+        return `
+        <div class="table-wrap" style="margin-bottom:20px">
+            <table>
+                <thead><tr><th>($M)</th>${headers}</tr></thead>
+                <tbody>
+                    <tr><td>Unlevered Free Cash Flow</td>${ufcfCells}</tr>
+                    <tr class="tv-row"><td>+ Terminal Value</td>${tvCells}</tr>
+                    <tr class="total-row"><td>Total Cash Flow</td>${totalCells}</tr>
+                    <tr><td>Discount Factor (at ${pct(wacc, 3)})</td>${dfCells}</tr>
+                    <tr class="subtotal"><td>PV of Cash Flow</td>${pvCells}</tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="dcf-summary-row">
+            <div>
+                <table>
+                    <thead><tr><th>PV Summary</th><th>Amount</th><th>Weight</th></tr></thead>
+                    <tbody>
+                        <tr><td>PV of Discrete Cash Flows</td><td>${fmtB(r.pv_discrete)}</td><td>${pct(pvDiscPct)}</td></tr>
+                        <tr><td>PV of Terminal Value</td><td>${fmtB(r.pv_terminal)}</td><td>${pct(pvTermPct)}</td></tr>
+                        <tr class="subtotal"><td><strong>Enterprise Value</strong></td><td><strong>${fmtB(totalEv)}</strong></td><td><strong>100%</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <table>
+                    <thead><tr><th>Equity Bridge</th><th>Value</th></tr></thead>
+                    <tbody>
+                        <tr><td>Enterprise Value</td><td>${fmtB(r.enterprise_value)}</td></tr>
+                        <tr><td>(−) Net Debt</td><td>${fmtM(r.net_debt)}</td></tr>
+                        <tr class="subtotal"><td>Equity Value</td><td>${fmtB(r.equity_value)}</td></tr>
+                        <tr><td>÷ Shares Outstanding</td><td>${r.shares_outstanding ? (r.shares_outstanding / 1e6).toFixed(0) + 'M' : '—'}</td></tr>
+                        <tr class="subtotal"><td><strong>Equity Value Per Share</strong></td><td><strong>${fmtPs(r.equity_value_per_share)}</strong></td></tr>
+                        <tr><td>Current Stock Price</td><td>${r.stock_price ? '$' + r.stock_price : '—'}</td></tr>
+                        <tr><td><strong>Premium / (Discount)</strong></td><td><strong>${prValue}</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+
+    // ─── Schedule 3: Interest Rate Schedule ──────────────────────────────────
+    function buildIrSchedule(r) {
+        const irs = r.interest_rate_schedule;
+        if (!irs) return '<p class="loading">Interest rate data not available.</p>';
+
+        const debtSection = `
+            <table>
+                <thead><tr><th>Interest-Bearing Debt</th><th>Amount</th></tr></thead>
+                <tbody>
+                    <tr><td>Current Portion of Long-Term Debt</td><td>${fmtM(irs.current_ltd)}</td></tr>
+                    <tr><td>Long-Term Debt (Loans)</td><td>${fmtM(irs.lt_debt)}</td></tr>
+                    <tr><td>LT Capital Lease Obligations</td><td>${fmtM(irs.lt_leases || 0)}</td></tr>
+                    <tr class="subtotal"><td>Total Interest-Bearing Debt</td><td>${fmtM(irs.total_debt)}</td></tr>
+                    <tr><td>(−) Cash &amp; Cash Equivalents</td><td>${fmtM(-irs.cash)}</td></tr>
+                    <tr class="subtotal"><td><strong>Net Debt</strong></td><td><strong>${fmtM(irs.net_debt)}</strong></td></tr>
+                </tbody>
+            </table>
+            <p class="ir-note">Pre-Tax Cost of Debt Used: <strong>${pct(irs.pre_tax_cost_debt_used)}</strong></p>`;
+
+        const histRows = [...(irs.history || [])].reverse().map(h => `
+            <tr>
+                <td>${h.year}</td>
+                <td>${fmtM(h.beginning_debt)}</td>
+                <td>${fmtM(h.ending_debt)}</td>
+                <td>${fmtM(h.avg_debt)}</td>
+                <td>${fmtM(h.interest_expense)}</td>
+                <td>${h.implied_rate != null ? pct(h.implied_rate) : '—'}</td>
+            </tr>`).join('');
+
+        const histSection = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Beg. Debt</th>
+                        <th>End. Debt</th>
+                        <th>Avg. Debt</th>
+                        <th>Interest Exp.</th>
+                        <th>Implied Rate</th>
+                    </tr>
+                </thead>
+                <tbody>${histRows || '<tr><td colspan="6">No historical data</td></tr>'}</tbody>
+            </table>`;
+
+        return `<div class="ir-two-col">${debtSection}${histSection}</div>`;
+    }
+
+    // ─── Sensitivity Table Builder ────────────────────────────────────────────
     function buildSensTable(matrix, wacc_steps, tgr_steps, fmt_fn, base_wacc, base_tgr) {
         const tgrHeaders = tgr_steps.map(g => {
             const isBaseCol = Math.abs(g - base_tgr) < 0.0001;
@@ -427,12 +466,12 @@
         </table>`;
     }
 
+    // ─── Render all results ───────────────────────────────────────────────────
     function renderResults(r) {
         lastResult = r;
         const premium = r.premium_discount;
         const isUnder = premium != null && premium > 0;
 
-        // Stat cards
         document.getElementById('stat-cards').innerHTML = `
             <div class="stat-card">
                 <div class="label">WACC</div>
@@ -451,7 +490,7 @@
                 <div class="value">$${r.stock_price}</div>
             </div>
             <div class="stat-card">
-                <div class="label">PV of Discrete</div>
+                <div class="label">PV of Discrete CFs</div>
                 <div class="value">${fmtB(r.pv_discrete)}</div>
             </div>
             <div class="stat-card">
@@ -462,33 +501,26 @@
             </div>
         `;
 
-        // Schedule
-        document.getElementById('schedule-table').innerHTML = buildScheduleTable(inputData);
+        document.getElementById('wacc-schedule').innerHTML = buildWaccSchedule(r);
+        document.getElementById('dcf-schedule').innerHTML  = buildDcfSchedule(inputData, r);
+        document.getElementById('ir-schedule').innerHTML   = buildIrSchedule(r);
 
-        // WACC + EV bridge
-        document.getElementById('wacc-breakdown').innerHTML = buildWaccBreakdown(r);
-        document.getElementById('ev-bridge').innerHTML = buildEvBridge(r);
-
-        // Sensitivity tables — 4 tables in 2×2 grid
         const sens = r.sensitivity;
         const bw   = r.wacc_inputs.wacc;
         const bg   = r.terminal_growth_rate;
         document.getElementById('sens-ev').innerHTML = buildSensTable(
-            sens.enterprise_value_table, sens.wacc_steps, sens.tgr_steps, fmtEvCell, bw, bg
-        );
+            sens.enterprise_value_table,  sens.wacc_steps, sens.tgr_steps, fmtEvCell, bw, bg);
         document.getElementById('sens-ps').innerHTML = buildSensTable(
-            sens.equity_per_share_table, sens.wacc_steps, sens.tgr_steps, fmtPsCell, bw, bg
-        );
+            sens.equity_per_share_table,  sens.wacc_steps, sens.tgr_steps, fmtPsCell, bw, bg);
         document.getElementById('sens-eq').innerHTML = buildSensTable(
-            sens.equity_value_table, sens.wacc_steps, sens.tgr_steps, fmtEvCell, bw, bg
-        );
+            sens.equity_value_table,      sens.wacc_steps, sens.tgr_steps, fmtEvCell, bw, bg);
         document.getElementById('sens-pr').innerHTML = buildSensTable(
-            sens.premium_discount_table, sens.wacc_steps, sens.tgr_steps, fmtPrCell, bw, bg
-        );
+            sens.premium_discount_table,  sens.wacc_steps, sens.tgr_steps, fmtPrCell, bw, bg);
 
         document.getElementById('dcf-results').style.display = 'block';
     }
 
+    // ─── Run DCF ──────────────────────────────────────────────────────────────
     async function runDcf() {
         if (!inputData) return;
 
@@ -506,15 +538,15 @@
         const wacc = getRaw('in-wacc');
 
         const body = {
-            ticker:                    inputData.ticker,
-            ufcf:                      inputData.ufcf,
-            terminal_growth_rate:      tgr != null ? tgr / 100 : 0.025,
-            risk_free_rate_override:   rf   != null ? rf / 100   : null,
-            beta_override:             beta,
-            market_risk_premium_override: mrp != null ? mrp / 100 : null,
-            pre_tax_cost_debt_override: cod != null ? cod / 100 : null,
-            tax_rate_override:         tax != null ? tax / 100 : null,
-            wacc_override:             wacc != null ? wacc / 100 : null,
+            ticker:                       inputData.ticker,
+            ufcf:                         inputData.ufcf,
+            terminal_growth_rate:         tgr  != null ? tgr  / 100 : 0.025,
+            risk_free_rate_override:      rf   != null ? rf   / 100 : null,
+            beta_override:                beta,
+            market_risk_premium_override: mrp  != null ? mrp  / 100 : null,
+            pre_tax_cost_debt_override:   cod  != null ? cod  / 100 : null,
+            tax_rate_override:            tax  != null ? tax  / 100 : null,
+            wacc_override:                wacc != null ? wacc / 100 : null,
         };
 
         const btn = document.getElementById('run-dcf-btn');
@@ -533,18 +565,18 @@
                 return;
             }
 
-            // Pre-fill WACC inputs from returned values (only on first run)
+            // Pre-fill inputs from computed values on first run
             if (!lastResult) {
                 const wi = data.wacc_inputs;
-                if (wi.risk_free_rate  && !document.getElementById('in-rf').value)
+                if (wi.risk_free_rate     && !document.getElementById('in-rf').value)
                     document.getElementById('in-rf').value   = (wi.risk_free_rate * 100).toFixed(2);
-                if (wi.beta            && !document.getElementById('in-beta').value)
+                if (wi.beta               && !document.getElementById('in-beta').value)
                     document.getElementById('in-beta').value = wi.beta.toFixed(3);
                 if (wi.market_risk_premium && !document.getElementById('in-mrp').value)
                     document.getElementById('in-mrp').value  = (wi.market_risk_premium * 100).toFixed(2);
-                if (wi.pre_tax_cost_debt && !document.getElementById('in-cod').value)
+                if (wi.pre_tax_cost_debt  && !document.getElementById('in-cod').value)
                     document.getElementById('in-cod').value  = (wi.pre_tax_cost_debt * 100).toFixed(2);
-                if (wi.tax_rate       && !document.getElementById('in-tax').value)
+                if (wi.tax_rate           && !document.getElementById('in-tax').value)
                     document.getElementById('in-tax').value  = (wi.tax_rate * 100).toFixed(2);
             }
 
@@ -557,7 +589,7 @@
         }
     }
 
-    // Init — load from localStorage
+    // ─── Init ─────────────────────────────────────────────────────────────────
     window.addEventListener('load', () => {
         const raw = localStorage.getItem('dcf_input');
         if (!raw) {
@@ -578,8 +610,6 @@
         `;
 
         document.getElementById('run-dcf-btn').addEventListener('click', runDcf);
-
-        // Auto-run on page load
         runDcf();
     });
 </script>

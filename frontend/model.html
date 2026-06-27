@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valuation Model — 3-Statement Model</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+            background: #f5f5f5;
+        }
+
+        /* ── Top nav ── */
+        .page-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0 16px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 4px;
+        }
+        .nav-left { display: flex; align-items: center; gap: 18px; }
+        .site-logo { color: #0f172a; font-size: 16px; font-weight: 800; text-decoration: none; }
+        .site-logo span { color: #7c3aed; }
+        .nav-back {
+            color: #64748b;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        .nav-back:hover { color: #0f172a; text-decoration: underline; }
+        .nav-right { display: flex; gap: 10px; align-items: center; }
+        .dcf-btn {
+            padding: 9px 20px;
+            font-size: 13px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .dcf-btn:hover { background: #6d28d9; }
+        .re-run-btn {
+            padding: 9px 18px;
+            font-size: 13px;
+            background: #0f766e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .re-run-btn:hover { background: #115e59; }
+
+        /* ── Company header ── */
+        .company-header {
+            background: white;
+            border-radius: 6px;
+            padding: 14px 20px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .company-header .name  { font-size: 17px; font-weight: 600; }
+        .company-header .price { font-size: 14px; color: #555; }
+
+        /* ── Tables ── */
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+        th {
+            background: #1e3a5f;
+            color: white;
+            padding: 8px 12px;
+            text-align: right;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        th:first-child { text-align: left; min-width: 220px; }
+        td {
+            padding: 7px 12px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        td:first-child { text-align: left; color: #333; }
+
+        th + th { border-left: 1px solid rgba(255,255,255,0.15); }
+        td + td { border-left: 1px solid #f0f0f0; }
+
+        tr.section-gap td    { padding: 4px 0; border: none; background: #f5f5f5; }
+        tr.subtotal td       { font-weight: 600; border-top: 1px solid #ddd; }
+        tr.check-row td      { font-weight: 600; border-top: 2px solid #1e3a5f; color: #1e3a5f; }
+        tr.section-header td {
+            background: #e8eef5; color: #1e3a5f;
+            font-weight: 700; padding: 6px 12px;
+            font-size: 12px; letter-spacing: 0.04em;
+        }
+        tr.sub-header td {
+            background: #f4f7fa; color: #2d4a6e;
+            font-weight: 600; padding: 5px 12px; font-size: 12px;
+        }
+        tr.reconcile-row td {
+            font-size: 11px; color: #aaa;
+            padding: 4px 12px; background: #fafafa;
+            border-top: 1px solid #f0f0f0; white-space: normal;
+        }
+
+        /* projected columns */
+        th.proj     { background: #274f82; }
+        td.proj     { background: #f0f6ff; }
+        tr.subtotal    td.proj { background: #e2eeff; }
+        tr.sub-header  td.proj { background: #eaf2fb; }
+        tr.check-row   td.proj { background: #e2eeff; }
+        th.proj-sep, td.proj-sep { border-left: 3px solid #60a5fa !important; }
+
+        .neg  { color: #dc2626; }
+        .pass { color: #16a34a; }
+        .fail { color: #dc2626; font-weight: 600; }
+
+        /* ── Labels ── */
+        .statement-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin: 20px 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .statement-label.divider {
+            color: #888;
+            font-size: 11px;
+            font-weight: 600;
+            border-top: 2px solid #ddd;
+            padding-top: 20px;
+            margin-top: 32px;
+        }
+
+        .error-box {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-nav">
+    <div class="nav-left">
+        <a class="site-logo" href="index.html">The Retail <span>Analyst</span></a>
+        <a class="nav-back" href="app.html">← Back to Inputs</a>
+    </div>
+    <div class="nav-right">
+        <a class="re-run-btn" href="app.html">Re-run Model</a>
+        <a class="dcf-btn" href="dcf.html" id="dcf-link" style="display:none">Go to DCF →</a>
+    </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+    // ── Format helpers ──
+    function fmt(val) {
+        if (val == null) return '—';
+        if (val === 0)   return '$-';
+        const b   = val / 1e9;
+        const str = '$' + Math.abs(b).toFixed(2) + 'B';
+        return val < 0 ? `<span class="neg">(${str})</span>` : str;
+    }
+    function fmtEps(val) {
+        if (val == null) return '—';
+        if (val === 0)   return '$-';
+        const str = '$' + Math.abs(val).toFixed(2);
+        return val < 0 ? `<span class="neg">(${str})</span>` : str;
+    }
+    function fmtDays(val) {
+        return val != null ? Math.round(val) + 'd' : '—';
+    }
+    function fmtPct(val) {
+        return val != null ? (val * 100).toFixed(1) + '%' : '—';
+    }
+
+    function reconcileSummary(rec) {
+        const mis = Object.entries(rec).filter(([, v]) => v !== 'MATCH');
+        if (!mis.length) return '<span class="pass">✓ checks pass</span>';
+        return mis.map(([k]) => `<span class="fail">✗ ${k}</span>`).join(' ');
+    }
+
+    function gap() { return '<tr class="section-gap"><td colspan="999"></td></tr>'; }
+
+    function tdCls(y) {
+        if (!y.projected) return '';
+        return y.isSeparator ? ' class="proj proj-sep"' : ' class="proj"';
+    }
+
+    function sectionHeader(label, allYears) {
+        return `<tr class="section-header"><td colspan="${allYears.length + 1}">${label}</td></tr>`;
+    }
+    function subHeader(label, allYears) {
+        return `<tr class="sub-header"><td colspan="${allYears.length + 1}">${label}</td></tr>`;
+    }
+    function row(label, key, allYears, formatter, isSubtotal) {
+        const cls   = isSubtotal ? ' class="subtotal"' : '';
+        const cells = allYears.map(y => `<td${tdCls(y)}>${formatter(y[key])}</td>`).join('');
+        return `<tr${cls}><td>${label}</td>${cells}</tr>`;
+    }
+    function zeroRow(label, allYears) {
+        const cells = allYears.map(y => `<td${tdCls(y)}>$-</td>`).join('');
+        return `<tr><td>${label}</td>${cells}</tr>`;
+    }
+
+    function buildTable(headerLabel, allYears, bodyHtml) {
+        const headerCells = allYears.map(y => {
+            const cls   = y.projected ? (y.isSeparator ? ' class="proj proj-sep"' : ' class="proj"') : '';
+            const label = y.date.slice(0, 4) + (y.projected ? 'E' : '');
+            return `<th${cls}>${label}</th>`;
+        }).join('');
+        const recCells = allYears.map(y => {
+            const content = y.projected ? '' : reconcileSummary(y.reconcile || {});
+            return `<td${tdCls(y)}>${content}</td>`;
+        }).join('');
+        return `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
+                    <tbody>
+                        ${bodyHtml}
+                        <tr class="reconcile-row"><td>Reconciliation</td>${recCells}</tr>
+                    </tbody>
+                </table>
+            </div>`;
+    }
+
+    function buildScheduleTable(headerLabel, allYears, bodyHtml) {
+        const headerCells = allYears.map(y => {
+            const cls   = y.projected ? (y.isSeparator ? ' class="proj proj-sep"' : ' class="proj"') : '';
+            const label = y.date.slice(0, 4) + (y.projected ? 'E' : '');
+            return `<th${cls}>${label}</th>`;
+        }).join('');
+        return `
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
+                    <tbody>${bodyHtml}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function combineYears(histYears, projYears) {
+        const proj = projYears.map((y, i) => ({ ...y, isSeparator: i === 0 }));
+        return [...histYears, ...proj];
+    }
+
+    // ── Supporting Schedules ──
+    function computeSchedules(isAll, cfAll, bsAll) {
+        const wcYears = isAll.map((isYr, i) => {
+            const bs   = bsAll[i];
+            const rev  = isYr.revenue || 0;
+            const cogs = Math.abs(isYr.cogs || 0);
+            const ar   = bs.accounts_receivable || 0;
+            const inv  = bs.inventory           || 0;
+            const ap   = bs.accounts_payable    || 0;
+            return {
+                date: isYr.date, projected: isYr.projected, isSeparator: isYr.isSeparator,
+                ar, inventory: inv, ap,
+                nwc:      ar + inv - ap,
+                ar_days:  rev  ? ar  / rev  * 365 : null,
+                inv_days: cogs ? inv / cogs * 365 : null,
+                ap_days:  cogs ? ap  / cogs * 365 : null,
+            };
+        });
+        wcYears.forEach((w, i) => {
+            w.change_nwc = i === 0 ? null : wcYears[i - 1].nwc - w.nwc;
+        });
+
+        const ppeYears = isAll.map((isYr, i) => {
+            const bs = bsAll[i];
+            const cf = cfAll[i];
+            return {
+                date: isYr.date, projected: isYr.projected, isSeparator: isYr.isSeparator,
+                beginning: i === 0 ? null : bsAll[i - 1].ppe_net,
+                capex_add: Math.abs(cf.capex || 0),
+                da_less:   cf.depreciation || 0,
+                ending:    bs.ppe_net,
+            };
+        });
+
+        const ufcfYears = isAll.map((isYr, i) => {
+            const cf      = cfAll[i];
+            const ebit    = isYr.operating_income || 0;
+            const pretax  = isYr.pretax_income    || 0;
+            const tax_amt = isYr.income_tax        || 0;
+            const tax_rate = pretax > 0 ? tax_amt / pretax : 0;
+            const nopat    = ebit * (1 - tax_rate);
+            const da       = cf.depreciation || 0;
+            const capex    = cf.capex        || 0;
+            const dNwc     = wcYears[i].change_nwc;
+            return {
+                date: isYr.date, projected: isYr.projected, isSeparator: isYr.isSeparator,
+                ebit, tax_rate, nopat, da,
+                capex,
+                change_nwc:  dNwc,
+                ufcf_carson: dNwc != null ? nopat + da + capex + dNwc : null,
+                ufcf_cf:     cf.free_cash_flow,
+            };
+        });
+
+        const ratioYears = isAll.map((isYr, i) => {
+            const cf     = cfAll[i];
+            const rev    = isYr.revenue       || 0;
+            const pretax = isYr.pretax_income || 0;
+            const tax    = isYr.income_tax     || 0;
+            return {
+                date: isYr.date, projected: isYr.projected, isSeparator: isYr.isSeparator,
+                sbc_pct:     rev ? (cf.stock_comp              || 0) / rev : null,
+                da_pct:      rev ? (cf.depreciation            || 0) / rev : null,
+                capex_pct:   rev ? Math.abs(cf.capex           || 0) / rev : null,
+                tax_rate:    pretax > 0 ? tax / pretax : null,
+                buyback_pct: rev ? Math.abs(cf.stock_repurchased || 0) / rev : null,
+            };
+        });
+
+        return { wcYears, ppeYears, ufcfYears, ratioYears };
+    }
+
+    // ── Main render ──
+    function render(histData, projData) {
+        const isHist = [...histData.income_statement].slice(0, 5).reverse();
+        const cfHist = [...histData.cash_flow].slice(0, 5).reverse();
+        const bsHist = [...histData.balance_sheet].slice(0, 5).reverse();
+
+        const isAll = projData ? combineYears(isHist, projData.income_statement) : isHist;
+        const cfAll = projData ? combineYears(cfHist, projData.cash_flow)        : cfHist;
+        const bsAll = projData ? combineYears(bsHist, projData.balance_sheet)    : bsHist;
+
+        // ── Income Statement ──
+        const isBody = `
+            ${row('Revenue',                                       'revenue',           isAll, fmt)}
+            ${row('Cost of Goods Sold',                           'cogs',              isAll, fmt)}
+            ${row('Gross Profit',                                  'gross_profit',      isAll, fmt, true)}
+            ${gap()}
+            ${row('Selling, General and Administrative',          'sga',               isAll, fmt)}
+            ${row('Research and Development',                     'rnd',               isAll, fmt)}
+            ${row('Other Operating Expenses',                     'other_opex',        isAll, fmt)}
+            ${row('Total Operating Expenses',                     'total_opex',        isAll, fmt, true)}
+            ${gap()}
+            ${row('Operating Income (EBIT)',                      'operating_income',  isAll, fmt, true)}
+            ${gap()}
+            ${row('Interest Income',                              'interest_income',   isAll, fmt)}
+            ${row('Interest Expense',                             'interest_expense',  isAll, fmt)}
+            ${row('Other Income (Expense)',                       'other_income',      isAll, fmt)}
+            ${row('Pretax Income',                                'pretax_income',     isAll, fmt, true)}
+            ${gap()}
+            ${row('Income Tax Expense',                           'income_tax',        isAll, fmt)}
+            ${row('Net Income',                                   'net_income',        isAll, fmt, true)}
+            ${gap()}
+            ${row('Earnings Per Share',                           'eps',               isAll, fmtEps)}
+            ${row('Diluted Earnings Per Share',                   'eps_diluted',       isAll, fmtEps)}
+        `;
+
+        // ── Cash Flow Statement ──
+        const cfBody = `
+            ${sectionHeader('OPERATING ACTIVITIES', cfAll)}
+            ${row('Net Income',                                        'net_income',            cfAll, fmt)}
+            ${row('Depreciation and Amortization',                     'depreciation',          cfAll, fmt)}
+            ${row('Stock-Based Compensation',                          'stock_comp',            cfAll, fmt)}
+            ${row('Other Adjustments',                                 'other_adjustments',     cfAll, fmt)}
+            ${row('Change in Accounts Receivable',                     'change_ar',             cfAll, fmt)}
+            ${row('Change in Inventory',                               'change_inventory',      cfAll, fmt)}
+            ${zeroRow('Change in Prepaid and Other Current Assets',     cfAll)}
+            ${row('Change in Accounts Payable',                        'change_ap',             cfAll, fmt)}
+            ${zeroRow('Change in Accrued Expenses',                     cfAll)}
+            ${row('Change in Other Working Capital',                   'other_wc',              cfAll, fmt)}
+            ${zeroRow('Change in Unearned Revenue',                     cfAll)}
+            ${row('Net Cash from Operating Activities',                'operating_cf',          cfAll, fmt, true)}
+            ${gap()}
+            ${sectionHeader('INVESTING ACTIVITIES', cfAll)}
+            ${row('Capital Expenditures',                              'capex',                 cfAll, fmt)}
+            ${zeroRow('Proceeds from Sale of PP&E',                     cfAll)}
+            ${row('Acquisitions',                                      'acquisitions',          cfAll, fmt)}
+            ${row('Purchases of Investments',                          'purchases_investments', cfAll, fmt)}
+            ${row('Proceeds from Sale of Investments',                 'sales_investments',     cfAll, fmt)}
+            ${row('Other Investing Activities',                        'other_investing',       cfAll, fmt)}
+            ${row('Net Cash from Investing Activities',                'investing_cf',          cfAll, fmt, true)}
+            ${gap()}
+            ${sectionHeader('FINANCING ACTIVITIES', cfAll)}
+            ${row('Proceeds from Long-Term Debt',                      'long_term_debt',        cfAll, fmt)}
+            ${row('Proceeds from Short-Term Borrowings',               'short_term_debt',       cfAll, fmt)}
+            ${row('Share Repurchases',                                 'stock_repurchased',     cfAll, fmt)}
+            ${row('Issuance of Common Stock',                          'stock_issued',          cfAll, fmt)}
+            ${row('Dividends Paid',                                    'dividends_paid',        cfAll, fmt)}
+            ${row('Other Financing Activities',                        'other_financing',       cfAll, fmt)}
+            ${row('Net Cash from Financing Activities',                'financing_cf',          cfAll, fmt, true)}
+            ${gap()}
+            ${row('Effect of Exchange Rate Changes',                   'fx_effect',             cfAll, fmt)}
+            ${row('Net Change in Cash',                                'net_change_cash',       cfAll, fmt)}
+            ${row('Cash at Beginning of Period',                       'cash_beginning',        cfAll, fmt)}
+            ${row('Cash at End of Period',                             'cash_end',              cfAll, fmt)}
+            ${gap()}
+            ${row('Free Cash Flow',                                    'free_cash_flow',        cfAll, fmt, true)}
+        `;
+
+        // ── Balance Sheet ──
+        const bsBody = `
+            ${sectionHeader('ASSETS', bsAll)}
+            ${subHeader('Current Assets', bsAll)}
+            ${row('Cash and Short-Term Investments',        'cash_st_investments',    bsAll, fmt)}
+            ${row('Accounts Receivable',                    'accounts_receivable',    bsAll, fmt)}
+            ${row('Inventory',                              'inventory',              bsAll, fmt)}
+            ${zeroRow('Prepaid and Other Current Assets',   bsAll)}
+            ${row('Other Current Assets',                   'other_current',          bsAll, fmt)}
+            ${row('Total Current Assets',                   'total_current_assets',   bsAll, fmt, true)}
+            ${gap()}
+            ${subHeader('Non-Current Assets', bsAll)}
+            ${row('Property, Plant and Equipment (net)',    'ppe_net',                bsAll, fmt)}
+            ${row('Goodwill',                               'goodwill',               bsAll, fmt)}
+            ${row('Intangible Assets',                      'intangible_assets',      bsAll, fmt)}
+            ${row('Long-Term Investments',                  'lt_investments',         bsAll, fmt)}
+            ${row('Other Non-Current Assets',               'other_noncurrent',       bsAll, fmt)}
+            ${row('Total Non-Current Assets',               'total_noncurrent_assets',bsAll, fmt, true)}
+            ${gap()}
+            ${row('Total Assets',                           'total_assets',           bsAll, fmt, true)}
+            ${gap()}
+            ${sectionHeader("LIABILITIES AND SHAREHOLDERS' EQUITY", bsAll)}
+            ${subHeader('Current Liabilities', bsAll)}
+            ${row('Accounts Payable',                       'accounts_payable',       bsAll, fmt)}
+            ${row('Accrued Expenses',                       'accrued_expenses',       bsAll, fmt)}
+            ${row('Current Portion of Long-Term Debt',      'current_ltd',            bsAll, fmt)}
+            ${row('Other Current Liabilities',              'other_current_liab',     bsAll, fmt)}
+            ${row('Total Current Liabilities',              'total_current_liab',     bsAll, fmt, true)}
+            ${gap()}
+            ${subHeader('Non-Current Liabilities', bsAll)}
+            ${row('Long-Term Debt',                         'long_term_debt',         bsAll, fmt)}
+            ${row('Deferred Tax Liabilities',               'deferred_tax_liab',      bsAll, fmt)}
+            ${row('Other Long-Term Liabilities',            'other_lt_liab',          bsAll, fmt)}
+            ${row('Total Non-Current Liabilities',          'total_noncurrent_liab',  bsAll, fmt, true)}
+            ${gap()}
+            ${row('Total Liabilities',                      'total_liabilities',      bsAll, fmt, true)}
+            ${gap()}
+            ${subHeader("Shareholders' Equity", bsAll)}
+            ${row('Common Stock',                           'common_stock',           bsAll, fmt)}
+            ${row('Additional Paid-In Capital',             'apic',                   bsAll, fmt)}
+            ${row('Retained Earnings',                      'retained_earnings',      bsAll, fmt)}
+            ${row('Treasury Stock',                         'treasury_stock',         bsAll, fmt)}
+            ${row('Accumulated OCI',                        'aoci',                   bsAll, fmt)}
+            ${row('Other Equity',                           'other_equity',           bsAll, fmt)}
+            ${row("Total Shareholders' Equity",             'total_equity',           bsAll, fmt, true)}
+            ${gap()}
+            ${row("Total Liabilities and Shareholders' Equity", 'total_lae',          bsAll, fmt, true)}
+            ${gap()}
+            <tr class="check-row">
+                <td>Assets − (Liabilities + Equity)</td>
+                ${bsAll.map(y => `<td${tdCls(y)}>${fmt(y.check_balance)}</td>`).join('')}
+            </tr>
+        `;
+
+        // ── Supporting Schedules ──
+        const { wcYears, ppeYears, ufcfYears, ratioYears } = computeSchedules(isAll, cfAll, bsAll);
+
+        const wcBody = `
+            ${subHeader('Working Capital Balances', wcYears)}
+            ${row('Accounts Receivable',              'ar',         wcYears, fmt)}
+            ${row('Inventory',                         'inventory',  wcYears, fmt)}
+            ${row('Accounts Payable',                  'ap',         wcYears, fmt)}
+            ${row('Net Working Capital',               'nwc',        wcYears, fmt, true)}
+            ${gap()}
+            ${subHeader('Days Outstanding', wcYears)}
+            ${row('Days Sales Outstanding (AR)',       'ar_days',    wcYears, fmtDays)}
+            ${row('Days Inventory Outstanding',        'inv_days',   wcYears, fmtDays)}
+            ${row('Days Payable Outstanding (AP)',     'ap_days',    wcYears, fmtDays)}
+            ${gap()}
+            ${row('Change in NWC (cash impact)',       'change_nwc', wcYears, fmt, true)}
+        `;
+
+        const ppeBody = `
+            ${row('Beginning Net PPE',                 'beginning',  ppeYears, fmt)}
+            ${row('(+) Capital Expenditures',          'capex_add',  ppeYears, fmt)}
+            ${row('(−) Depreciation & Amortization',   'da_less',    ppeYears, fmt)}
+            ${row('Ending Net PPE',                    'ending',     ppeYears, fmt, true)}
+        `;
+
+        const depBody = `
+            ${row('Depreciation & Amortization',       'da',         ufcfYears,  fmt)}
+            ${row('Revenue',                           'ebit',       isAll,      fmt)}
+            ${row('D&A as % of Revenue',               'da_pct',     ratioYears, fmtPct, true)}
+        `;
+
+        const ufcfBody = `
+            ${row('EBIT (Operating Income)',            'ebit',        ufcfYears, fmt)}
+            ${row('Effective Tax Rate',                 'tax_rate',    ufcfYears, fmtPct)}
+            ${row('NOPAT  =  EBIT × (1 − t)',          'nopat',       ufcfYears, fmt, true)}
+            ${gap()}
+            ${row('(+) Depreciation & Amortization',   'da',          ufcfYears, fmt)}
+            ${row('(+) Capital Expenditures',          'capex',       ufcfYears, fmt)}
+            ${row('(±) Change in Net Working Capital', 'change_nwc',  ufcfYears, fmt)}
+            ${row('Unlevered FCF  — Carson formula',   'ufcf_carson', ufcfYears, fmt, true)}
+            ${gap()}
+            ${row('Free Cash Flow  — CF Statement',    'ufcf_cf',     ufcfYears, fmt, true)}
+        `;
+
+        const ratioBody = `
+            ${row('SBC % of Revenue',                  'sbc_pct',     ratioYears, fmtPct)}
+            ${row('D&A % of Revenue',                  'da_pct',      ratioYears, fmtPct)}
+            ${row('CapEx % of Revenue',                'capex_pct',   ratioYears, fmtPct)}
+            ${row('Effective Tax Rate',                'tax_rate',    ratioYears, fmtPct)}
+            ${row('Buyback % of Revenue',              'buyback_pct', ratioYears, fmtPct)}
+        `;
+
+        document.getElementById('content').innerHTML = `
+            <div class="company-header">
+                <span class="name">${histData.company_name} (${histData.ticker})</span>
+                <span class="price">Price: $${histData.stock_price}</span>
+            </div>
+
+            <p class="statement-label">Income Statement</p>
+            ${buildTable(histData.ticker, isAll, isBody)}
+
+            <p class="statement-label">Cash Flow Statement</p>
+            ${buildTable(histData.ticker, cfAll, cfBody)}
+
+            <p class="statement-label">Balance Sheet</p>
+            ${buildTable(histData.ticker, bsAll, bsBody)}
+
+            <p class="statement-label divider">Supporting Schedules</p>
+
+            <p class="statement-label">1 · Working Capital</p>
+            ${buildScheduleTable('Working Capital', wcYears, wcBody)}
+
+            <p class="statement-label">2 · PPE Schedule</p>
+            ${buildScheduleTable('PPE', ppeYears, ppeBody)}
+
+            <p class="statement-label">3 · Depreciation Driver</p>
+            ${buildScheduleTable('D&A', ufcfYears, depBody)}
+
+            <p class="statement-label">4 · UFCF Build-Up</p>
+            ${buildScheduleTable('UFCF', ufcfYears, ufcfBody)}
+
+            <p class="statement-label">5 · Key Ratio Summary</p>
+            ${buildScheduleTable('Ratios', ratioYears, ratioBody)}
+        `;
+
+        // Show DCF button only if projection was run
+        if (projData) {
+            document.getElementById('dcf-link').style.display = 'inline-block';
+        }
+    }
+
+    // ── Init ──
+    window.addEventListener('load', () => {
+        const rawHist = localStorage.getItem('model_hist');
+        const rawProj = localStorage.getItem('model_proj');
+
+        if (!rawHist) {
+            document.getElementById('content').innerHTML = `
+                <div class="error-box">
+                    No data found. <a href="app.html" style="color:#1d4ed8">Go back to run the model.</a>
+                </div>`;
+            return;
+        }
+
+        try {
+            const histData = JSON.parse(rawHist);
+            const projData = rawProj ? JSON.parse(rawProj) : null;
+            render(histData, projData);
+        } catch (e) {
+            document.getElementById('content').innerHTML =
+                `<div class="error-box">Error loading data: ${e.message}</div>`;
+        }
+    });
+</script>
+</body>
+</html>
