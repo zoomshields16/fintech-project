@@ -3,281 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Retail Analyst — Equity valuation tools</title>
+    <title>The Retail Analyst — DCF valuation, shown in full</title>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        :root {
-            --paper:   #faf8f4;
-            --paper-2: #f2efe8;
-            --ink:     #1c1c1a;
-            --muted:   #6f6b63;
-            --line:    #e3ddd1;
-            --navy:    #1e3a5f;
-            --navy-d:  #152a45;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-            background: var(--paper);
-            color: var(--ink);
-            -webkit-font-smoothing: antialiased;
-            line-height: 1.6;
-        }
-        .serif { font-family: Georgia, 'Times New Roman', serif; }
-        .wrap { max-width: 940px; margin: 0 auto; padding: 0 28px; }
-        .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
-
-        /* ── Top bar ───────────────────────────────────────────── */
-        header {
-            border-bottom: 1px solid var(--line);
-            background: var(--paper);
-            position: sticky; top: 0; z-index: 50;
-        }
-        .nav {
-            display: flex; align-items: center; justify-content: space-between;
-            height: 66px;
-        }
-        .brand {
-            font-family: Georgia, serif; font-size: 20px; font-weight: 700;
-            color: var(--ink); text-decoration: none; letter-spacing: -0.2px;
-        }
-        .brand .dot { color: var(--navy); }
-        .nav-links { display: flex; align-items: center; gap: 30px; }
-        .nav-links a { color: var(--muted); text-decoration: none; font-size: 14.5px; }
-        .nav-links a:hover { color: var(--ink); }
-        .nav-go {
-            border: 1px solid var(--navy); color: var(--navy) !important;
-            padding: 7px 16px; border-radius: 2px; font-weight: 500;
-        }
-        .nav-go:hover { background: var(--navy); color: #fff !important; }
-
-        /* ── Hero ──────────────────────────────────────────────── */
-        .hero { padding: 96px 0 84px; }
-        .kicker {
-            font-size: 12.5px; letter-spacing: 0.18em; text-transform: uppercase;
-            color: var(--navy); font-weight: 600; margin-bottom: 26px;
+        /* ── Hero ── */
+        .hero { padding: 76px 0 72px; }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            gap: 44px;
+            align-items: center;
         }
         .hero h1 {
             font-family: Georgia, serif; font-weight: 700;
-            font-size: 56px; line-height: 1.08; letter-spacing: -1px;
-            max-width: 720px; margin-bottom: 26px;
+            font-size: 44px; line-height: 1.12; letter-spacing: -0.8px;
+            margin-bottom: 20px;
         }
-        .hero h1 .u { font-style: italic; color: var(--navy); }
         .hero .lede {
-            font-size: 19px; color: var(--muted); max-width: 560px;
-            line-height: 1.7; margin-bottom: 38px;
+            font-size: 16.5px; color: var(--muted); line-height: 1.7;
+            margin-bottom: 34px; max-width: 440px;
         }
-        .hero-actions { display: flex; align-items: center; gap: 26px; }
-        .btn {
-            display: inline-block; background: var(--navy); color: #fff;
-            text-decoration: none; font-size: 15.5px; font-weight: 500;
-            padding: 13px 28px; border-radius: 2px; transition: background 0.15s;
-        }
-        .btn:hover { background: var(--navy-d); }
-        .text-link {
-            color: var(--ink); text-decoration: none; font-size: 15px;
-            border-bottom: 1.5px solid var(--navy); padding-bottom: 2px;
-        }
-        .text-link:hover { color: var(--navy); }
 
-        .hero-note {
-            margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--line);
-            display: flex; gap: 48px; flex-wrap: wrap;
+        .ticker-form {
+            display: flex; border: 1.5px solid var(--ink);
+            border-radius: 2px; overflow: hidden; max-width: 440px;
         }
-        .hero-note div { font-size: 14px; color: var(--muted); max-width: 240px; }
-        .hero-note strong { display: block; color: var(--ink); font-weight: 600; margin-bottom: 3px; font-size: 14.5px; }
-
-        /* ── Generic section ───────────────────────────────────── */
-        section { padding: 84px 0; }
-        .band { background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-        .sec-head { max-width: 620px; margin-bottom: 54px; }
-        .sec-head .kicker { margin-bottom: 16px; }
-        .sec-head h2 {
-            font-family: Georgia, serif; font-weight: 700;
-            font-size: 36px; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 14px;
-        }
-        .sec-head p { font-size: 17px; color: var(--muted); line-height: 1.7; }
-        .center { text-align: center; }
-        .center.sec-head, .center .sec-head { margin-left: auto; margin-right: auto; }
-
-        /* ── How it works (numbered rows) ──────────────────────── */
-        .steps { border-top: 1px solid var(--line); }
-        .step {
-            display: grid; grid-template-columns: 56px 1fr;
-            gap: 28px; padding: 30px 0; border-bottom: 1px solid var(--line);
-            align-items: start;
-        }
-        .step .n {
-            font-family: Georgia, serif; font-size: 26px; color: var(--navy);
-            font-weight: 700; line-height: 1;
-        }
-        .step h3 { font-size: 19px; font-weight: 600; margin-bottom: 8px; }
-        .step p { color: var(--muted); font-size: 15.5px; max-width: 620px; }
-
-        /* ── Analyze (ticker entry) ────────────────────────────── */
-        .analyze-inner { max-width: 560px; margin: 0 auto; text-align: center; }
-        .analyze-inner h2 {
-            font-family: Georgia, serif; font-weight: 700; font-size: 34px;
-            letter-spacing: -0.5px; margin-bottom: 12px;
-        }
-        .analyze-inner p { color: var(--muted); font-size: 16.5px; margin-bottom: 32px; }
-        .ticker-form { display: flex; gap: 0; border: 1.5px solid var(--ink); border-radius: 2px; overflow: hidden; }
         .ticker-form input {
-            flex: 1; border: none; outline: none; background: var(--paper);
-            padding: 16px 18px; font-size: 19px; font-weight: 600;
+            flex: 1; min-width: 0; border: none; outline: none; background: var(--paper);
+            padding: 15px 16px; font-size: 18px; font-weight: 600;
             text-transform: uppercase; letter-spacing: 0.06em;
             font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink);
         }
         .ticker-form input::placeholder { color: #b9b3a6; }
         .ticker-form button {
             border: none; background: var(--ink); color: #fff;
-            padding: 0 28px; font-size: 15px; font-weight: 500; cursor: pointer;
-            transition: background 0.15s; white-space: nowrap;
+            padding: 0 22px; font-size: 14.5px; font-weight: 500; cursor: pointer;
+            transition: background 0.15s; white-space: nowrap; font-family: inherit;
         }
         .ticker-form button:hover { background: var(--navy); }
-        .analyze-hint { margin-top: 16px; font-size: 13.5px; color: var(--muted); }
-        .analyze-disclaimer { margin-top: 8px; font-size: 13px; font-style: italic; color: #a39c8d; }
+        .ticker-hint { margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+        .ticker-note { margin-top: 6px; font-size: 13px; font-style: italic; color: var(--faint); }
         .ast { color: var(--navy); font-weight: 600; font-style: normal; }
 
-        /* ── About ─────────────────────────────────────────────── */
-        .people { display: flex; gap: 56px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
-        .person { text-align: center; max-width: 240px; }
+        /* ── Specimen (real model excerpt) ── */
+        .specimen {
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: 3px; padding: 16px 16px 12px;
+        }
+        .specimen figcaption {
+            font-family: Georgia, serif; font-style: italic;
+            font-size: 13px; color: var(--muted); margin-bottom: 12px;
+        }
+        .spec-scroll { overflow-x: auto; }
+        .specimen table { border-collapse: collapse; width: 100%; font-size: 12px; table-layout: fixed; }
+        .specimen th {
+            font-size: 10.5px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            text-align: right; padding: 4px 6px 7px;
+            border-bottom: 1px solid var(--ink);
+        }
+        .specimen th:first-child { text-align: left; padding-left: 0; width: 31%; }
+        .specimen td {
+            padding: 5px 6px; text-align: right; white-space: nowrap;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
+            border-bottom: 1px solid #f0ece3;
+        }
+        .specimen td:first-child {
+            text-align: left; padding-left: 0; white-space: normal;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--ink);
+        }
+        .specimen td:not(:first-child):not(.proj),
+        .specimen th:not(:first-child):not(.proj) { background: var(--navy-tint); }
+        .specimen th.proj { color: var(--navy); }
+        .specimen tr.sum td { font-weight: 600; border-top: 1px solid var(--ink); }
+        .specimen tr:last-child td { border-bottom: none; }
+        .spec-foot {
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+            margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line);
+            font-size: 12px; color: var(--faint);
+        }
+        .spec-foot .ok { color: var(--green); }
+
+        /* ── Method (what happens to your ticker) ── */
+        .method { background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 72px 0; }
+        .method h2, .about h2 {
+            font-family: Georgia, serif; font-weight: 700;
+            font-size: 30px; letter-spacing: -0.4px; margin-bottom: 8px;
+        }
+        .method .sub, .about .sub { color: var(--muted); font-size: 16px; max-width: 560px; margin-bottom: 40px; }
+        .method-row {
+            display: grid; grid-template-columns: 190px 1fr; gap: 32px;
+            padding: 22px 0; border-top: 1px solid var(--line);
+        }
+        .method-row:last-child { border-bottom: 1px solid var(--line); }
+        .method-row dt {
+            font-family: Georgia, serif; font-size: 19px; font-weight: 700;
+            color: var(--navy); line-height: 1.35;
+        }
+        .method-row dd { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 600px; }
+
+        /* ── About ── */
+        .about { padding: 76px 0 20px; }
+        .about-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 56px; align-items: start; }
+        .about-copy p + p { margin-top: 14px; }
+        .about-copy { color: var(--muted); font-size: 15.5px; line-height: 1.75; max-width: 460px; }
+        .people { display: flex; gap: 44px; }
+        .person { text-align: center; width: 180px; }
         .photo {
-            width: 132px; height: 132px; border-radius: 50%; margin: 0 auto 20px;
-            overflow: hidden; background: var(--paper-2);
-            border: 1px solid var(--line);
+            width: 116px; height: 116px; border-radius: 50%; margin: 0 auto 16px;
+            overflow: hidden; background: var(--paper-2); border: 1px solid var(--line);
         }
         .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .person .nm { font-family: Georgia, serif; font-size: 21px; font-weight: 700; margin-bottom: 8px; }
-        .person .ln { font-size: 14.5px; color: var(--ink); }
+        .person .nm { font-family: Georgia, serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .person .ln { font-size: 13.5px; line-height: 1.5; }
         .person .ln.school { color: var(--navy); font-weight: 600; }
-        .person .ln.muted { color: var(--muted); }
-        .person .links { margin-top: 16px; }
+        .person .ln.dim { color: var(--muted); }
+        .person .links { margin-top: 12px; }
         .person .links a {
-            display: inline-flex; align-items: center; gap: 7px;
-            color: var(--muted); text-decoration: none; font-size: 13.5px;
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--muted); text-decoration: none; font-size: 13px;
         }
         .person .links a:hover { color: var(--navy); }
-        .person .links svg { width: 16px; height: 16px; }
+        .person .links svg { width: 15px; height: 15px; }
 
-        /* ── Footer ────────────────────────────────────────────── */
-        footer {
-            border-top: 1px solid var(--line); padding: 36px 0;
-            font-size: 13.5px; color: var(--muted);
+        @media (max-width: 900px) {
+            .hero { padding: 56px 0 60px; }
+            .hero-grid { grid-template-columns: 1fr; gap: 44px; }
+            .hero h1 { font-size: 36px; }
+            .about-grid { grid-template-columns: 1fr; }
+            .method-row { grid-template-columns: 1fr; gap: 8px; }
         }
-        .foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
-        .foot a { color: var(--muted); text-decoration: none; }
-        .foot a:hover { color: var(--ink); }
-
-        @media (max-width: 640px) {
-            .hero h1 { font-size: 40px; }
-            .hero-actions { flex-direction: column; align-items: flex-start; gap: 18px; }
-            .step { grid-template-columns: 40px 1fr; gap: 18px; }
+        @media (max-width: 480px) {
+            .people { flex-direction: column; gap: 32px; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="wrap nav">
+<header class="site-head">
+    <div class="shell">
         <a class="brand" href="index.html">The Retail Analyst<span class="dot">.</span></a>
-        <nav class="nav-links">
-            <a href="#how">How it works</a>
+        <nav class="head-links">
+            <a href="#method">Method</a>
             <a href="#about">About</a>
-            <a class="nav-go" href="#analyze">Analyze a stock</a>
         </nav>
     </div>
 </header>
 
-<!-- Hero -->
+<!-- Hero: the ticker entry is the front door -->
 <section class="hero">
-    <div class="wrap">
-        <div class="kicker">Independent equity research</div>
-        <h1 class="serif">Build the model. <span class="u">Then</span> trust the number.</h1>
-        <p class="lede">
-            A discounted cash flow tool that doesn't hide its work. Pull a company's
-            financials, set your own assumptions, and watch every line flow through to
-            an intrinsic value — nothing pre-baked, nothing you can't trace back.
-        </p>
-        <div class="hero-actions">
-            <a class="btn" href="#analyze">Analyze a stock</a>
-            <a class="text-link" href="#how">See how it works</a>
-        </div>
-
-        <div class="hero-note">
-            <div>
-                <strong>Real financials</strong>
-                Five years of statements pulled live, not estimates or samples.
-            </div>
-            <div>
-                <strong>Your assumptions</strong>
-                Growth, margins, WACC, terminal value — every input is yours to change.
-            </div>
-            <div>
-                <strong>Shown in full</strong>
-                Projections, schedules, and the DCF bridge are all on the page.
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- How it works -->
-<section class="band" id="how">
-    <div class="wrap">
-        <div class="sec-head">
-            <div class="kicker">How it works</div>
-            <h2 class="serif">Three steps from a ticker to a valuation.</h2>
-            <p>We rebuilt a full three-statement model and DCF in code, using a working Excel model as the spec. Here's the path it takes.</p>
-        </div>
-        <div class="steps">
-            <div class="step">
-                <div class="n">1</div>
-                <div>
-                    <h3>Pull the financials</h3>
-                    <p>Enter any US-listed ticker. We fetch five years of income statements, balance sheets, and cash flow statements and reconcile the line items against the reported figures.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="n">2</div>
-                <div>
-                    <h3>Set your assumptions</h3>
-                    <p>Adjust revenue growth, margins, and capital spending year by year. The engine projects all three statements forward — working capital, depreciation, and PP&amp;E schedules included — and keeps them linked.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="n">3</div>
-                <div>
-                    <h3>Run the DCF</h3>
-                    <p>WACC is built from live beta and treasury data — or override it yourself. You get an intrinsic value per share, the full discounting schedule, and a sensitivity grid across discount rate and terminal growth.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Analyze -->
-<section id="analyze">
-    <div class="wrap">
-        <div class="analyze-inner">
-            <h2 class="serif">Pick a company to value.</h2>
-            <p>Type a ticker and we'll load its financials so you can start building.</p>
+    <div class="shell hero-grid">
+        <div>
+            <h1>A valuation you can check line by line.</h1>
+            <p class="lede">
+                Pull five years of a company's filed statements, set your own growth and
+                margin assumptions, and follow every figure through the projection to a
+                value per share. Nothing sits in a cell you can't see.
+            </p>
             <form class="ticker-form" id="ticker-form" onsubmit="return false;">
-                <input type="text" id="home-ticker" placeholder="AAPL" maxlength="10" autocomplete="off" spellcheck="false">
-                <button id="home-go-btn" type="submit">Analyze →</button>
+                <input type="text" id="home-ticker" placeholder="AAPL" maxlength="10"
+                       autocomplete="off" spellcheck="false" aria-label="Stock ticker">
+                <button id="home-go-btn" type="submit">Pull financials →</button>
             </form>
-            <div class="analyze-hint">e.g. AAPL, MSFT, NVDA, COST<span class="ast">*</span></div>
-            <div class="analyze-disclaimer"><span class="ast">*</span>Nasdaq-100 companies only — model is in beta.</div>
+            <div class="ticker-hint">Try AAPL, MSFT, NVDA, COST<span class="ast">*</span></div>
+            <div class="ticker-note"><span class="ast">*</span>Nasdaq-100 companies for now — the model is in beta.</div>
         </div>
+
+        <figure class="specimen">
+            <figcaption>From the model — Apple Inc. (AAPL), $B</figcaption>
+            <div class="spec-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>FY23</th><th>FY24</th>
+                            <th class="proj proj-sep">FY25E</th><th class="proj">FY26E</th><th class="proj">FY27E</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Revenue</td>
+                            <td>383.3</td><td>391.0</td>
+                            <td class="proj proj-sep">410.6</td><td class="proj">431.1</td><td class="proj">452.7</td>
+                        </tr>
+                        <tr>
+                            <td>Cost of revenue</td>
+                            <td>(214.1)</td><td>(210.4)</td>
+                            <td class="proj proj-sep">(220.9)</td><td class="proj">(231.9)</td><td class="proj">(243.5)</td>
+                        </tr>
+                        <tr class="sum">
+                            <td>Gross profit</td>
+                            <td>169.1</td><td>180.7</td>
+                            <td class="proj proj-sep">189.7</td><td class="proj">199.2</td><td class="proj">209.2</td>
+                        </tr>
+                        <tr>
+                            <td>Operating expenses</td>
+                            <td>(54.8)</td><td>(57.5)</td>
+                            <td class="proj proj-sep">(60.4)</td><td class="proj">(63.4)</td><td class="proj">(66.5)</td>
+                        </tr>
+                        <tr class="sum">
+                            <td>Operating income</td>
+                            <td>114.3</td><td>123.2</td>
+                            <td class="proj proj-sep">129.3</td><td class="proj">135.8</td><td class="proj">142.7</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="spec-foot">
+                <span class="ok">✓ FY23–24 reconcile to filed statements</span>
+                <span>FY25E onward uses your assumptions</span>
+            </div>
+        </figure>
+    </div>
+</section>
+
+<!-- Method -->
+<section class="method" id="method">
+    <div class="shell">
+        <h2>What happens to your ticker.</h2>
+        <p class="sub">The engine is a full three-statement model rebuilt in code from a working Excel model. This is the path a ticker takes through it.</p>
+        <dl>
+            <div class="method-row">
+                <dt>Financials</dt>
+                <dd>Five years of income statement, balance sheet, and cash flow, pulled the moment you enter a ticker. Every computed subtotal is reconciled against the reported figure — mismatches get flagged, not smoothed over.</dd>
+            </div>
+            <div class="method-row">
+                <dt>Assumptions</dt>
+                <dd>Revenue growth, cost of goods, SG&amp;A, and capital spending are yours to set for each projected year. The quieter drivers — R&amp;D, depreciation, tax, buybacks — default to four-year historical averages until you override them.</dd>
+            </div>
+            <div class="method-row">
+                <dt>Projection</dt>
+                <dd>All three statements are projected together and stay linked. Working capital, PP&amp;E, and depreciation schedules move with your assumptions, and unlevered free cash flow builds up from NOPAT.</dd>
+            </div>
+            <div class="method-row">
+                <dt>Valuation</dt>
+                <dd>WACC is assembled from live beta and treasury data, or your own override. The output is a value per share, the full discounting schedule, and sensitivity grids across discount rate and terminal growth.</dd>
+            </div>
+        </dl>
     </div>
 </section>
 
 <!-- About -->
-<section class="band" id="about">
-    <div class="wrap">
-        <div class="sec-head center">
-            <div class="kicker">Who's behind it</div>
-            <h2 class="serif">A finance student and a CS student, building the tool we wanted.</h2>
-            <p>We started this because we wanted to actually understand how a valuation comes together — not just read a price target someone else produced.</p>
+<section class="about" id="about">
+    <div class="shell about-grid">
+        <div>
+            <h2>Who's behind it.</h2>
+            <div class="about-copy">
+                <p>The Retail Analyst started as a working Excel model — the kind you build to actually learn valuation, not to publish. We rebuilt it as a web tool so the whole thing is inspectable: same logic, same checks, no black box.</p>
+                <p>It's a two-person project between a finance student and a computer science student, and it's still growing.</p>
+            </div>
         </div>
         <div class="people">
             <div class="person">
@@ -286,8 +262,8 @@
                 </div>
                 <div class="nm">Zoom Shields</div>
                 <div class="ln school">Southern Methodist University</div>
-                <div class="ln muted">Dallas, TX</div>
-                <div class="ln muted">Computer Science &amp; Data Science</div>
+                <div class="ln dim">Dallas, TX</div>
+                <div class="ln dim">Computer Science &amp; Data Science</div>
                 <div class="links">
                     <a href="https://www.linkedin.com/in/zoom-shields-89059a33b/" target="_blank" rel="noopener">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
@@ -297,12 +273,12 @@
             </div>
             <div class="person">
                 <div class="photo">
-                    <img src="assets/carson.png" alt="Carson Adams" style="object-position: center 42%;">
+                    <img src="assets/carson.png" alt="Carson Adams" style="object-position: center 55%; transform: scale(1.25);">
                 </div>
                 <div class="nm">Carson Adams</div>
                 <div class="ln school">Oklahoma State University</div>
-                <div class="ln muted">Stillwater, OK</div>
-                <div class="ln muted">Finance</div>
+                <div class="ln dim">Stillwater, OK</div>
+                <div class="ln dim">Finance</div>
                 <div class="links">
                     <a href="https://www.linkedin.com/in/carson-adams-aa8b7928b/" target="_blank" rel="noopener">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
@@ -314,16 +290,10 @@
     </div>
 </section>
 
-<footer>
-    <div class="wrap foot">
+<footer class="site-foot">
+    <div class="shell">
         <div>© 2026 The Retail Analyst</div>
-        <div>
-            <a href="#how">How it works</a>
-            &nbsp;·&nbsp;
-            <a href="#analyze">Analyze a stock</a>
-            &nbsp;·&nbsp;
-            <a href="#about">About</a>
-        </div>
+        <div>For education and research — nothing here is investment advice.</div>
     </div>
 </footer>
 

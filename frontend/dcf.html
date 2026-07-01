@@ -3,100 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DCF Valuation</title>
+    <title>The Retail Analyst — DCF</title>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        body {
-            font-family: -apple-system, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px 60px;
-            background: #f5f5f5;
-        }
-        h1 { color: #1a1a1a; margin-bottom: 4px; }
-        .site-topbar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 28px;
-        }
-        .site-topbar-logo { color: #0f172a; font-size: 16px; font-weight: 800; text-decoration: none; }
-        .site-topbar-logo span { color: #7c3aed; }
-        .site-topbar-links { display: flex; gap: 20px; align-items: center; }
-        .site-topbar-links a { color: #64748b; text-decoration: none; font-size: 13px; font-weight: 500; }
-        .site-topbar-links a:hover { color: #0f172a; }
+        /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
+        main.shell { padding-bottom: 140px; }
 
-        .company-header {
-            background: white; border-radius: 6px; padding: 16px 20px;
-            margin-bottom: 16px; display: flex;
-            justify-content: space-between; align-items: center;
+        /* ── Loading state (matches app.html) ── */
+        .load-state { text-align: center; padding: 130px 28px 0; }
+        .load-ticker {
+            font-size: 38px; font-weight: 600; letter-spacing: 0.08em;
+            color: var(--ink); margin-bottom: 8px;
         }
-        .company-header .name { font-size: 18px; font-weight: 600; }
-        .company-header .price { font-size: 15px; color: #555; }
+        .load-msg { font-size: 15px; color: var(--muted); margin-bottom: 26px; }
+        .load-bar {
+            width: 220px; height: 2px; margin: 0 auto;
+            background: var(--line); overflow: hidden; border-radius: 1px;
+        }
+        .load-bar span {
+            display: block; width: 40%; height: 100%; background: var(--navy);
+            animation: sweep 1.1s ease-in-out infinite alternate;
+        }
+        @keyframes sweep {
+            from { transform: translateX(-60%); }
+            to   { transform: translateX(210%); }
+        }
 
-        .card { background: white; border-radius: 6px; padding: 20px 24px; margin-bottom: 16px; }
+        /* ── Company masthead ── */
+        .masthead {
+            display: flex; align-items: baseline; justify-content: space-between;
+            flex-wrap: wrap; gap: 8px 20px;
+            padding: 30px 0 18px; margin-bottom: 22px;
+            border-bottom: 1px solid var(--line);
+        }
+        .masthead .name {
+            font-family: Georgia, serif; font-size: 25px; font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+        .masthead .price { font-size: 14px; color: var(--muted); }
+        .masthead .price b { color: var(--ink); font-weight: 600; }
+
         .card-title {
-            font-size: 14px; font-weight: 700; color: #1e3a5f;
-            margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.04em;
+            font-family: Georgia, serif;
+            font-size: 18px; font-weight: 700; color: var(--ink);
+            margin: 0 0 14px 0; letter-spacing: -0.2px;
         }
 
         /* --- WACC inputs --- */
-        .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; }
-        .wacc-field label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+        .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 22px; }
+        .wacc-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
         .wacc-field input {
-            width: 100%; padding: 7px 10px; font-size: 14px;
-            border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+            width: 100%; padding: 8px 10px; font-size: 14px;
+            border: 1px solid var(--line); border-radius: 2px;
+            background: #fff; color: var(--ink); text-align: right;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
         }
-        .wacc-field input:focus { outline: none; border-color: #7c3aed; }
-        .run-dcf-btn {
-            padding: 10px 24px; font-size: 14px; background: #7c3aed;
-            color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 14px;
-        }
-        .run-dcf-btn:hover { background: #6d28d9; }
+        .wacc-field input:focus { outline: none; border-color: var(--navy); }
+        .run-dcf-btn { margin-top: 16px; }
 
         /* --- stat cards --- */
-        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-        .stat-card { background: white; border-radius: 6px; padding: 14px 16px; text-align: center; }
-        .stat-card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
-        .stat-card .value { font-size: 22px; font-weight: 700; color: #1e3a5f; margin-top: 4px; }
-        .stat-card .value.undervalued { color: #16a34a; }
-        .stat-card .value.overvalued  { color: #dc2626; }
+        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: 3px; padding: 14px 16px; text-align: center;
+        }
+        .stat-card .label {
+            font-size: 10.5px; color: var(--faint);
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .stat-card .value {
+            font-size: 21px; font-weight: 700; color: var(--navy); margin-top: 4px;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-card .value.undervalued { color: var(--green); }
+        .stat-card .value.overvalued  { color: var(--red); }
 
         /* --- shared table base --- */
         .table-wrap { overflow-x: auto; }
         table {
             width: 100%; border-collapse: collapse;
-            background: white; font-size: 13px;
+            background: var(--card); font-size: 13px;
         }
         th {
-            background: #1e3a5f; color: white; padding: 8px 12px;
+            background: var(--navy); color: #fff; padding: 8px 12px;
             text-align: right; font-weight: 500;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
         }
-        th:first-child { text-align: left; }
-        td { padding: 6px 12px; text-align: right; }
-        td:first-child { text-align: left; color: #333; }
+        th:first-child {
+            text-align: left;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        td {
+            padding: 6px 12px; text-align: right;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        td:first-child {
+            text-align: left; color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
         th + th { border-left: 1px solid rgba(255,255,255,0.15); }
-        td + td { border-left: 1px solid #f0f0f0; }
-        tr + tr td { border-top: 1px solid #f5f5f5; }
-        tr.subtotal td { font-weight: 600; border-top: 1px solid #ddd !important; }
-        tr.tv-row td   { background: #f0f6ff; }
-        tr.total-row td { font-weight: 700; background: #e8eef5; color: #1e3a5f; }
-        tr.wacc-final-row td { background: #1e3a5f; color: white; font-weight: 700; }
+        td + td { border-left: 1px solid #f2eee5; }
+        tr + tr td { border-top: 1px solid #f7f4ee; }
+        tr.subtotal td { font-weight: 600; border-top: 1px solid #d8d2c4 !important; }
+        tr.tv-row td   { background: var(--navy-tint); }
+        tr.total-row td { font-weight: 700; background: var(--paper-2); color: var(--navy); }
+        tr.wacc-final-row td { background: var(--navy); color: #fff; font-weight: 700; }
 
         /* --- WACC schedule 3-panel --- */
         .schedule-three-col {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 18px;
         }
         .schedule-panel-title {
-            font-size: 11px; font-weight: 700; color: #1e3a5f;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            padding-bottom: 6px; border-bottom: 2px solid #1e3a5f; margin-bottom: 10px;
+            font-size: 11px; font-weight: 700; color: var(--navy);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding-bottom: 6px; border-bottom: 2px solid var(--navy); margin-bottom: 10px;
         }
-        .panel-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .panel-table td { padding: 5px 0; border: none; color: #444; }
-        .panel-table td:last-child { text-align: right; font-weight: 600; color: #1e3a5f; }
+        .panel-table { width: 100%; border-collapse: collapse; font-size: 13px; background: transparent; }
+        .panel-table td { padding: 5px 0; border: none !important; color: var(--muted); }
+        .panel-table td:first-child { color: var(--muted); }
+        .panel-table td:last-child { text-align: right; font-weight: 600; color: var(--navy); }
         .panel-table tr:last-child td {
-            font-size: 14px; font-weight: 700; color: #1e3a5f;
-            border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 4px;
+            font-size: 14px; font-weight: 700; color: var(--navy);
+            border-top: 1px solid var(--line) !important; padding-top: 8px;
         }
-        .sched-divider { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+        .sched-divider { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 
         /* --- DCF schedule summary --- */
         .dcf-summary-row {
@@ -105,59 +139,76 @@
 
         /* --- Interest Rate schedule --- */
         .ir-two-col { display: grid; grid-template-columns: 1fr 1.7fr; gap: 24px; }
-        .ir-note { margin-top: 10px; font-size: 12px; color: #555; }
+        .ir-note { margin-top: 10px; font-size: 12px; color: var(--muted); }
+        .ir-note strong { color: var(--navy); }
 
         /* --- Sensitivity tables --- */
-        .sens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px; }
+        .sens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px; }
         .sens-title {
-            font-size: 13px; font-weight: 700; color: #1e3a5f;
-            margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.03em;
+            font-size: 12px; font-weight: 700; color: var(--navy);
+            margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;
         }
         .sens-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .sens-table th {
-            background: #1e3a5f; color: white; padding: 5px 7px;
+            background: var(--navy); color: #fff; padding: 5px 7px;
             text-align: right; font-weight: 500;
         }
         .sens-table th:first-child { text-align: center; min-width: 56px; }
         .sens-table td {
-            padding: 4px 7px; border: 1px solid #e5e7eb;
+            padding: 4px 7px; border: 1px solid var(--line) !important;
             text-align: right; white-space: nowrap;
         }
-        .sens-table td.row-label { background: #1e3a5f; color: white; font-weight: 600; text-align: right; }
-        .sens-table .highlight { background: #d1fae5 !important; color: #065f46; font-weight: 700; }
-        .sens-table .base-col  { background: #f0f6ff; }
+        .sens-table td.row-label { background: var(--navy); color: #fff; font-weight: 600; text-align: right; }
+        .sens-table .highlight { background: var(--green-tint) !important; color: var(--green); font-weight: 700; }
+        .sens-table .base-col  { background: var(--navy-tint); }
 
-        .error-box { background: #fee2e2; color: #dc2626; padding: 16px; border-radius: 6px; }
-        .loading { color: #555; padding: 10px 0; }
+        .loading { color: var(--muted); padding: 10px 0; }
         #dcf-results { display: none; }
-        .neg { color: #dc2626; }
-        .pos { color: #16a34a; }
+        .neg { color: var(--red); }
+        .pos { color: var(--green); }
+        #no-data { margin-top: 26px; }
+
+        @media (max-width: 860px) {
+            .stat-cards, .wacc-grid, .schedule-three-col { grid-template-columns: 1fr 1fr; }
+            .sens-grid, .dcf-summary-row, .ir-two-col { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-<nav class="site-topbar">
-    <a class="site-topbar-logo" href="index.html">The Retail <span>Analyst</span></a>
-    <div class="site-topbar-links">
-        <a href="model.html">← Back to Model</a>
-        <a href="index.html#about">About Us</a>
-        <a href="index.html">Home</a>
+<header class="site-head">
+    <div class="shell wide centered">
+        <a class="brand" href="index.html">The Retail Analyst<span class="dot">.</span></a>
+        <nav class="rail" aria-label="Workflow">
+            <a class="rail-step" href="app.html">Assumptions</a>
+            <span class="rail-sep"></span>
+            <a class="rail-step" href="model.html">Model</a>
+            <span class="rail-sep"></span>
+            <span class="rail-step here">DCF</span>
+        </nav>
+        <div class="head-right"></div>
     </div>
-</nav>
+</header>
 
-<h1>DCF Valuation</h1>
+<main class="shell wide">
+
+<div id="loading" class="load-state" hidden>
+    <div class="load-ticker mono" id="load-ticker"></div>
+    <div class="load-msg">Running the DCF…</div>
+    <div class="load-bar"><span></span></div>
+</div>
 
 <div id="no-data" style="display:none" class="error-box">
-    No projection data found. Please run a projection on the
-    <a href="app.html" style="color:#1d4ed8">input page</a> first.
+    No projection data yet. <a href="index.html">Start from the homepage</a> by entering a ticker,
+    then run a projection.
 </div>
 
 <div id="main-content" style="display:none">
-    <div class="company-header" id="company-header"></div>
+    <div class="masthead" id="company-header"></div>
 
     <!-- DCF Parameters -->
     <div class="card">
-        <p class="card-title">DCF Parameters</p>
+        <p class="card-title">DCF parameters</p>
         <div class="wacc-grid">
             <div class="wacc-field">
                 <label>Risk-Free Rate (10Y Treasury)</label>
@@ -188,7 +239,7 @@
                 <input type="number" id="in-wacc" step="0.01" placeholder="blank = auto">
             </div>
         </div>
-        <button class="run-dcf-btn" id="run-dcf-btn">Run DCF</button>
+        <button class="btn run-dcf-btn" id="run-dcf-btn">Run DCF</button>
     </div>
 
     <div id="dcf-results">
@@ -197,7 +248,7 @@
 
         <!-- Sensitivity Analysis -->
         <div class="card">
-            <p class="card-title">Sensitivity Analysis</p>
+            <p class="card-title">Sensitivity analysis</p>
             <div class="sens-grid">
                 <div>
                     <p class="sens-title">Enterprise Value</p>
@@ -220,23 +271,25 @@
 
         <!-- Schedule 1: WACC Schedule -->
         <div class="card">
-            <p class="card-title">WACC Schedule</p>
+            <p class="card-title">WACC schedule</p>
             <div id="wacc-schedule"></div>
         </div>
 
         <!-- Schedule 2: Discounted Cash Flows Schedule -->
         <div class="card">
-            <p class="card-title">Discounted Cash Flows Schedule</p>
+            <p class="card-title">Discounted cash flows schedule</p>
             <div id="dcf-schedule"></div>
         </div>
 
         <!-- Schedule 3: Interest Rate Schedule -->
         <div class="card">
-            <p class="card-title">Interest Rate Schedule</p>
+            <p class="card-title">Interest rate schedule</p>
             <div id="ir-schedule"></div>
         </div>
     </div>
 </div>
+
+</main>
 
 <script>
     const API = 'http://127.0.0.1:8000';
@@ -586,6 +639,8 @@
         } finally {
             btn.disabled = false;
             btn.textContent = 'Run DCF';
+            document.getElementById('loading').hidden = true;
+            document.getElementById('main-content').style.display = 'block';
         }
     }
 
@@ -603,10 +658,14 @@
             return;
         }
 
-        document.getElementById('main-content').style.display = 'block';
+        // Full-page loading screen while the first DCF run computes;
+        // main content is revealed when runDcf() finishes.
+        document.getElementById('load-ticker').textContent = inputData.ticker;
+        document.getElementById('loading').hidden = false;
+
         document.getElementById('company-header').innerHTML = `
             <span class="name">${inputData.company_name} (${inputData.ticker})</span>
-            <span class="price">Current Price: $${inputData.stock_price}</span>
+            <span class="price mono">Current price <b>$${inputData.stock_price}</b></span>
         `;
 
         document.getElementById('run-dcf-btn').addEventListener('click', runDcf);

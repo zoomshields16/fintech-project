@@ -3,176 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valuation Model — 3-Statement Model</title>
+    <title>The Retail Analyst — Model</title>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, sans-serif;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 20px 60px;
-            background: #f5f5f5;
-        }
+        /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
+        main.shell { padding-bottom: 140px; }
 
-        /* ── Top nav ── */
-        .page-nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 0 16px;
-            border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 4px;
+        /* ── Company masthead ── */
+        .masthead {
+            display: flex; align-items: baseline; justify-content: space-between;
+            flex-wrap: wrap; gap: 8px 20px;
+            padding: 30px 0 18px; margin-bottom: 22px;
+            border-bottom: 1px solid var(--line);
         }
-        .nav-left { display: flex; align-items: center; gap: 18px; }
-        .site-logo { color: #0f172a; font-size: 16px; font-weight: 800; text-decoration: none; }
-        .site-logo span { color: #7c3aed; }
-        .nav-back {
-            color: #64748b;
-            font-size: 13px;
-            text-decoration: none;
+        .masthead .name {
+            font-family: Georgia, serif; font-size: 25px; font-weight: 700;
+            letter-spacing: -0.4px;
         }
-        .nav-back:hover { color: #0f172a; text-decoration: underline; }
-        .nav-right { display: flex; gap: 10px; align-items: center; }
-        .dcf-btn {
-            padding: 9px 20px;
-            font-size: 13px;
-            background: #7c3aed;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .dcf-btn:hover { background: #6d28d9; }
-        .re-run-btn {
-            padding: 9px 18px;
-            font-size: 13px;
-            background: #0f766e;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .re-run-btn:hover { background: #115e59; }
+        .masthead .price { font-size: 14px; color: var(--muted); }
+        .masthead .price b { color: var(--ink); font-weight: 600; }
 
-        /* ── Company header ── */
-        .company-header {
-            background: white;
-            border-radius: 6px;
-            padding: 14px 20px;
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .company-header .name  { font-size: 17px; font-weight: 600; }
-        .company-header .price { font-size: 14px; color: #555; }
-
-        /* ── Tables ── */
-        .table-wrap { overflow-x: auto; }
+        /* ── Tables ──
+           table-layout: fixed + one shared first-column width keeps the year
+           columns vertically aligned across every table on the page. */
         table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 6px;
-            overflow: hidden;
-            font-size: 13px;
+            width: 100%; border-collapse: collapse;
+            background: var(--card); font-size: 12.5px;
+            border: 1px solid var(--line);
+            table-layout: fixed;
         }
+        thead th { position: sticky; top: 60px; z-index: 5; }
         th {
-            background: #1e3a5f;
-            color: white;
-            padding: 8px 12px;
-            text-align: right;
-            font-weight: 500;
-            white-space: nowrap;
+            background: var(--navy); color: #fff;
+            padding: 8px 10px; text-align: right;
+            font-weight: 500; white-space: nowrap; overflow: hidden;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
         }
-        th:first-child { text-align: left; min-width: 220px; }
+        th:first-child {
+            text-align: left; width: 250px; white-space: normal;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
         td {
-            padding: 7px 12px;
-            text-align: right;
-            white-space: nowrap;
+            padding: 6px 10px; text-align: right; white-space: nowrap; overflow: hidden;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
         }
-        td:first-child { text-align: left; color: #333; }
+        td:first-child {
+            text-align: left; color: var(--ink); white-space: normal;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
 
         th + th { border-left: 1px solid rgba(255,255,255,0.15); }
-        td + td { border-left: 1px solid #f0f0f0; }
+        td + td { border-left: 1px solid #f2eee5; }
 
-        tr.section-gap td    { padding: 4px 0; border: none; background: #f5f5f5; }
-        tr.subtotal td       { font-weight: 600; border-top: 1px solid #ddd; }
-        tr.check-row td      { font-weight: 600; border-top: 2px solid #1e3a5f; color: #1e3a5f; }
+        tr.section-gap td    { padding: 4px 0; border: none; background: var(--paper); }
+        tr.subtotal td       { font-weight: 600; border-top: 1px solid #d8d2c4; }
+        tr.check-row td      { font-weight: 600; border-top: 2px solid var(--navy); color: var(--navy); }
         tr.section-header td {
-            background: #e8eef5; color: #1e3a5f;
+            background: var(--paper-2); color: var(--navy);
             font-weight: 700; padding: 6px 12px;
             font-size: 12px; letter-spacing: 0.04em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         tr.sub-header td {
-            background: #f4f7fa; color: #2d4a6e;
+            background: #f7f5ef; color: #3a5578;
             font-weight: 600; padding: 5px 12px; font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         tr.reconcile-row td {
-            font-size: 11px; color: #aaa;
-            padding: 4px 12px; background: #fafafa;
-            border-top: 1px solid #f0f0f0; white-space: normal;
+            font-size: 11px; color: var(--faint);
+            padding: 4px 12px; background: #fbfaf6;
+            border-top: 1px solid #f2eee5; white-space: normal;
         }
 
-        /* projected columns */
-        th.proj     { background: #274f82; }
-        td.proj     { background: #f0f6ff; }
-        tr.subtotal    td.proj { background: #e2eeff; }
-        tr.sub-header  td.proj { background: #eaf2fb; }
-        tr.check-row   td.proj { background: #e2eeff; }
-        th.proj-sep, td.proj-sep { border-left: 3px solid #60a5fa !important; }
+        /* ── Supporting schedules: Excel-style formatting ──
+           Sub-section labels are plain bold text (no fill), driver inputs are
+           boxed, and totals get the accounting top-rule + double underline. */
+        .sched tr.sub-header td {
+            background: transparent; color: var(--ink);
+            font-weight: 700; font-size: 12.5px;
+        }
+        .sched tr.box-top    td:not(:first-child) { border-top: 1.5px solid var(--ink); }
+        .sched tr.box-bottom td:not(:first-child) { border-bottom: 1.5px solid var(--ink); }
+        .sched tr.boxed td:nth-child(2) { border-left: 1.5px solid var(--ink); }
+        .sched tr.boxed td:last-child   { border-right: 1.5px solid var(--ink); }
+        .sched tr.sched-total td { font-weight: 700; }
+        .sched tr.sched-total td:not(:first-child) {
+            border-top: 1.5px solid var(--ink);
+            border-bottom: 3px double var(--ink);
+        }
 
-        .neg  { color: #dc2626; }
-        .pass { color: #16a34a; }
-        .fail { color: #dc2626; font-weight: 600; }
+        /* Historical (actual) columns carry the light tint; projected stay plain */
+        td:not(:first-child):not(.proj) { background: var(--navy-tint); }
+        tr.subtotal  td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
+        tr.check-row td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
 
-        /* ── Labels ── */
+        .neg  { color: var(--red); }
+        .pass { color: var(--green); }
+        .fail { color: var(--red); font-weight: 600; }
+
+        /* ── Statement headings ── */
         .statement-label {
-            font-size: 14px;
-            font-weight: 700;
-            color: #1e3a5f;
-            margin: 20px 0 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
+            font-family: Georgia, serif;
+            font-size: 20px; font-weight: 700; color: var(--ink);
+            letter-spacing: -0.3px;
+            margin: 30px 0 10px;
         }
         .statement-label.divider {
-            color: #888;
-            font-size: 11px;
-            font-weight: 600;
-            border-top: 2px solid #ddd;
-            padding-top: 20px;
-            margin-top: 32px;
+            font-size: 15px; font-style: italic; font-weight: 400;
+            color: var(--muted);
+            border-top: 2px solid var(--line);
+            padding-top: 26px; margin-top: 44px;
         }
 
-        .error-box {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 16px;
-            border-radius: 6px;
-            margin-top: 20px;
-        }
+        .error-box { margin-top: 26px; }
     </style>
 </head>
 <body>
 
-<div class="page-nav">
-    <div class="nav-left">
-        <a class="site-logo" href="index.html">The Retail <span>Analyst</span></a>
-        <a class="nav-back" href="app.html">← Back to Inputs</a>
+<header class="site-head">
+    <div class="shell wide centered">
+        <a class="brand" href="index.html">The Retail Analyst<span class="dot">.</span></a>
+        <nav class="rail" aria-label="Workflow">
+            <a class="rail-step" href="app.html">Assumptions</a>
+            <span class="rail-sep"></span>
+            <span class="rail-step here">Model</span>
+            <span class="rail-sep"></span>
+            <a class="rail-step off" id="rail-dcf">DCF</a>
+        </nav>
+        <div class="head-right">
+            <a class="btn small" href="dcf.html" id="dcf-link" style="display:none">Run the DCF →</a>
+        </div>
     </div>
-    <div class="nav-right">
-        <a class="re-run-btn" href="app.html">Re-run Model</a>
-        <a class="dcf-btn" href="dcf.html" id="dcf-link" style="display:none">Go to DCF →</a>
-    </div>
-</div>
+</header>
 
-<div id="content"></div>
+<main class="shell wide">
+    <div id="content"></div>
+</main>
 
 <script>
     // ── Format helpers ──
@@ -190,7 +158,8 @@
         return val < 0 ? `<span class="neg">(${str})</span>` : str;
     }
     function fmtDays(val) {
-        return val != null ? Math.round(val) + 'd' : '—';
+        if (val == null || val === 0) return '—';
+        return String(Math.round(val));
     }
     function fmtPct(val) {
         return val != null ? (val * 100).toFixed(1) + '%' : '—';
@@ -202,7 +171,11 @@
         return mis.map(([k]) => `<span class="fail">✗ ${k}</span>`).join(' ');
     }
 
-    function gap() { return '<tr class="section-gap"><td colspan="999"></td></tr>'; }
+    // NOTE: with table-layout: fixed, a colspan larger than the real column
+    // count expands the grid and crushes the year columns — so gap() must
+    // span exactly the number of columns on the page (set once per render).
+    let gapCols = 11;
+    function gap() { return `<tr class="section-gap"><td colspan="${gapCols}"></td></tr>`; }
 
     function tdCls(y) {
         if (!y.projected) return '';
@@ -215,8 +188,9 @@
     function subHeader(label, allYears) {
         return `<tr class="sub-header"><td colspan="${allYears.length + 1}">${label}</td></tr>`;
     }
-    function row(label, key, allYears, formatter, isSubtotal) {
-        const cls   = isSubtotal ? ' class="subtotal"' : '';
+    function row(label, key, allYears, formatter, rowCls) {
+        const clsName = rowCls === true ? 'subtotal' : rowCls;   // true kept for back-compat
+        const cls   = clsName ? ` class="${clsName}"` : '';
         const cells = allYears.map(y => `<td${tdCls(y)}>${formatter(y[key])}</td>`).join('');
         return `<tr${cls}><td>${label}</td>${cells}</tr>`;
     }
@@ -255,7 +229,7 @@
         }).join('');
         return `
             <div class="table-wrap">
-                <table>
+                <table class="sched">
                     <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
                     <tbody>${bodyHtml}</tbody>
                 </table>
@@ -278,7 +252,12 @@
             const ap   = bs.accounts_payable    || 0;
             return {
                 date: isYr.date, projected: isYr.projected, isSeparator: isYr.isSeparator,
+                days_in_period: 365,
+                revenue:  rev,
+                cogs_neg: -cogs,
                 ar, inventory: inv, ap,
+                wc_assets: ar + inv,
+                wc_liab:   ap,
                 nwc:      ar + inv - ap,
                 ar_days:  rev  ? ar  / rev  * 365 : null,
                 inv_days: cogs ? inv / cogs * 365 : null,
@@ -294,9 +273,10 @@
             const cf = cfAll[i];
             return {
                 date: isYr.date, projected: isYr.projected, isSeparator: isYr.isSeparator,
+                revenue:   isYr.revenue || 0,
                 beginning: i === 0 ? null : bsAll[i - 1].ppe_net,
                 capex_add: Math.abs(cf.capex || 0),
-                da_less:   cf.depreciation || 0,
+                da_neg:    -(cf.depreciation || 0),
                 ending:    bs.ppe_net,
             };
         });
@@ -348,6 +328,8 @@
         const isAll = projData ? combineYears(isHist, projData.income_statement) : isHist;
         const cfAll = projData ? combineYears(cfHist, projData.cash_flow)        : cfHist;
         const bsAll = projData ? combineYears(bsHist, projData.balance_sheet)    : bsHist;
+
+        gapCols = isAll.length + 1;   // label column + one column per year
 
         // ── Income Statement ──
         const isBody = `
@@ -474,25 +456,37 @@
         const { wcYears, ppeYears, ufcfYears, ratioYears } = computeSchedules(isAll, cfAll, bsAll);
 
         const wcBody = `
-            ${subHeader('Working Capital Balances', wcYears)}
-            ${row('Accounts Receivable',              'ar',         wcYears, fmt)}
+            ${subHeader('Basic Driver', wcYears)}
+            ${row('Days in Period',                    'days_in_period', wcYears, fmtDays, 'boxed box-top')}
+            ${row('Revenue',                           'revenue',    wcYears, fmt, 'boxed')}
+            ${row('COGS',                              'cogs_neg',   wcYears, fmt, 'boxed box-bottom')}
+            ${gap()}
+            ${subHeader('Amounts Per Day', wcYears)}
+            ${row('Accounts Receivable',               'ar_days',    wcYears, fmtDays)}
+            ${row('Inventory',                         'inv_days',   wcYears, fmtDays)}
+            ${row('Accounts Payable',                  'ap_days',    wcYears, fmtDays)}
+            ${gap()}
+            ${subHeader('Total Amounts', wcYears)}
+            ${row('Accounts Receivable',               'ar',         wcYears, fmt)}
             ${row('Inventory',                         'inventory',  wcYears, fmt)}
             ${row('Accounts Payable',                  'ap',         wcYears, fmt)}
+            ${gap()}
+            ${subHeader('Net Working Capital', wcYears)}
+            ${row('Current Assets',                    'wc_assets',  wcYears, fmt)}
+            ${row('Current Liabilities',               'wc_liab',    wcYears, fmt)}
             ${row('Net Working Capital',               'nwc',        wcYears, fmt, true)}
             ${gap()}
-            ${subHeader('Days Outstanding', wcYears)}
-            ${row('Days Sales Outstanding (AR)',       'ar_days',    wcYears, fmtDays)}
-            ${row('Days Inventory Outstanding',        'inv_days',   wcYears, fmtDays)}
-            ${row('Days Payable Outstanding (AP)',     'ap_days',    wcYears, fmtDays)}
-            ${gap()}
-            ${row('Change in NWC (cash impact)',       'change_nwc', wcYears, fmt, true)}
+            ${row('Cash from Working Capital Items',   'change_nwc', wcYears, fmt, 'sched-total')}
         `;
 
         const ppeBody = `
-            ${row('Beginning Net PPE',                 'beginning',  ppeYears, fmt)}
-            ${row('(+) Capital Expenditures',          'capex_add',  ppeYears, fmt)}
-            ${row('(−) Depreciation & Amortization',   'da_less',    ppeYears, fmt)}
-            ${row('Ending Net PPE',                    'ending',     ppeYears, fmt, true)}
+            ${row('Revenue',                'revenue',   ppeYears, fmt, 'boxed box-top box-bottom')}
+            ${gap()}
+            ${subHeader('Plant, Property and Equipment', ppeYears)}
+            ${row('Beginning of Period',    'beginning', ppeYears, fmt)}
+            ${row('Capital Expenditures',   'capex_add', ppeYears, fmt)}
+            ${row('Depreciation Expense',   'da_neg',    ppeYears, fmt)}
+            ${row('Net PPE',                'ending',    ppeYears, fmt, 'sched-total')}
         `;
 
         const depBody = `
@@ -523,27 +517,27 @@
         `;
 
         document.getElementById('content').innerHTML = `
-            <div class="company-header">
+            <div class="masthead">
                 <span class="name">${histData.company_name} (${histData.ticker})</span>
-                <span class="price">Price: $${histData.stock_price}</span>
+                <span class="price mono">Current price <b>$${histData.stock_price}</b></span>
             </div>
 
             <p class="statement-label">Income Statement</p>
-            ${buildTable(histData.ticker, isAll, isBody)}
+            ${buildTable('Income Statement', isAll, isBody)}
 
             <p class="statement-label">Cash Flow Statement</p>
-            ${buildTable(histData.ticker, cfAll, cfBody)}
+            ${buildTable('Cash Flow Statement', cfAll, cfBody)}
 
             <p class="statement-label">Balance Sheet</p>
-            ${buildTable(histData.ticker, bsAll, bsBody)}
+            ${buildTable('Balance Sheet', bsAll, bsBody)}
 
-            <p class="statement-label divider">Supporting Schedules</p>
+            <p class="statement-label divider">Supporting schedules</p>
 
-            <p class="statement-label">1 · Working Capital</p>
-            ${buildScheduleTable('Working Capital', wcYears, wcBody)}
+            <p class="statement-label">1 · Working Capital Driver</p>
+            ${buildScheduleTable('Working Capital Driver', wcYears, wcBody)}
 
-            <p class="statement-label">2 · PPE Schedule</p>
-            ${buildScheduleTable('PPE', ppeYears, ppeBody)}
+            <p class="statement-label">2 · Property, Plant and Equipment</p>
+            ${buildScheduleTable('Property, Plant and Equipment', ppeYears, ppeBody)}
 
             <p class="statement-label">3 · Depreciation Driver</p>
             ${buildScheduleTable('D&A', ufcfYears, depBody)}
@@ -555,9 +549,12 @@
             ${buildScheduleTable('Ratios', ratioYears, ratioBody)}
         `;
 
-        // Show DCF button only if projection was run
+        // Enable the DCF step once a projection exists
         if (projData) {
             document.getElementById('dcf-link').style.display = 'inline-block';
+            const railDcf = document.getElementById('rail-dcf');
+            railDcf.classList.remove('off');
+            railDcf.href = 'dcf.html';
         }
     }
 
@@ -569,7 +566,7 @@
         if (!rawHist) {
             document.getElementById('content').innerHTML = `
                 <div class="error-box">
-                    No data found. <a href="app.html" style="color:#1d4ed8">Go back to run the model.</a>
+                    No model data yet. <a href="index.html">Start from the homepage</a> by entering a ticker.
                 </div>`;
             return;
         }
