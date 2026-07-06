@@ -88,6 +88,26 @@
         .sched tr.box-bottom td:not(:first-child) { border-bottom: 1.5px solid var(--ink); }
         .sched tr.boxed td:nth-child(2) { border-left: 1.5px solid var(--ink); }
         .sched tr.boxed td:last-child   { border-right: 1.5px solid var(--ink); }
+        /* Box drawn around the historical (actual) columns only */
+        .sched tr.boxed-hist td:not(:first-child):not(.proj) {
+            border-top: 1.5px solid var(--ink);
+            border-bottom: 1.5px solid var(--ink);
+        }
+        .sched tr.boxed-hist td:nth-child(2)          { border-left: 1.5px solid var(--ink); }
+        .sched tr.boxed-hist td:not(.proj) + td.proj  { border-left: 1.5px solid var(--ink); }
+        .sched tr.boxed-hist td:last-child:not(.proj) { border-right: 1.5px solid var(--ink); }
+        /* Bold values (Depreciation Driver % row) */
+        .sched tr.bold-vals td:not(:first-child) { font-weight: 700; }
+        /* Single-cell average total: value in first data column, ruled + double-underlined */
+        .sched tr.avg-row td:nth-child(2) {
+            border-top: 1.5px solid var(--ink);
+            border-bottom: 3px double var(--ink);
+        }
+
+        /* Schedule highlight bands (light gray) */
+        .sched tr.tint-hist td:not(:first-child):not(.proj) { background: #ebebe8; }
+        .sched tr.tint-proj td.proj                          { background: #ebebe8; }
+        .sched tr.tint-all  td:not(:first-child)             { background: #ebebe8; }
         .sched tr.sched-total td { font-weight: 700; }
         .sched tr.sched-total td:not(:first-child) {
             border-top: 1.5px solid var(--ink);
@@ -199,6 +219,19 @@
         const cells = allYears.map(y => `<td${tdCls(y)}>$-</td>`).join('');
         return `<tr><td>${label}</td>${cells}</tr>`;
     }
+    // Fills historical columns only; projected columns stay blank.
+    function histRow(label, key, allYears, formatter, rowCls) {
+        const cls   = rowCls ? ` class="${rowCls}"` : '';
+        const cells = allYears.map(y =>
+            `<td${tdCls(y)}>${y.projected ? '' : formatter(y[key])}</td>`).join('');
+        return `<tr${cls}><td>${label}</td>${cells}</tr>`;
+    }
+    // Single value shown in the first data column only (e.g. "average 3 years").
+    function avgRow(label, value, allYears, formatter) {
+        const cells = allYears.map((y, i) =>
+            `<td${tdCls(y)}>${i === 0 ? formatter(value) : ''}</td>`).join('');
+        return `<tr class="avg-row"><td>${label}</td>${cells}</tr>`;
+    }
 
     function buildTable(headerLabel, allYears, bodyHtml) {
         const headerCells = allYears.map(y => {
@@ -222,7 +255,14 @@
             </div>`;
     }
 
-    function buildScheduleTable(headerLabel, allYears, bodyHtml) {
+    // fullYearCount lets a schedule show fewer year columns than the rest of the
+    // page while keeping each column the same width — the table ends early and
+    // leaves blank space to the right instead of stretching to fill the row.
+    function buildScheduleTable(headerLabel, allYears, bodyHtml, fullYearCount) {
+        const total = fullYearCount || allYears.length;
+        const widthStyle = total !== allYears.length
+            ? ` style="width: calc(250px + (100% - 250px) * ${allYears.length} / ${total});"`
+            : '';
         const headerCells = allYears.map(y => {
             const cls   = y.projected ? (y.isSeparator ? ' class="proj proj-sep"' : ' class="proj"') : '';
             const label = y.date.slice(0, 4) + (y.projected ? 'E' : '');
@@ -230,7 +270,7 @@
         }).join('');
         return `
             <div class="table-wrap">
-                <table class="sched">
+                <table class="sched"${widthStyle}>
                     <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
                     <tbody>${bodyHtml}</tbody>
                 </table>
@@ -453,59 +493,59 @@
             ${row('COGS',                              'cogs_neg',   wcYears, fmt, 'boxed box-bottom')}
             ${gap()}
             ${subHeader('Amounts Per Day', wcYears)}
-            ${row('Accounts Receivable',               'ar_days',    wcYears, fmtDays)}
-            ${row('Inventory',                         'inv_days',   wcYears, fmtDays)}
-            ${row('Accounts Payable',                  'ap_days',    wcYears, fmtDays)}
+            ${row('Accounts Receivable',               'ar_days',    wcYears, fmtDays, 'tint-hist')}
+            ${row('Inventory',                         'inv_days',   wcYears, fmtDays, 'tint-hist')}
+            ${row('Accounts Payable',                  'ap_days',    wcYears, fmtDays, 'tint-hist')}
             ${gap()}
             ${subHeader('Total Amounts', wcYears)}
-            ${row('Accounts Receivable',               'ar',         wcYears, fmt)}
-            ${row('Inventory',                         'inventory',  wcYears, fmt)}
-            ${row('Accounts Payable',                  'ap',         wcYears, fmt)}
+            ${row('Accounts Receivable',               'ar',         wcYears, fmt, 'tint-proj')}
+            ${row('Inventory',                         'inventory',  wcYears, fmt, 'tint-proj')}
+            ${row('Accounts Payable',                  'ap',         wcYears, fmt, 'tint-proj')}
             ${gap()}
             ${subHeader('Net Working Capital', wcYears)}
-            ${row('Current Assets',                    'wc_assets',  wcYears, fmt)}
-            ${row('Current Liabilities',               'wc_liab',    wcYears, fmt)}
-            ${row('Net Working Capital',               'nwc',        wcYears, fmt, true)}
+            ${row('Current Assets',                    'wc_assets',  wcYears, fmt, 'tint-all')}
+            ${row('Current Liabilities',               'wc_liab',    wcYears, fmt, 'tint-all')}
+            ${row('Net Working Capital',               'nwc',        wcYears, fmt, 'subtotal tint-all')}
             ${gap()}
             ${row('Cash from Working Capital Items',   'change_nwc', wcYears, fmt, 'sched-total')}
         `;
 
         const ppeBody = `
-            ${row('Revenue',                'revenue',   ppeYears, fmt, 'boxed box-top box-bottom')}
+            ${gap()}
+            ${row('Revenue',                'revenue',   ppeYears, fmt, 'boxed-hist')}
             ${gap()}
             ${subHeader('Plant, Property and Equipment', ppeYears)}
-            ${row('Beginning of Period',    'beginning', ppeYears, fmt)}
-            ${row('Capital Expenditures',   'capex_add', ppeYears, fmt)}
-            ${row('Depreciation Expense',   'da_neg',    ppeYears, fmt)}
-            ${row('Net PPE',                'ending',    ppeYears, fmt, 'sched-total')}
+            ${row('Beginning of Period',    'beginning', ppeYears, fmt, 'tint-proj')}
+            ${row('Capital Expenditures',   'capex_add', ppeYears, fmt, 'tint-proj')}
+            ${row('Depreciation Expense',   'da_neg',    ppeYears, fmt, 'tint-proj')}
+            ${row('Net PPE',                'ending',    ppeYears, fmt, 'sched-total tint-proj')}
         `;
 
+        // Depreciation Driver shows historical years only — its columns are sized
+        // to match the full-width schedules so they still line up (see fullYearCount).
+        const depYears  = ratioYears.filter(y => !y.projected);
+        const depGap    = `<tr class="section-gap"><td colspan="${depYears.length + 1}"></td></tr>`;
+        const histDaPct = depYears.filter(y => y.da_pct != null).map(y => y.da_pct);
+        const last3     = histDaPct.slice(-3);
+        const depAvg3   = last3.length ? last3.reduce((a, b) => a + b, 0) / last3.length : null;
+
         const depBody = `
-            ${row('Depreciation & Amortization',       'da',         ufcfYears,  fmt)}
-            ${row('Revenue',                           'ebit',       isAll,      fmt)}
-            ${row('D&A as % of Revenue',               'da_pct',     ratioYears, fmtPct, true)}
+            ${depGap}
+            ${row('Depreciation as a % of Revenue', 'da_pct', depYears, fmtPct, 'boxed-hist tint-hist bold-vals')}
+            ${depGap}
+            ${avgRow('average 3 years', depAvg3, depYears, fmtPct)}
         `;
 
         const ufcfBody = `
-            ${row('EBIT (Operating Income)',            'ebit',        ufcfYears, fmt)}
-            ${row('Effective Tax Rate',                 'tax_rate',    ufcfYears, fmtPct)}
-            ${row('NOPAT  =  EBIT × (1 − t)',          'nopat',       ufcfYears, fmt, true)}
             ${gap()}
-            ${row('(+) Depreciation & Amortization',   'da',          ufcfYears, fmt)}
-            ${row('(+) Capital Expenditures',          'capex',       ufcfYears, fmt)}
-            ${row('(±) Change in Net Working Capital', 'change_nwc',  ufcfYears, fmt)}
-            ${row('Unlevered FCF  — Carson formula',   'ufcf_carson', ufcfYears, fmt, true)}
+            ${row('EBIT × (1 − Tax Rate)',              'nopat',       ufcfYears, fmt, 'boxed box-top')}
+            ${row('Depreciation and Amortization',      'da',          ufcfYears, fmt, 'boxed')}
+            ${row('Less: Capital Expenditures',         'capex',       ufcfYears, fmt, 'boxed')}
+            ${row('Less: Change in Net Working Capital','change_nwc',  ufcfYears, fmt, 'boxed box-bottom')}
             ${gap()}
-            ${row('Free Cash Flow  — CF Statement',    'ufcf_cf',     ufcfYears, fmt, true)}
+            ${row('Unlevered Free Cash Flow',           'ufcf_carson', ufcfYears, fmt, 'sched-total')}
         `;
 
-        const ratioBody = `
-            ${row('SBC % of Revenue',                  'sbc_pct',     ratioYears, fmtPct)}
-            ${row('D&A % of Revenue',                  'da_pct',      ratioYears, fmtPct)}
-            ${row('CapEx % of Revenue',                'capex_pct',   ratioYears, fmtPct)}
-            ${row('Effective Tax Rate',                'tax_rate',    ratioYears, fmtPct)}
-            ${row('Buyback % of Revenue',              'buyback_pct', ratioYears, fmtPct)}
-        `;
 
         document.getElementById('content').innerHTML = `
             <div class="masthead">
@@ -531,13 +571,10 @@
             ${buildScheduleTable('Property, Plant and Equipment', ppeYears, ppeBody)}
 
             <p class="statement-label">3 · Depreciation Driver</p>
-            ${buildScheduleTable('D&A', ufcfYears, depBody)}
+            ${buildScheduleTable('Depreciation Driver', depYears, depBody, gapCols - 1)}
 
             <p class="statement-label">4 · UFCF Build-Up</p>
             ${buildScheduleTable('UFCF', ufcfYears, ufcfBody)}
-
-            <p class="statement-label">5 · Key Ratio Summary</p>
-            ${buildScheduleTable('Ratios', ratioYears, ratioBody)}
         `;
 
         // Enable the DCF step once a projection exists
