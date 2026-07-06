@@ -63,32 +63,51 @@ def compute_cf_formula_lines(a):
     other_adjustments = s(a["deferred_tax"]) + s(a["other_noncash"])
     operating_cf = (s(a["net_income"]) + s(a["depreciation"]) + s(a["stock_comp"]) +
                     other_adjustments + change_in_wc)
-    investing_cf = (s(a["capex"]) + s(a["acquisitions"]) + s(a["purchases_investments"]) +
-                    s(a["sales_investments"]) + s(a["other_investing"]))
-    financing_cf = (s(a["long_term_debt"]) + s(a["short_term_debt"]) +
-                    s(a["stock_repurchased"]) + s(a["stock_issued"]) +
-                    s(a["dividends_paid"]) + s(a["other_financing"]))
+    # Model total: investing activities are modeled as capex only (per Carson's template).
+    # The full sum is kept separately so reconcile can still validate the mapping vs FMP.
+    investing_cf = s(a["capex"])
+    investing_cf_full = (s(a["capex"]) + s(a["acquisitions"]) + s(a["purchases_investments"]) +
+                         s(a["sales_investments"]) + s(a["other_investing"]))
+    # Model total: financing activities are modeled as buybacks + dividends only
+    # (per Carson's template). Full sum kept for the FMP reconcile.
+    financing_cf = s(a["stock_repurchased"]) + s(a["dividends_paid"])
+    financing_cf_full = (s(a["long_term_debt"]) + s(a["short_term_debt"]) +
+                         s(a["stock_repurchased"]) + s(a["stock_issued"]) +
+                         s(a["dividends_paid"]) + s(a["other_financing"]))
     # capex is already negative in FMP, so adding it reduces operating CF to get FCF
     free_cash_flow = operating_cf + s(a["capex"])
-    net_change_cash = operating_cf + investing_cf + financing_cf + s(a["fx_effect"])
+    # Modeled change in cash (no FX line, matching Carson's template);
+    # actual cash balances still come from FMP so the balance sheet balances.
+    net_change_cash = operating_cf + investing_cf + financing_cf
+    net_change_cash_full = operating_cf + investing_cf_full + financing_cf_full + s(a["fx_effect"])
 
     return {
         "other_adjustments": other_adjustments,
         "change_in_wc": change_in_wc,
         "operating_cf": operating_cf,
         "investing_cf": investing_cf,
+        "investing_cf_full": investing_cf_full,
         "financing_cf": financing_cf,
+        "financing_cf_full": financing_cf_full,
         "free_cash_flow": free_cash_flow,
         "net_change_cash": net_change_cash,
+        "net_change_cash_full": net_change_cash_full,
     }
 
 
 def reconcile_cf(cf_record, computed):
     """Compare our computed CF subtotals against FMP's reported values."""
+    # investing_cf/net_change_cash are model totals (capex-only investing);
+    # reconcile against the full sums so the check still validates the mapping.
+    reconcile_key = {
+        "investing_cf": "investing_cf_full",
+        "financing_cf": "financing_cf_full",
+        "net_change_cash": "net_change_cash_full",
+    }
     reported = pull_accounts_priority(cf_record, CF_CHECK_ACCOUNTS)
     results = {}
     for line, rep_val in reported.items():
-        ours = computed.get(line)
+        ours = computed.get(reconcile_key.get(line, line))
         if rep_val is None or ours is None:
             results[line] = "no reported value"
         elif abs(ours - rep_val) < 1:

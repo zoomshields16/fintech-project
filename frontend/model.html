@@ -94,10 +94,11 @@
             border-bottom: 3px double var(--ink);
         }
 
-        /* Historical (actual) columns carry the light tint; projected stay plain */
-        td:not(:first-child):not(.proj) { background: var(--navy-tint); }
-        tr.subtotal  td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
-        tr.check-row td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
+        /* Historical (actual) columns carry the light tint; projected stay plain.
+           Supporting schedules (.sched) get no tint at all. */
+        table:not(.sched) td:not(:first-child):not(.proj) { background: var(--navy-tint); }
+        table:not(.sched) tr.subtotal  td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
+        table:not(.sched) tr.check-row td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
 
         .neg  { color: var(--red); }
         .pass { color: var(--green); }
@@ -374,23 +375,13 @@
             ${gap()}
             ${sectionHeader('INVESTING ACTIVITIES', cfAll)}
             ${row('Capital Expenditures',                              'capex',                 cfAll, fmt)}
-            ${zeroRow('Proceeds from Sale of PP&E',                     cfAll)}
-            ${row('Acquisitions',                                      'acquisitions',          cfAll, fmt)}
-            ${row('Purchases of Investments',                          'purchases_investments', cfAll, fmt)}
-            ${row('Proceeds from Sale of Investments',                 'sales_investments',     cfAll, fmt)}
-            ${row('Other Investing Activities',                        'other_investing',       cfAll, fmt)}
             ${row('Net Cash from Investing Activities',                'investing_cf',          cfAll, fmt, true)}
             ${gap()}
             ${sectionHeader('FINANCING ACTIVITIES', cfAll)}
-            ${row('Proceeds from Long-Term Debt',                      'long_term_debt',        cfAll, fmt)}
-            ${row('Proceeds from Short-Term Borrowings',               'short_term_debt',       cfAll, fmt)}
-            ${row('Share Repurchases',                                 'stock_repurchased',     cfAll, fmt)}
-            ${row('Issuance of Common Stock',                          'stock_issued',          cfAll, fmt)}
-            ${row('Dividends Paid',                                    'dividends_paid',        cfAll, fmt)}
-            ${row('Other Financing Activities',                        'other_financing',       cfAll, fmt)}
+            ${row('Share Buy Back',                                    'stock_repurchased',     cfAll, fmt)}
+            ${row('Dividends',                                         'dividends_paid',        cfAll, fmt)}
             ${row('Net Cash from Financing Activities',                'financing_cf',          cfAll, fmt, true)}
             ${gap()}
-            ${row('Effect of Exchange Rate Changes',                   'fx_effect',             cfAll, fmt)}
             ${row('Net Change in Cash',                                'net_change_cash',       cfAll, fmt)}
             ${row('Cash at Beginning of Period',                       'cash_beginning',        cfAll, fmt)}
             ${row('Cash at End of Period',                             'cash_end',              cfAll, fmt)}

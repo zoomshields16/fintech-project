@@ -97,16 +97,7 @@ def project_cash_flow(projected_is, last_cf_actuals, drivers):
     change_inv    = _s(last_cf_actuals.get("change_inventory"))
     change_ap     = _s(last_cf_actuals.get("change_ap"))
     other_wc      = _s(last_cf_actuals.get("other_wc"))
-    acquisitions  = _s(last_cf_actuals.get("acquisitions"))
-    purchases_inv = _s(last_cf_actuals.get("purchases_investments"))
-    sales_inv     = _s(last_cf_actuals.get("sales_investments"))
-    other_inv     = _s(last_cf_actuals.get("other_investing"))
-    lt_debt       = _s(last_cf_actuals.get("long_term_debt"))
-    st_debt       = _s(last_cf_actuals.get("short_term_debt"))
-    issued        = _s(last_cf_actuals.get("stock_issued"))
     dividends     = _s(last_cf_actuals.get("dividends_paid"))
-    other_fin     = _s(last_cf_actuals.get("other_financing"))
-    fx            = _s(last_cf_actuals.get("fx_effect"))
 
     years = []
     for i, is_yr in enumerate(projected_is):
@@ -118,10 +109,12 @@ def project_cash_flow(projected_is, last_cf_actuals, drivers):
         repurchased  = -(revenue * buyback_pct[i]) if buyback_pct is not None else repurch_held
 
         operating_cf    = net_income + depreciation + stock_comp + other_adj + change_ar + change_inv + change_ap + other_wc
-        investing_cf    = capex + acquisitions + purchases_inv + sales_inv + other_inv
-        financing_cf    = lt_debt + st_debt + repurchased + issued + dividends + other_fin
+        # Investing activities are modeled as capex only (per Carson's template)
+        investing_cf    = capex
+        # Financing activities are modeled as buybacks + dividends only (per Carson's template)
+        financing_cf    = repurchased + dividends
         free_cash_flow  = operating_cf + capex
-        net_change_cash = operating_cf + investing_cf + financing_cf + fx
+        net_change_cash = operating_cf + investing_cf + financing_cf
 
         years.append({
             "date":                  is_yr["date"],
@@ -136,19 +129,10 @@ def project_cash_flow(projected_is, last_cf_actuals, drivers):
             "other_wc":              other_wc,
             "operating_cf":          operating_cf,
             "capex":                 capex,
-            "acquisitions":          acquisitions,
-            "purchases_investments": purchases_inv,
-            "sales_investments":     sales_inv,
-            "other_investing":       other_inv,
             "investing_cf":          investing_cf,
-            "long_term_debt":        lt_debt,
-            "short_term_debt":       st_debt,
             "stock_repurchased":     repurchased,
-            "stock_issued":          issued,
             "dividends_paid":        dividends,
-            "other_financing":       other_fin,
             "financing_cf":          financing_cf,
-            "fx_effect":             fx,
             "net_change_cash":       net_change_cash,
             "cash_beginning":        None,
             "cash_end":              None,

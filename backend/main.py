@@ -103,23 +103,14 @@ def run_model(request: ModelRequest):
             "change_ap":            cf_accounts["change_ap"],
             "other_wc":             cf_accounts["other_wc"],
             "operating_cf":         cf_formulas["operating_cf"],
-            # Investing
+            # Investing — modeled as capex only; the full FMP sum stays in the reconcile
             "capex":                cf_accounts["capex"],
-            "acquisitions":         cf_accounts["acquisitions"],
-            "purchases_investments":cf_accounts["purchases_investments"],
-            "sales_investments":    cf_accounts["sales_investments"],
-            "other_investing":      cf_accounts["other_investing"],
             "investing_cf":         cf_formulas["investing_cf"],
-            # Financing
-            "long_term_debt":       cf_accounts["long_term_debt"],
-            "short_term_debt":      cf_accounts["short_term_debt"],
+            # Financing — modeled as buybacks + dividends only; full FMP sum stays in the reconcile
             "stock_repurchased":    cf_accounts["stock_repurchased"],
-            "stock_issued":         cf_accounts["stock_issued"],
             "dividends_paid":       cf_accounts["dividends_paid"],
-            "other_financing":      cf_accounts["other_financing"],
             "financing_cf":         cf_formulas["financing_cf"],
-            # Summary
-            "fx_effect":            cf_accounts["fx_effect"],
+            # Summary — modeled change in cash; cash balances stay FMP actuals
             "net_change_cash":      cf_formulas["net_change_cash"],
             "cash_beginning":       cf_accounts["cash_beginning"],
             "cash_end":             cf_accounts["cash_end"],
