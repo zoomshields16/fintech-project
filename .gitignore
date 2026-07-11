@@ -10,6 +10,9 @@ env/
 .env
 .env.local
 
+# Local SQLite database
+*.db
+
 # Excel temp files
 ~$*.xlsx
 

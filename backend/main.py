@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-from fmp_test import get_financials, extract_profile
+from fmp_test import extract_profile
+from data_source import get_financials_cached
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import pull_bs_accounts, compute_bs_formula_lines, reconcile_bs
@@ -40,9 +41,11 @@ def run_model(request: ModelRequest):
     ticker = request.ticker.upper()
 
     try:
-        data = get_financials(ticker)
+        data, from_cache = get_financials_cached(ticker)
     except Exception as e:
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
+
+    print(f"[run-model] {ticker}: {'CACHE HIT (no FMP call)' if from_cache else 'CACHE MISS -> fetched from FMP'}")
 
     profile = extract_profile(data["profile"])
 
@@ -229,7 +232,7 @@ def run_projection(request: ProjectionRequest):
     }
 
     try:
-        data = get_financials(ticker)
+        data, _ = get_financials_cached(ticker)
     except Exception as e:
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
 
@@ -293,7 +296,7 @@ class DCFRequest(BaseModel):
 def run_dcf_endpoint(request: DCFRequest):
     ticker = request.ticker.upper()
     try:
-        data = get_financials(ticker)
+        data, _ = get_financials_cached(ticker)
     except Exception as e:
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
 
