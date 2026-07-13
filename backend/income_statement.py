@@ -1,41 +1,70 @@
-# Carson's IS Synonym Map — logic is final, synonyms get added over time.
-# Each "detail" line lists the FMP field names that mean that line.
-# The code tries each synonym until one is found in the company's data.
+# Income statement engine.
+#
+# Mapping rules come from mappings.json (exported from Carson's workbook by
+# export_mappings.py) and are resolved per ticker by mapping_engine. This file only
+# owns: the translation from Carson's model-line names to the app's snake_case keys,
+# the subtotal formulas, and the reconcile against FMP's reported figures.
 
-from statement_engine import find_value_first_match as find_value
+from checks import compare_line, to_display
+from mapping_engine import (
+    resolve_active,
+    resolve_line_value,
+    pull_aliased,
+    fiscal_year,
+)
 
-DETAIL_ACCOUNTS = {
-    "date": ["fiscalYear", "date", "period"],
-    "revenue": ["revenue", "totalRevenue", "sales", "netSales"],
-    "cogs": ["costOfRevenue", "costOfGoodsSold", "costOfSales"],
-    "sga": ["sellingGeneralAndAdministrativeExpenses", "sellingAndMarketingExpenses",
-            "generalAndAdministrativeExpenses", "sellingExpense"],
-    "rnd": ["researchAndDevelopmentExpenses"],
-    "other_opex": ["otherExpenses", "otherOperatingExpenses"],
-    "interest_income": ["interestIncome"],
-    "interest_expense": ["interestExpense"],
-    "other_income": ["totalOtherIncomeExpensesNet"],
-    "income_tax": ["incomeTaxExpense", "incomeTaxExpenseBenefit"],
-    "eps": ["eps"],
-    "eps_diluted": ["epsDiluted"],
+STATEMENT = "income_statement"
+
+# snake_case key -> Carson model line(s) feeding it
+IS_ALIASES = {
+    "revenue":          ["Revenue"],
+    "cogs":             ["Cost of Goods Sold"],
+    "sga":              ["SG&A"],
+    "rnd":              ["Research & Development"],
+    "interest_income":  ["Interest Income"],
+    "interest_expense": ["Interest Expense"],
+    "other_income":     ["Other Income (Expense)"],
+    "income_tax":       ["Income Tax Expense"],
+    "eps":              ["Earnings Per Share"],
+    "eps_diluted":      ["Diluted Earnings Per Share"],
 }
 
-# Reported values pulled ONLY to check our computed subtotals against.
-CHECK_ACCOUNTS = {
-    "gross_profit_reported": ["grossProfit"],
-    "operating_income_reported": ["operatingIncome", "ebit"],
-    "pretax_reported": ["incomeBeforeTax"],
-    "net_income_reported": ["netIncome", "bottomLineNetIncome"],
-    "ebitda_reported": ["ebitda"],
+# Reconcile targets: our computed subtotal -> Carson's reported-check model line
+IS_CHECK_LINES = {
+    "gross_profit":     "Gross Profit (reported)",
+    "operating_income": "Operating Income (reported)",
+    "pretax_income":    "Pretax Income (reported)",
+    "net_income":       "Net Income (reported)",
 }
 
 
-def pull_detail_accounts(income_record):
-    """Pull every Direct Detail Account from one year's income statement."""
-    result = {}
-    for line_name, synonyms in DETAIL_ACCOUNTS.items():
-        result[line_name] = find_value(income_record, synonyms)
-    return result
+def pull_detail_accounts(income_record, records=None, ticker=None):
+    """Pull one year's detail lines. `records` is the full history — synonym
+    resolution needs all years (HasData spans the whole history), so passing a
+    single year weakens it to what that year happens to contain."""
+    records = records if records is not None else [income_record]
+
+    a = pull_aliased(STATEMENT, income_record, records, IS_ALIASES, ticker)
+
+    # FMP's totalOtherIncomeExpensesNet INCLUDES interest income/expense. The model
+    # shows interest on its own lines, so when that synonym wins, interest is netted
+    # back out of Other Income — otherwise pretax income counts interest twice.
+    # (Carson's built sheet does exactly this; the fallback synonym already excludes
+    # interest, so it needs no netting.)
+    other_rows = resolve_active(STATEMENT, records).get("Other Income (Expense)", [])
+    if any(r["synonym"] == "totalOtherIncomeExpensesNet" for r in other_rows):
+        a["other_income"] = a["other_income"] - a["interest_income"] + a["interest_expense"]
+
+    # Other Operating Expenses is a cross-check line in Carson's map (no Detail
+    # anchor), but the built statement still adds it into Total OpEx.
+    other_opex = resolve_line_value(STATEMENT, "Other Operating Expenses", income_record, records)
+    a["other_opex"] = other_opex if other_opex is not None else 0.0
+
+    a["date"] = (income_record.get("fiscalYear")
+                 or income_record.get("date")
+                 or income_record.get("period"))
+    return a
+
 
 def compute_formula_lines(a):
     """Compute subtotals from detail accounts. 'a' = pulled detail accounts."""
@@ -52,43 +81,17 @@ def compute_formula_lines(a):
         "net_income": net_income,
     }
 
-def reconcile(income_record, computed):
-    """Compare our computed subtotals against FMP's reported values."""
-    checks = {
-        "gross_profit": find_value(income_record, CHECK_ACCOUNTS["gross_profit_reported"]),
-        "operating_income": find_value(income_record, CHECK_ACCOUNTS["operating_income_reported"]),
-        "pretax_income": find_value(income_record, CHECK_ACCOUNTS["pretax_reported"]),
-        "net_income": find_value(income_record, CHECK_ACCOUNTS["net_income_reported"]),
-    }
-    results = {}
-    for line, reported in checks.items():
-        ours = computed[line]
-        if reported is None:
-            results[line] = "no reported value"
-        elif abs(ours - reported) < 1:
-            results[line] = "MATCH"
-        else:
-            results[line] = f"MISMATCH (ours={ours}, reported={reported})"
-    return results
 
-if __name__ == "__main__":
-    from fmp_test import get_financials
+def reconcile_rows(income_record, computed, records=None):
+    """Structured reconcile results — one row per line item. Persisted to check_results."""
+    records = records if records is not None else [income_record]
+    return [
+        compare_line(line, computed.get(line),
+                     resolve_line_value(STATEMENT, check_line, income_record, records))
+        for line, check_line in IS_CHECK_LINES.items()
+    ]
 
-    data = get_financials("AAPL")
-    latest_year = data["income_statement"][0]
 
-    accounts = pull_detail_accounts(latest_year)
-    formulas = compute_formula_lines(accounts)
-
-    print("--- AAPL detail accounts ---")
-    for line, value in accounts.items():
-        print(f"{line}: {value}")
-
-    print("\n--- AAPL computed subtotals ---")
-    for line, value in formulas.items():
-        print(f"{line}: {value}")
-
-    checks = reconcile(latest_year, formulas)
-    print("\n--- Reconciliation vs FMP reported ---")
-    for line, status in checks.items():
-        print(f"{line}: {status}")
+def reconcile(income_record, computed, records=None):
+    """Compare our computed subtotals against FMP's reported values (display form)."""
+    return to_display(reconcile_rows(income_record, computed, records), thousands=False)

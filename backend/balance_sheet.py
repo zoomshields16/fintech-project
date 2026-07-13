@@ -1,58 +1,76 @@
-# Carson's BS Synonym Map — 0/1/2 priority logic.
-# TO UPDATE: only edit BS_DETAIL_ACCOUNTS and BS_CHECK_ACCOUNTS below.
-# Never touch the functions — logic lives in statement_engine.py.
+# Balance sheet engine.
 #
-# Priority: 0=unconditional single source, 1=preferred, 2=fallback
+# Mapping rules come from mappings.json (exported from Carson's workbook) and are
+# resolved per ticker by mapping_engine. This file owns the fold from Carson's
+# model lines down to the app's display keys, the subtotal formulas, and the
+# reconcile against FMP's reported totals.
+#
+# The fold mirrors his Inputs sheet: his map splits some concepts into more lines
+# than the app displays (Short-Term Debt vs Current Portion of LTD, Deferred
+# Revenue, Income Taxes Payable, Operating Lease Liabilities, Tax Assets,
+# Noncontrolling Interest), and each of those folds into the display line his
+# Inputs sheet folds it into — so our subtotals are composed of the same pieces
+# as his.
 
-from statement_engine import pull_accounts_priority
+from checks import compare_line, to_display
+from mapping_engine import pull_aliased, resolve_line_value
 
-BS_DETAIL_ACCOUNTS = {
+STATEMENT = "balance_sheet"
+
+# snake_case key -> Carson model line(s) folded into it
+BS_ALIASES = {
     # --- Current Assets ---
-    "cash_st_investments":  [(1, "cashAndShortTermInvestments"), (2, "cashAndCashEquivalents")],
-    "accounts_receivable":  [(1, "netReceivables"), (2, "accountsReceivables")],
-    "inventory":            [(0, "inventory")],
-    "prepaid":              [(0, "prepaids")],
-    "other_current":        [(0, "otherCurrentAssets")],
+    "cash_st_investments":  ["Cash and Cash Equivalents", "Short-Term Investments"],
+    "accounts_receivable":  ["Accounts Receivable"],
+    "inventory":            ["Inventory"],
+    # Prepaids have no line of their own in Carson's map — his Other Current Assets
+    # pulls prepaids as a Priority-1 tie, so they arrive inside other_current.
+    "other_current":        ["Other Current Assets"],
     # --- Non-Current Assets ---
-    "ppe_net":              [(0, "propertyPlantEquipmentNet")],
-    "goodwill":             [(0, "goodwill")],
-    "intangible_assets":    [(0, "intangibleAssets")],
-    "lt_investments":       [(0, "longTermInvestments")],
-    "other_noncurrent":     [(0, "otherNonCurrentAssets")],
+    "ppe_net":              ["PP&E"],
+    "goodwill":             ["Goodwill"],
+    "intangible_assets":    ["Intangible Assets"],
+    "lt_investments":       ["Long-Term Investments"],
+    "other_noncurrent":     ["Other Long-Term Assets", "Tax Assets"],
     # --- Current Liabilities ---
-    "accounts_payable":     [(1, "accountPayables"), (2, "totalPayables")],
-    "accrued_expenses":     [(0, "accruedExpenses")],
-    "current_ltd":          [(0, "shortTermDebt")],
-    "other_current_liab":   [(0, "otherCurrentLiabilities")],
+    "accounts_payable":     ["Accounts Payable"],
+    "accrued_expenses":     ["Accrued Expenses"],
+    "current_ltd":          ["Current Portion of Long-Term Debt", "Short-Term Debt"],
+    "other_current_liab":   ["Other Current Liabilities", "Deferred Revenue", "Income Taxes Payable"],
     # --- Non-Current Liabilities ---
-    "long_term_debt":       [(0, "longTermDebt")],
-    "deferred_tax_liab":    [(0, "deferredTaxLiabilitiesNonCurrent")],
-    "other_lt_liab":        [(0, "otherNonCurrentLiabilities")],
-    "unearned_revenue_lt":  [(0, "deferredRevenueNonCurrent")],
+    "long_term_debt":       ["Long-Term Debt"],
+    "deferred_tax_liab":    ["Deferred Tax Liabilities"],
+    "other_lt_liab":        ["Other Long-Term Liabilities", "Operating Lease Liabilities"],
+    "unearned_revenue_lt":  ["Deferred Revenue (Non-Current)"],
     # --- Shareholders' Equity ---
-    "common_stock":         [(0, "commonStock")],
-    "apic":                 [(0, "additionalPaidInCapital")],
-    "retained_earnings":    [(0, "retainedEarnings")],
-    "treasury_stock":       [(0, "treasuryStock")],
-    "aoci":                 [(0, "accumulatedOtherComprehensiveIncomeLoss")],
-    "other_equity":         [(0, "otherTotalStockholdersEquity")],
+    "common_stock":         ["Common Stock / APIC"],
+    "apic":                 ["Additional Paid-In Capital"],
+    "retained_earnings":    ["Retained Earnings"],
+    "treasury_stock":       ["Treasury Stock"],
+    "aoci":                 ["AOCI"],
+    "other_equity":         ["Noncontrolling Interest"],
 }
 
-# Keys match computed keys in compute_bs_formula_lines for direct reconciliation lookup
-BS_CHECK_ACCOUNTS = {
-    "total_current_assets":    [(0, "totalCurrentAssets")],
-    "total_noncurrent_assets": [(0, "totalNonCurrentAssets")],
-    "total_assets":            [(0, "totalAssets")],
-    "total_current_liab":      [(0, "totalCurrentLiabilities")],
-    "total_noncurrent_liab":   [(0, "totalNonCurrentLiabilities")],
-    "total_liabilities":       [(0, "totalLiabilities")],
-    "total_equity":            [(1, "totalStockholdersEquity"), (2, "totalEquity")],
-    "total_lae":               [(0, "totalLiabilitiesAndTotalEquity")],
+# Reconcile targets: our computed subtotal -> Carson's reported-check model line.
+# He checks only the totals FMP actually reports; the non-current subtotals are
+# covered transitively by Total Assets / Total Liabilities.
+BS_CHECK_LINES = {
+    "total_current_assets": "Total Current Assets (reported)",
+    "total_assets":         "Total Assets (reported)",
+    "total_current_liab":   "Total Current Liabilities (reported)",
+    "total_liabilities":    "Total Liabilities (reported)",
+    "total_equity":         "Total Equity (reported)",
+    "total_lae":            "Total Liab & Equity (reported)",
 }
 
 
-def pull_bs_accounts(bs_record):
-    return pull_accounts_priority(bs_record, BS_DETAIL_ACCOUNTS)
+def pull_bs_accounts(bs_record, records=None, ticker=None):
+    """Pull one year's detail lines. `records` is the full history — synonym
+    resolution spans all years."""
+    records = records if records is not None else [bs_record]
+    a = pull_aliased(STATEMENT, bs_record, records, BS_ALIASES, ticker)
+    a["prepaid"] = 0.0  # kept for API shape; folded into other_current (see BS_ALIASES)
+    return a
 
 
 def compute_bs_formula_lines(a):
@@ -91,16 +109,16 @@ def compute_bs_formula_lines(a):
     }
 
 
-def reconcile_bs(bs_record, computed):
-    """Compare our computed BS subtotals against FMP's reported values."""
-    reported = pull_accounts_priority(bs_record, BS_CHECK_ACCOUNTS)
-    results = {}
-    for line, rep_val in reported.items():
-        ours = computed.get(line)
-        if rep_val is None or ours is None:
-            results[line] = "no reported value"
-        elif abs(ours - rep_val) < 1:
-            results[line] = "MATCH"
-        else:
-            results[line] = f"MISMATCH (ours={ours:,.0f}, reported={rep_val:,.0f})"
-    return results
+def reconcile_bs_rows(bs_record, computed, records=None):
+    """Structured reconcile results — one row per line item. Persisted to check_results."""
+    records = records if records is not None else [bs_record]
+    return [
+        compare_line(line, computed.get(line),
+                     resolve_line_value(STATEMENT, check_line, bs_record, records))
+        for line, check_line in BS_CHECK_LINES.items()
+    ]
+
+
+def reconcile_bs(bs_record, computed, records=None):
+    """Compare our computed BS subtotals against FMP's reported values (display form)."""
+    return to_display(reconcile_bs_rows(bs_record, computed, records))

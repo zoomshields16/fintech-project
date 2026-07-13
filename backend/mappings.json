@@ -1,0 +1,2028 @@
+{
+ "source": "model 55.xlsm",
+ "statements": {
+  "income_statement": {
+   "master": [
+    {
+     "statement": "IS",
+     "section": "Revenue",
+     "model_line": "Revenue",
+     "synonym": "revenue",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Top line, mapped from Raw_IS"
+    },
+    {
+     "statement": "IS",
+     "section": "COGS",
+     "model_line": "Cost of Goods Sold",
+     "synonym": "costOfRevenue",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Mapped detail"
+    },
+    {
+     "statement": "IS",
+     "section": "Gross Profit",
+     "model_line": "Gross Profit (reported)",
+     "synonym": "grossProfit",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check only \u2014 GP is calculated Rev\u2212COGS"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "SG&A",
+     "synonym": "sellingGeneralAndAdministrativeExpenses",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Combined SG&A (matches Clean_IS)"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "SG&A",
+     "synonym": "generalAndAdministrativeExpenses",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Fallback if combined SG&A blank (ticker resilience)"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Research & Development",
+     "synonym": "researchAndDevelopmentExpenses",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Mapped detail"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Depreciation & Amortization",
+     "synonym": "depreciationAndAmortization",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Reported IS D&A when separately disclosed. MEMO only \u2014 embedded in COGS/SG&A/R&D, not additive to EBIT."
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Depreciation & Amortization",
+     "synonym": "depreciationAndAmortizationExpense",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback (other data sources)."
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Operating Expenses (reported)",
+     "synonym": "operatingExpenses",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check only"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Income",
+     "model_line": "Operating Income (reported)",
+     "synonym": "operatingIncome",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check vs calculated EBIT"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Income",
+     "model_line": "Operating Income (reported)",
+     "synonym": "ebit",
+     "use_type": "Total/Check",
+     "priority": 2,
+     "notes": "Alt check"
+    },
+    {
+     "statement": "IS",
+     "section": "Non-Operating",
+     "model_line": "Interest Income",
+     "synonym": "interestIncome",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Mapped detail"
+    },
+    {
+     "statement": "IS",
+     "section": "Non-Operating",
+     "model_line": "Interest Expense",
+     "synonym": "interestExpense",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Stored positive in Raw_IS; negated in engine output"
+    },
+    {
+     "statement": "IS",
+     "section": "Non-Operating",
+     "model_line": "Other Income (Expense)",
+     "synonym": "totalOtherIncomeExpensesNet",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Net other; engine nets out interest to avoid double count"
+    },
+    {
+     "statement": "IS",
+     "section": "Pretax",
+     "model_line": "Pretax Income (reported)",
+     "synonym": "incomeBeforeTax",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check vs calculated pretax"
+    },
+    {
+     "statement": "IS",
+     "section": "Taxes",
+     "model_line": "Income Tax Expense",
+     "synonym": "incomeTaxExpense",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Mapped detail"
+    },
+    {
+     "statement": "IS",
+     "section": "Net Income",
+     "model_line": "Net Income (reported)",
+     "synonym": "netIncome",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check vs calculated NI"
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Depreciation & Amortization",
+     "synonym": "depreciationAmortizationDepletion",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback (other data sources)."
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Depreciation & Amortization",
+     "synonym": "depreciationExpense",
+     "use_type": "Duplicate/Backup",
+     "priority": 4,
+     "notes": "Synonym fallback (other data sources)."
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Depreciation & Amortization",
+     "synonym": "amortizationExpense",
+     "use_type": "Duplicate/Backup",
+     "priority": 5,
+     "notes": "Synonym fallback (other data sources)."
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "SG&A",
+     "synonym": "sellingAndMarketingExpenses",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Ties with generalAndAdministrativeExpenses (P2): when combined SG&A is missing, S&M + G&A both activate and sum. AAPL unaffected (combined is P1 active)."
+    },
+    {
+     "statement": "IS",
+     "section": "Non-Operating",
+     "model_line": "Other Income (Expense)",
+     "synonym": "nonOperatingIncomeExcludingInterest",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Fallback when totalOtherIncomeExpensesNet is missing. Caveat: engine nets out Interest Income/Expense from this line; this field already excludes interest, so verify if both interest fields have data."
+    },
+    {
+     "statement": "IS",
+     "section": "Operating Expenses",
+     "model_line": "Other Operating Expenses",
+     "synonym": "otherExpenses",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Cross-check only \u2014 engine derives Other OpEx as GP \u2212 SG&A \u2212 R&D \u2212 OpInc(reported), falling back to OpEx(reported) \u2212 SG&A \u2212 R&D when OpInc is missing. Captures operating charges FMP omits from operatingExpenses (TXN/QCOM/STX/MRVL pattern) with no per-ticker reclass. Total/Check keeps this field out of SUMIFS detail builds; no double count."
+    },
+    {
+     "statement": "IS",
+     "section": "Per Share",
+     "model_line": "Earnings Per Share",
+     "synonym": "eps",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Mapped detail"
+    },
+    {
+     "statement": "IS",
+     "section": "Diluted Per Share",
+     "model_line": "Diluted Earnings Per Share",
+     "synonym": "epsDiluted",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Mapped detail"
+    }
+   ],
+   "reclasses": [
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2017,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 104000000.0,
+     "reason": "FMP IS/CF net income decomposition noise; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2018,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -19000000.0,
+     "reason": "FMP IS/CF net income decomposition noise; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2019,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -12000000.0,
+     "reason": "FMP IS/CF net income decomposition noise; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2020,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -1000000.0,
+     "reason": "FMP IS/CF net income decomposition noise; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2022,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -57000000.0,
+     "reason": "FMP IS/CF net income decomposition noise; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2024,
+     "statement": "IS",
+     "source_field": "netIncomeFromDiscontinuedOperations",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -273000000.0,
+     "reason": "Disc. ops in CF top NI but not in IS continuing-ops build; reclass so IS NI matches CF basis. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2019,
+     "statement": "IS",
+     "source_field": "netIncomeDeductions (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -138000000.0,
+     "reason": "FY2019: CF top NI is attributable-to-common (net of NCI in SolarCity/financing funds); align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2020,
+     "statement": "IS",
+     "source_field": "netIncomeDeductions (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -172000000.0,
+     "reason": "FY2020: CF top NI is attributable-to-common (net of NCI in SolarCity/financing funds); align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2021,
+     "statement": "IS",
+     "source_field": "netIncomeDeductions (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -98000000.0,
+     "reason": "FY2021: CF top NI is attributable-to-common (net of NCI in SolarCity/financing funds); align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2022,
+     "statement": "IS",
+     "source_field": "netIncomeDeductions (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -4000000.0,
+     "reason": "FY2022: CF top NI is attributable-to-common (net of NCI in SolarCity/financing funds); align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2023,
+     "statement": "IS",
+     "source_field": "netIncomeDeductions (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 25000000.0,
+     "reason": "FY2023: CF top NI is attributable-to-common (net of NCI in SolarCity/financing funds); align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2024,
+     "statement": "IS",
+     "source_field": "netIncomeDeductions (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -23000000.0,
+     "reason": "FY2024: CF top NI is attributable-to-common (net of NCI in SolarCity/financing funds); align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "MU",
+     "fiscal_year": 2021,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 49000000.0,
+     "reason": "FMP IS/CF net income decomposition noise (FY2021); align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "WMT",
+     "fiscal_year": 2018,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -661000000.0,
+     "reason": "FMP FY2018 IS/CF net income decomposition difference; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "INTC",
+     "fiscal_year": 2017,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 29000000.0,
+     "reason": "FMP IS/CF net income decomposition difference FY2017; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "INTC",
+     "fiscal_year": 2018,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 72000000.0,
+     "reason": "FMP IS/CF net income decomposition difference FY2018; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "INTC",
+     "fiscal_year": 2022,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -2000000.0,
+     "reason": "FMP IS/CF net income decomposition difference FY2022; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "INTC",
+     "fiscal_year": 2023,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 62000000.0,
+     "reason": "FMP IS/CF net income decomposition difference FY2023; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "AMD",
+     "fiscal_year": 2017,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 76000000.0,
+     "reason": "FMP IS/CF NI difference FY2017 (\u2212$76M IS vs CF, rounded to nearest $M; residual under $1M check tolerance). Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2023,
+     "statement": "IS",
+     "source_field": "netIncome attributable (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -142000000.0,
+     "reason": "FY2023: model NI = pretax\u2212tax (incl. NCI $142M); CF top NI is attributable-to-Linde-plc. Align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2024,
+     "statement": "IS",
+     "source_field": "netIncome attributable (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -172000000.0,
+     "reason": "FY2024: NCI $172M in continuing-ops build; CF top NI is attributable-to-Linde-plc. Align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2025,
+     "statement": "IS",
+     "source_field": "netIncome attributable (NCI)",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -74000000.0,
+     "reason": "FY2025: NCI/adjustments $74M gap between continuing-ops build and CF top NI (attributable basis). Align IS NI to CF basis. Special case."
+    },
+    {
+     "ticker": "MRVL",
+     "fiscal_year": 2018,
+     "statement": "IS",
+     "source_field": "FMP tax expense error",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 87689000.0,
+     "reason": "FY2018: FMP shows +$18.1M income tax expense; actual 10-K had ~$69.6M tax BENEFIT (CF top-line NI 520.8M confirms). Align IS NI to CF top-line per precedent. Special case."
+    },
+    {
+     "ticker": "WDC",
+     "fiscal_year": 2023,
+     "statement": "IS",
+     "source_field": "netIncomeFromDiscontinuedOperations",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -782000000.0,
+     "reason": "FY2023: SNDK disc ops (\u2212$782M) in CF top NI but not in IS continuing-ops build; reclass so IS NI matches CF basis. Special case."
+    },
+    {
+     "ticker": "WDC",
+     "fiscal_year": 2024,
+     "statement": "IS",
+     "source_field": "netIncomeFromDiscontinuedOperations",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -33000000.0,
+     "reason": "FY2024: SNDK disc ops (\u2212$33M) in CF top NI but not in IS continuing-ops build; reclass so IS NI matches CF basis. Special case."
+    },
+    {
+     "ticker": "WDC",
+     "fiscal_year": 2025,
+     "statement": "IS",
+     "source_field": "netIncomeFromDiscontinuedOperations",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 246000000.0,
+     "reason": "FY2025: SNDK disc ops (+$246M) in CF top NI but not in IS continuing-ops build; reclass so IS NI matches CF basis. Special case."
+    },
+    {
+     "ticker": "PANW",
+     "fiscal_year": 2018,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -24900000.0,
+     "reason": "FMP FY2018 IS/CF net income decomposition difference; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2017,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -78120000.0,
+     "reason": "FMP FY2017 IS/CF net income decomposition difference (Linear Technology acquisition items); align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2018,
+     "statement": "IS",
+     "source_field": "FMP NI reconciliation",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": -11548000.0,
+     "reason": "FMP FY2018 IS/CF net income decomposition difference; align IS NI to CF top-line. Special case."
+    },
+    {
+     "ticker": "TMUS",
+     "fiscal_year": 2020,
+     "statement": "IS",
+     "source_field": "netIncomeFromDiscontinuedOperations",
+     "from_line": null,
+     "to_line": "Other Income (Expense)",
+     "amount": 320000000.0,
+     "reason": "FY2020: disc ops (+$320M) in CF top NI but not in IS continuing-ops build; reclass so IS NI matches CF basis. Special case."
+    }
+   ]
+  },
+  "balance_sheet": {
+   "master": [
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Cash and Cash Equivalents",
+     "synonym": "cashAndCashEquivalents",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Cash and Cash Equivalents",
+     "synonym": "cashAndShortTermInvestments",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Cash and Cash Equivalents",
+     "synonym": "cashAndCashEquivalentsAtCarryingValue",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Short-Term Investments",
+     "synonym": "shortTermInvestments",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Short-Term Investments",
+     "synonym": "marketableSecurities",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Short-Term Investments",
+     "synonym": "shortTermMarketableSecurities",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Accounts Receivable",
+     "synonym": "netReceivables",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Accounts Receivable",
+     "synonym": "accountsReceivables",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Accounts Receivable",
+     "synonym": "accountsReceivable",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Inventory",
+     "synonym": "inventory",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Other Current Assets",
+     "synonym": "otherCurrentAssets",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Other Current Assets",
+     "synonym": "prepaids",
+     "use_type": "Duplicate/Backup",
+     "priority": 1,
+     "notes": "P1 tie with otherCurrentAssets (both sum). FMP switches between the two fields by year (e.g., NVDA: prepaids FY2017-22, otherCurrentAssets FY2023-26); a lower priority here gets shadowed and drops the data."
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Other Current Assets",
+     "synonym": "prepaidExpensesAndOtherCurrentAssets",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Total Current Assets (reported)",
+     "synonym": "totalCurrentAssets",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "PP&E",
+     "synonym": "propertyPlantEquipmentNet",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "PP&E",
+     "synonym": "netPPE",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "PP&E",
+     "synonym": "propertyPlantAndEquipmentNet",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Goodwill",
+     "synonym": "goodwill",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Intangible Assets",
+     "synonym": "intangibleAssets",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Intangible Assets",
+     "synonym": "goodwillAndIntangibleAssets",
+     "use_type": "Total/Check",
+     "priority": 2,
+     "notes": "Aggregate (GW + intangibles) \u2014 must NOT back up the Intangibles line: when goodwill is mapped separately and intangibles are 0 (e.g., WMT), activating this double-counts goodwill. Total/Check keeps it visible without summing."
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Intangible Assets",
+     "synonym": "intangibleAssetsNet",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Long-Term Investments",
+     "synonym": "longTermInvestments",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Other Long-Term Assets",
+     "synonym": "otherNonCurrentAssets",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Other Long-Term Assets",
+     "synonym": "otherAssets",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Tax Assets",
+     "synonym": "taxAssets",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field (non-current tax assets)"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Assets",
+     "model_line": "Total Assets (reported)",
+     "synonym": "totalAssets",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Accounts Payable",
+     "synonym": "accountPayables",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Accounts Payable",
+     "synonym": "accountsPayable",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Accrued Expenses",
+     "synonym": "accruedExpenses",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Accrued Expenses",
+     "synonym": "accruedLiabilities",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Accrued Expenses",
+     "synonym": "accruedExpensesAndOtherCurrentLiabilities",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Deferred Revenue",
+     "synonym": "deferredRevenue",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Deferred Revenue",
+     "synonym": "deferredRevenueCurrent",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Deferred Revenue",
+     "synonym": "contractLiabilitiesCurrent",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Short-Term Debt",
+     "synonym": "shortTermDebt",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Short-Term Debt",
+     "synonym": "shortTermBorrowings",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Current Portion of Long-Term Debt",
+     "synonym": "currentPortionOfLongTermDebt",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Current Portion of Long-Term Debt",
+     "synonym": "currentDebt",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Current Portion of Long-Term Debt",
+     "synonym": "capitalLeaseObligationsCurrent",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Other Current Liabilities",
+     "synonym": "otherCurrentLiabilities",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Total Current Liabilities (reported)",
+     "synonym": "totalCurrentLiabilities",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Long-Term Debt",
+     "synonym": "longTermDebt",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Long-Term Debt",
+     "synonym": "longTermDebtNonCurrent",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Operating Lease Liabilities",
+     "synonym": "operatingLeaseLiabilities",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Operating Lease Liabilities",
+     "synonym": "operatingLeaseLiabilitiesNonCurrent",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Operating Lease Liabilities",
+     "synonym": "capitalLeaseObligationsNonCurrent",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Operating Lease Liabilities",
+     "synonym": "capitalLeaseObligations",
+     "use_type": "Duplicate/Backup",
+     "priority": 4,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Deferred Revenue (Non-Current)",
+     "synonym": "deferredRevenueNonCurrent",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Deferred Tax Liabilities",
+     "synonym": "deferredTaxLiabilitiesNonCurrent",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Other Long-Term Liabilities",
+     "synonym": "otherNonCurrentLiabilities",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Other Long-Term Liabilities",
+     "synonym": "otherLiabilities",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Other Long-Term Liabilities",
+     "synonym": "longTermLiabilitiesOther",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Non-Current Liabilities",
+     "model_line": "Total Liabilities (reported)",
+     "synonym": "totalLiabilities",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Common Stock / APIC",
+     "synonym": "commonStock",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Common Stock / APIC",
+     "synonym": "commonStockAndAdditionalPaidInCapital",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Common Stock / APIC",
+     "synonym": "commonStocks",
+     "use_type": "Duplicate/Backup",
+     "priority": 3,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Additional Paid-In Capital",
+     "synonym": "additionalPaidInCapital",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Retained Earnings",
+     "synonym": "retainedEarnings",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Treasury Stock",
+     "synonym": "treasuryStock",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "AOCI",
+     "synonym": "accumulatedOtherComprehensiveIncomeLoss",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "AOCI",
+     "synonym": "accumulatedOtherComprehensiveIncome",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Noncontrolling Interest",
+     "synonym": "minorityInterest",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Primary mapped field"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Noncontrolling Interest",
+     "synonym": "noncontrollingInterest",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Synonym fallback"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Total Equity (reported)",
+     "synonym": "totalStockholdersEquity",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Total Equity (reported)",
+     "synonym": "totalEquity",
+     "use_type": "Total/Check",
+     "priority": 2,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Total Liab & Equity (reported)",
+     "synonym": "totalLiabilitiesAndTotalEquity",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Reported subtotal \u2014 check only"
+    },
+    {
+     "statement": null,
+     "section": null,
+     "model_line": "Income Taxes Payable",
+     "synonym": "taxPayables",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "FMP income taxes payable (current); captured as real field. Included in current liab only when <= pre-tax imbalance (see reconciliation block)."
+    },
+    {
+     "statement": "BS",
+     "section": "Current Assets",
+     "model_line": "Accounts Receivable",
+     "synonym": "otherReceivables",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Ties with accountsReceivables (P2): when netReceivables is missing, both activate and sum. Verified AAPL netReceivables = accountsReceivables + otherReceivables all years."
+    },
+    {
+     "statement": "BS",
+     "section": "Current Liabilities",
+     "model_line": "Accounts Payable",
+     "synonym": "otherPayables",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Additive at Priority 1 tie with accountPayables (both sum). FMP sometimes reports otherPayables outside its own CL decomposition (AAPL FY2025, NVDA FY2025-26); this row completes the sum. Where taxPayables duplicates otherPayables, the fits test (row 253) auto-drops the tax line \u2014 no double count. Note: AP line now = trade + other payables; affects DPO/payables days."
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "AOCI",
+     "synonym": "otherTotalStockholdersEquity",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "P1 tie with AOCI \u2014 FMP catch-all 'other equity' (e.g., AVGO FY2016-18 partnership-era adjustment of \u2212$19-23B). No dedicated Other Equity line; AOCI is the closest bucket. Any double-count surfaces visibly in the balance check."
+    },
+    {
+     "statement": "BS",
+     "section": "Equity",
+     "model_line": "Common Stock / APIC",
+     "synonym": "preferredStock",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "P1 tie \u2014 preferred stock bundled into share capital (no dedicated preferred line in the model; typically immaterial, e.g., AVGO FY2019-21 $27-29M)."
+    }
+   ],
+   "reclasses": [
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -4000000.0,
+     "reason": "FMP FY2023: raw components don't tie to reported totals by \u2212$4M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "AVGO",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -13000000.0,
+     "reason": "FMP FY2024: raw components don't tie to reported totals by \u2212$13M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 1873000.0,
+     "reason": "FMP FY2018: raw components don't tie to reported totals by 2M (source rounding). Parked in AOCI; special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -3000000.0,
+     "reason": "FMP FY2019: raw components don't tie to reported totals by -3M (source rounding). Parked in AOCI; special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 3000000.0,
+     "reason": "FMP FY2020: raw components don't tie to reported totals by 3M (source rounding). Parked in AOCI; special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -4000000.0,
+     "reason": "FMP FY2021: raw components don't tie to reported totals by -4M (source rounding). Parked in AOCI; special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 1000000.0,
+     "reason": "FMP FY2023: raw components don't tie to reported totals by 1M (source rounding). Parked in AOCI; special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 6000000.0,
+     "reason": "FMP FY2024: raw components don't tie to reported totals by 6M (source rounding). Parked in AOCI; special case."
+    },
+    {
+     "ticker": "INTC",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "deferredRevenueNonCurrent",
+     "from_line": "FMP double count vs otherNonCurrentLiabilities",
+     "to_line": "Deferred Revenue (Non-Current)",
+     "amount": -866000000.0,
+     "reason": "FMP FY2017: deferredRevenueNonCurrent ($866M) also embedded in otherNonCurrentLiabilities; NCL has no fits-test so it double-counts. Remove once. Special case."
+    },
+    {
+     "ticker": "KLAC",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(unitemized NCA)",
+     "from_line": "FMP unallocated non-current asset",
+     "to_line": "Other Long-Term Assets",
+     "amount": 13526000.0,
+     "reason": "FMP FY2017: reported totalAssets exceeds the sum of itemized non-current asset fields by $13.5M (an asset FMP doesn't break out). Added to Other Long-Term Assets so total assets tie to the reported 10-K; equity left at reported."
+    },
+    {
+     "ticker": "KLAC",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(unitemized NCA)",
+     "from_line": "FMP unallocated non-current asset",
+     "to_line": "Other Long-Term Assets",
+     "amount": 19606000.0,
+     "reason": "FMP FY2018: model-built assets fall $19.6M short of reported totalAssets (FMP asset subtotals don't foot). Added to Other Long-Term Assets to tie to the reported 10-K."
+    },
+    {
+     "ticker": "KLAC",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(NCL double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": "FMP over-listed NCL",
+     "amount": 23076000.0,
+     "reason": "FMP FY2018: itemized non-current liabilities exceed reported totalNonCurrentLiabilities by $23.1M (FMP over-lists). Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K."
+    },
+    {
+     "ticker": "NFLX",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(unitemized NCA)",
+     "from_line": "FMP unallocated non-current asset",
+     "to_line": "Other Long-Term Assets",
+     "amount": 19996000.0,
+     "reason": "FMP FY2022: reported totalNonCurrentAssets exceeds the sum of itemized non-current asset fields by $20.0M (an asset FMP includes in its subtotal but doesn't break out). Added to Other Long-Term Assets so total assets tie to the reported 10-K; equity left at reported."
+    },
+    {
+     "ticker": "WDC",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "intangibleAssets (double-count)",
+     "from_line": "Other Long-Term Assets",
+     "to_line": "FMP duplicate intangibles",
+     "amount": 72000000.0,
+     "reason": "FY2024: FMP duplicates intangibleAssets ($72M) inside otherNonCurrentAssets; itemized non-current assets over-foot the reported subtotal (16,200 vs 16,128). Removed from Other Long-Term Assets so total assets tie to the reported 10-K."
+    },
+    {
+     "ticker": "STX",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "shortTermInvestments (double-count)",
+     "from_line": "Short-Term Investments",
+     "to_line": "FMP duplicate STI",
+     "amount": 2000000.0,
+     "reason": "FY2023: FMP lists shortTermInvestments $2M that its own totalCurrentAssets (2,905) and cashAndShortTermInvestments (786) exclude \u2014 double-count. Removed from Short-Term Investments so current assets tie to reported."
+    },
+    {
+     "ticker": "STX",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(unitemized NCA)",
+     "from_line": "FMP unallocated non-current asset",
+     "to_line": "Other Long-Term Assets",
+     "amount": 16000000.0,
+     "reason": "FY2023: itemized non-current assets (4,635) under-foot reported totalNonCurrentAssets (4,651) by $16M; no source field holds it. Added to Other Long-Term Assets so total assets tie to the reported 10-K."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "deferredTaxLiabilitiesNonCurrent",
+     "from_line": "Deferred Tax Liabilities",
+     "to_line": "(removed \u2014 FMP double count)",
+     "amount": 1167000000.0,
+     "reason": "FY2017: defTax $1,167M already inside otherNonCurrentLiabilities \u2014 reported NCL (10,607) foots only without it. Removed to avoid double count. Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "deferredRevenueNonCurrent",
+     "from_line": "Deferred Revenue (Non-Current)",
+     "to_line": "(removed \u2014 FMP double count)",
+     "amount": 69000000.0,
+     "reason": "FY2017: defRevNC $69M already inside otherNonCurrentLiabilities per reported NCL footing. Removed to avoid double count. Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "deferredTaxLiabilitiesNonCurrent",
+     "from_line": "Deferred Tax Liabilities",
+     "to_line": "(removed \u2014 FMP double count)",
+     "amount": 2293000000.0,
+     "reason": "FY2018: defTax $2,293M already inside otherNonCurrentLiabilities \u2014 reported NCL (23,334) foots only without it. Removed to avoid double count. Special case."
+    },
+    {
+     "ticker": "PANW",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 5000000.0,
+     "reason": "FMP FY2018: raw components don't tie to reported totals by +$5M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "current maturities of LTD",
+     "from_line": "Long-Term Debt",
+     "to_line": null,
+     "amount": 39923000.0,
+     "reason": "Raw components don't tie: FMP longTermDebt includes current maturities that are also mapped to the current-portion line; remove double-count so LTD is net of current portion."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "current maturities of LTD",
+     "from_line": "Long-Term Debt",
+     "to_line": null,
+     "amount": 52576000.0,
+     "reason": "Raw components don't tie: FMP longTermDebt includes current maturities that are also mapped to the current-portion line; remove double-count so LTD is net of current portion."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "current maturities of LTD",
+     "from_line": "Long-Term Debt",
+     "to_line": null,
+     "amount": 53628000.0,
+     "reason": "Raw components don't tie: FMP longTermDebt includes current maturities that are also mapped to the current-portion line; remove double-count so LTD is net of current portion."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "current maturities of LTD",
+     "from_line": "Long-Term Debt",
+     "to_line": null,
+     "amount": 64745000.0,
+     "reason": "Raw components don't tie: FMP longTermDebt includes current maturities that are also mapped to the current-portion line; remove double-count so LTD is net of current portion."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "current maturities of LTD",
+     "from_line": "Long-Term Debt",
+     "to_line": null,
+     "amount": 68130000.0,
+     "reason": "Raw components don't tie: FMP longTermDebt includes current maturities that are also mapped to the current-portion line; remove double-count so LTD is net of current portion."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2025,
+     "statement": "BS",
+     "source_field": "current maturities of LTD",
+     "from_line": "Long-Term Debt",
+     "to_line": null,
+     "amount": 72905000.0,
+     "reason": "Raw components don't tie: FMP longTermDebt includes current maturities that are also mapped to the current-portion line; remove double-count so LTD is net of current portion."
+    },
+    {
+     "ticker": "ADI",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": null,
+     "to_line": "AOCI",
+     "amount": 11413000.0,
+     "reason": "FMP FY2018: raw components don't tie to reported totals by +$11.4M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 442000000.0,
+     "reason": "FY2019: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 460000000.0,
+     "reason": "FY2020: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 446000000.0,
+     "reason": "FY2021: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 483000000.0,
+     "reason": "FY2022: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 556000000.0,
+     "reason": "FY2023: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 642000000.0,
+     "reason": "FY2024: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    },
+    {
+     "ticker": "PEP",
+     "fiscal_year": 2025,
+     "statement": "BS",
+     "source_field": "capitalLeaseObligations (double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 719000000.0,
+     "reason": "FY2025: FMP capitalLeaseObligations also mapped to the current-portion line; for PEP the lease is fully current (non-current lease = 0) so the non-current bucket double-counts it. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K. Special case."
+    }
+   ]
+  },
+  "cash_flow": {
+   "master": [
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Net Income",
+     "synonym": "netIncome",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Starting point for CFO"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Depreciation and Amortization",
+     "synonym": "depreciationAndAmortization",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Non-cash addback"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Deferred Income Tax",
+     "synonym": "deferredIncomeTax",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Operating non-cash item"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Stock Based Compensation",
+     "synonym": "stockBasedCompensation",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Non-cash addback"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Change in Working Capital",
+     "synonym": "changeInWorkingCapital",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Summary NWC change (active in summary mode)"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Accounts Receivable",
+     "synonym": "accountsReceivables",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "NWC detail; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Inventory",
+     "synonym": "inventory",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "NWC detail; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Accounts Payable",
+     "synonym": "accountsPayables",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "NWC detail; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Other Working Capital",
+     "synonym": "otherWorkingCapital",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "NWC detail; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Other Non-Cash Items",
+     "synonym": "otherNonCashItems",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Other CFO adjustment"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Net Cash Provided by Operating Activities",
+     "synonym": "netCashProvidedByOperatingActivities",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Do not double-count; checks CFO build"
+    },
+    {
+     "statement": "CF",
+     "section": "Operating",
+     "model_line": "Operating Cash Flow",
+     "synonym": "operatingCashFlow",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Usually = CFO; not counted"
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Capital Expenditures",
+     "synonym": "capitalExpenditure",
+     "use_type": "Duplicate/Backup",
+     "priority": 2,
+     "notes": "Backup. FMP sometimes bundles Other Investing into capitalExpenditure (e.g. ZS) - use pure PP&E field as preferred instead."
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Capital Expenditures",
+     "synonym": "investmentsInPropertyPlantAndEquipment",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Preferred CapEx (pure purchases of PP&E). Avoids FMP capitalExpenditure bundling; falls back to capitalExpenditure if blank."
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Acquisitions",
+     "synonym": "acquisitionsNet",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Default = Investing. Reclass per-year ONLY via CF_Reclasses (e.g. NCI buyouts)"
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Purchases of Investments",
+     "synonym": "purchasesOfInvestments",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Investing activity"
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Sales/Maturities of Investments",
+     "synonym": "salesMaturitiesOfInvestments",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Investing activity"
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Other Investing Activities",
+     "synonym": "otherInvestingActivities",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Investing activity"
+    },
+    {
+     "statement": "CF",
+     "section": "Investing",
+     "model_line": "Net Cash Provided by Investing Activities",
+     "synonym": "netCashProvidedByInvestingActivities",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Do not double-count; checks investing build"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Net Debt Issuance",
+     "synonym": "netDebtIssuance",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Summary debt issuance (active in summary mode)"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Long-Term Net Debt Issuance",
+     "synonym": "longTermNetDebtIssuance",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "Debt split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Short-Term Net Debt Issuance",
+     "synonym": "shortTermNetDebtIssuance",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "Debt split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Net Stock Issuance",
+     "synonym": "netStockIssuance",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Summary stock issuance (active in summary mode)"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Net Common Stock Issuance",
+     "synonym": "netCommonStockIssuance",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "Stock split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Common Stock Issuance",
+     "synonym": "commonStockIssuance",
+     "use_type": "Detail",
+     "priority": 3,
+     "notes": "Issuance/repurchase split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Common Stock Repurchased",
+     "synonym": "commonStockRepurchased",
+     "use_type": "Detail",
+     "priority": 3,
+     "notes": "Issuance/repurchase split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Net Preferred Stock Issuance",
+     "synonym": "netPreferredStockIssuance",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "Stock split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Net Dividends Paid",
+     "synonym": "netDividendsPaid",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Summary dividends (active in summary mode)"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Common Dividends Paid",
+     "synonym": "commonDividendsPaid",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "Dividend split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Preferred Dividends Paid",
+     "synonym": "preferredDividendsPaid",
+     "use_type": "Detail",
+     "priority": 2,
+     "notes": "Dividend split; inactive in summary mode"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Other Financing Activities",
+     "synonym": "otherFinancingActivities",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Financing activity"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing",
+     "model_line": "Net Cash Provided by Financing Activities",
+     "synonym": "netCashProvidedByFinancingActivities",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Do not double-count; checks financing build"
+    },
+    {
+     "statement": "CF",
+     "section": "Check",
+     "model_line": "Effect of FX on Cash",
+     "synonym": "effectOfForexChangesOnCash",
+     "use_type": "Check",
+     "priority": 1,
+     "notes": "Used in cash roll-forward"
+    },
+    {
+     "statement": "CF",
+     "section": "Check",
+     "model_line": "Net Change in Cash",
+     "synonym": "netChangeInCash",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Checks full cash flow build"
+    },
+    {
+     "statement": "CF",
+     "section": "Check",
+     "model_line": "Cash at Beginning of Period",
+     "synonym": "cashAtBeginningOfPeriod",
+     "use_type": "Check",
+     "priority": 1,
+     "notes": "Cash roll-forward"
+    },
+    {
+     "statement": "CF",
+     "section": "Check",
+     "model_line": "Cash at End of Period",
+     "synonym": "cashAtEndOfPeriod",
+     "use_type": "Check",
+     "priority": 1,
+     "notes": "Cash roll-forward"
+    },
+    {
+     "statement": "CF",
+     "section": "Supporting",
+     "model_line": "Income Taxes Paid",
+     "synonym": "incomeTaxesPaid",
+     "use_type": "Supporting",
+     "priority": 1,
+     "notes": "Supplemental disclosure; not in build"
+    },
+    {
+     "statement": "CF",
+     "section": "Supporting",
+     "model_line": "Interest Paid",
+     "synonym": "interestPaid",
+     "use_type": "Supporting",
+     "priority": 1,
+     "notes": "Supplemental disclosure; not in build"
+    },
+    {
+     "statement": "CF",
+     "section": "Calculated",
+     "model_line": "Free Cash Flow",
+     "synonym": "freeCashFlow",
+     "use_type": "Calculated",
+     "priority": 1,
+     "notes": "Model calculates CFO - CapEx; FMP field shown for check only"
+    }
+   ],
+   "reclasses": [
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2019,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 5000000.0,
+     "reason": "FY2019: FMP investing components don't tie to its reported total by -5M; align. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2020,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 10000000.0,
+     "reason": "FY2020: FMP investing components don't tie to its reported total by -10M; align. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2021,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 1500000000.0,
+     "reason": "FY2021: digital-asset purchases sit in FMP components but net differently in its reported investing total; align build to reported."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2022,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": -27000000.0,
+     "reason": "FY2022: FMP CFO components don't tie to its reported total by 27M; align. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2022,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 9000000.0,
+     "reason": "FY2022: FMP investing components don't tie to its reported total by -9M; align. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2023,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": -25000000.0,
+     "reason": "FY2023: FMP CFO components don't tie to its reported total by 25M; align. Special case."
+    },
+    {
+     "ticker": "TSLA",
+     "fiscal_year": 2024,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 23000000.0,
+     "reason": "FY2024: FMP CFO components don't tie to its reported total by -23M; align. Special case."
+    },
+    {
+     "ticker": "COST",
+     "fiscal_year": 2022,
+     "statement": "CF",
+     "source_field": "acquisitionsNet",
+     "from_line": "Investing",
+     "to_line": "Financing",
+     "amount": -842000000.0,
+     "reason": "Costco Taiwan remaining 45% NCI buyout; already-controlled subsidiary => equity transaction (ASC 810-10-45); financing not investing. Dormant unless ticker=COST."
+    },
+    {
+     "ticker": "MU",
+     "fiscal_year": 2023,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 7000000.0,
+     "reason": "FMP FY2023: CFO components don't sum to reported total; align build. Special case."
+    },
+    {
+     "ticker": "WMT",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 35000000.0,
+     "reason": "FMP FY2018: CFO components don't sum to reported total; align build. Special case."
+    },
+    {
+     "ticker": "TXN",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "shortTermNetDebtIssuance",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": 625000000.0,
+     "reason": "FY2017: FMP shortTermNetDebtIssuance (\u2212625M) duplicates the LT repayment already netted in longTermNetDebtIssuance (474 = 1,099 issued \u2212 625 repaid); FMP's own reported CFF (\u22123,734M) excludes it. Offset so financing build ties. Special case."
+    },
+    {
+     "ticker": "TXN",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "shortTermNetDebtIssuance",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": 500000000.0,
+     "reason": "FY2018: FMP shortTermNetDebtIssuance (\u2212500M) duplicates the LT repayment already netted in longTermNetDebtIssuance (1,000 = 1,500 issued \u2212 500 repaid); reported CFF (\u22126,329M) excludes it. Offset so financing build ties. Special case."
+    },
+    {
+     "ticker": "QCOM",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": 13000000.0,
+     "reason": "FY2018: FMP financing components sum to \u221231,500M but its reported CFF is \u221231,487M (13M unitemized); align build to reported. Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": -30000000.0,
+     "reason": "FY2017: FMP investing components sum to \u22121,284 vs its reported CFI \u22121,314; \u2212$30M unitemized. Align build to reported. Special case."
+    },
+    {
+     "ticker": "LIN",
+     "fiscal_year": 2019,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "FX",
+     "amount": -14000000.0,
+     "reason": "FY2019: FMP's reported netChangeInCash (\u22121,766) doesn't foot to its own sections + FX (\u22121,752); each section ties to Raw_CF individually. \u2212$14M parked in FX (the reconciling line) so the cash-flow build foots to reported net change. Special case."
+    }
+   ]
+  }
+ }
+}

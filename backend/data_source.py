@@ -9,6 +9,7 @@
 
 from fmp_test import get_financials, extract_profile
 from db_write import load_recent_pull, save_raw_pulls
+from check_runner import run_checks_for_batch
 
 CACHE_MAX_AGE_HOURS = 24
 
@@ -21,5 +22,13 @@ def get_financials_cached(ticker, max_age_hours=CACHE_MAX_AGE_HOURS):
 
     data = get_financials(ticker)
     profile = extract_profile(data.get("profile"))
-    save_raw_pulls(ticker, profile.get("company_name"), data)
+    batch_id = save_raw_pulls(ticker, profile.get("company_name"), data)
+
+    # Validate what we just ingested. Never let a check failure break the request —
+    # the user still gets their data; the finding is recorded for us to look at.
+    try:
+        run_checks_for_batch(batch_id, data, ticker)
+    except Exception as e:
+        print(f"[checks] failed for {ticker} (batch {batch_id}): {e}")
+
     return data, False

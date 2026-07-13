@@ -10,7 +10,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from db import Base
@@ -46,6 +46,7 @@ class PullBatch(Base):
 
     company = relationship("Company", back_populates="batches")
     raw_pulls = relationship("RawPull", back_populates="batch")
+    check_results = relationship("CheckResult", back_populates="batch")
 
 
 class RawPull(Base):
@@ -61,3 +62,37 @@ class RawPull(Base):
     raw_json = Column(Text, nullable=False)          # exactly what FMP returned, unmodified
 
     batch = relationship("PullBatch", back_populates="raw_pulls")
+
+
+class CheckResult(Base):
+    """One reconcile assertion: "our computed X for this year equals FMP's reported X."
+
+    Derived data — every row can be rebuilt from the raw log by re-running the
+    engines, so this table is a cache of an answer, not a source of truth. It hangs
+    off batch_id rather than off a company so a check is always traceable to the
+    exact fetch whose numbers it validated.
+
+    ours/reported/diff are stored as numbers, not formatted strings, so the table
+    can actually be queried: "biggest mismatches", "which line items drift most",
+    "did this company start failing after some date".
+    """
+
+    __tablename__ = "check_results"
+
+    id = Column(Integer, primary_key=True)
+    batch_id = Column(Integer, ForeignKey("pull_batches.id"), nullable=False, index=True)
+
+    statement_type = Column(String, nullable=False, index=True)  # income_statement | balance_sheet | cash_flow
+    fiscal_date = Column(String, nullable=True, index=True)      # e.g. "2024-09-28"
+    line_item = Column(String, nullable=False)                   # net_income, check_balance, ...
+
+    # MATCH | MISMATCH | NO_REPORTED_VALUE
+    status = Column(String, nullable=False, index=True)
+
+    ours = Column(Float, nullable=True)
+    reported = Column(Float, nullable=True)
+    diff = Column(Float, nullable=True)  # ours - reported; null when there is nothing to compare
+
+    checked_at = Column(DateTime, nullable=False, default=_utcnow)
+
+    batch = relationship("PullBatch", back_populates="check_results")

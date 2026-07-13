@@ -26,7 +26,7 @@ def _utcnow():
 
 
 def save_raw_pulls(ticker, company_name, data):
-    """Append a fetch event and every record it returned."""
+    """Append a fetch event and every record it returned. Returns the new batch id."""
     session = SessionLocal()
     try:
         company = session.query(Company).filter_by(ticker=ticker).first()
@@ -73,6 +73,37 @@ def save_raw_pulls(ticker, company_name, data):
         # Mark complete only once everything we depend on actually landed.
         batch.status = "complete" if all(data.get(k) for k in REQUIRED_KEYS) else "partial"
         session.commit()
+        return batch.id  # read before close(); the instance expires afterwards
+    finally:
+        session.close()
+
+
+def _batch_to_data(session, batch):
+    """Reassemble a batch's RawPull rows into get_financials()'s dict shape."""
+    rows = (
+        session.query(RawPull)
+        .filter(RawPull.batch_id == batch.id)
+        .order_by(RawPull.seq)
+        .all()
+    )
+
+    data = {}
+    for row in rows:
+        payload = json.loads(row.raw_json)
+        if row.statement_type in STATEMENT_KEYS:
+            data.setdefault(row.statement_type, []).append(payload)
+        else:
+            data[row.statement_type] = payload
+    return data
+
+
+def load_batch(batch_id):
+    """Rehydrate one batch by id, regardless of age. Used to re-run derived work
+    (like the reconcile checks) over pulls we already have — no network needed."""
+    session = SessionLocal()
+    try:
+        batch = session.query(PullBatch).filter_by(id=batch_id).first()
+        return _batch_to_data(session, batch) if batch else None
     finally:
         session.close()
 
@@ -100,21 +131,6 @@ def load_recent_pull(ticker, max_age_hours=24):
         if not batch:
             return None
 
-        rows = (
-            session.query(RawPull)
-            .filter(RawPull.batch_id == batch.id)
-            .order_by(RawPull.seq)
-            .all()
-        )
-
-        data = {}
-        for row in rows:
-            payload = json.loads(row.raw_json)
-            if row.statement_type in STATEMENT_KEYS:
-                data.setdefault(row.statement_type, []).append(payload)
-            else:
-                data[row.statement_type] = payload
-
-        return data
+        return _batch_to_data(session, batch)
     finally:
         session.close()

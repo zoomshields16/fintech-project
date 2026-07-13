@@ -50,11 +50,12 @@ def run_model(request: ModelRequest):
     profile = extract_profile(data["profile"])
 
     income_years = []
-    for record in data["income_statement"]:
+    is_records = data["income_statement"]
+    for record in is_records:
         try:
-            accounts = pull_detail_accounts(record)
+            accounts = pull_detail_accounts(record, is_records, ticker)
             formulas = compute_formula_lines(accounts)
-            checks = reconcile(record, formulas)
+            checks = reconcile(record, formulas, is_records)
         except Exception as e:
             income_years.append({"date": record.get("date"), "error": str(e)})
             continue
@@ -86,11 +87,12 @@ def run_model(request: ModelRequest):
         })
 
     cash_flow_years = []
-    for record in data["cash_flow"]:
+    cf_records = data["cash_flow"]
+    for record in cf_records:
         try:
-            cf_accounts = pull_cf_accounts(record)
+            cf_accounts = pull_cf_accounts(record, cf_records, ticker)
             cf_formulas = compute_cf_formula_lines(cf_accounts)
-            cf_checks = reconcile_cf(record, cf_formulas)
+            cf_checks = reconcile_cf(record, cf_formulas, cf_records)
         except Exception as e:
             cash_flow_years.append({"date": record.get("date"), "error": str(e)})
             continue
@@ -122,11 +124,12 @@ def run_model(request: ModelRequest):
         })
 
     bs_years = []
-    for record in data["balance_sheet"]:
+    bs_records = data["balance_sheet"]
+    for record in bs_records:
         try:
-            bs_accounts = pull_bs_accounts(record)
+            bs_accounts = pull_bs_accounts(record, bs_records, ticker)
             bs_formulas = compute_bs_formula_lines(bs_accounts)
-            bs_checks = reconcile_bs(record, bs_formulas)
+            bs_checks = reconcile_bs(record, bs_formulas, bs_records)
         except Exception as e:
             bs_years.append({"date": record.get("date"), "error": str(e)})
             continue
@@ -249,7 +252,7 @@ def run_projection(request: ProjectionRequest):
     last_cf_raw = cf_records[0]
     last_bs_raw = bs_records[0]
 
-    last_is = pull_detail_accounts(last_is_raw)
+    last_is = pull_detail_accounts(last_is_raw, is_records, ticker)
     last_is_formulas = compute_formula_lines(last_is)
     last_is["pretax_income"]    = last_is_formulas["pretax_income"]
     last_is["net_income"]       = last_is_formulas["net_income"]
@@ -257,11 +260,11 @@ def run_projection(request: ProjectionRequest):
     last_is["operating_income"] = last_is_formulas["operating_income"]
     last_is["total_opex"]       = last_is_formulas["total_operating_expenses"]
 
-    last_cf = pull_cf_accounts(last_cf_raw)
+    last_cf = pull_cf_accounts(last_cf_raw, cf_records, ticker)
     last_cf_formulas = compute_cf_formula_lines(last_cf)
     last_cf["other_adjustments"] = last_cf_formulas["other_adjustments"]
 
-    last_bs = pull_bs_accounts(last_bs_raw)
+    last_bs = pull_bs_accounts(last_bs_raw, bs_records, ticker)
 
     # Derive base year from the most recent IS date
     date_str = last_is.get("date") or last_is_raw.get("date", "")
