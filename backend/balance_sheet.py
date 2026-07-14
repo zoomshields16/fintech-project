@@ -36,7 +36,10 @@ BS_ALIASES = {
     "accounts_payable":     ["Accounts Payable"],
     "accrued_expenses":     ["Accrued Expenses"],
     "current_ltd":          ["Current Portion of Long-Term Debt", "Short-Term Debt"],
-    "other_current_liab":   ["Other Current Liabilities", "Deferred Revenue", "Income Taxes Payable"],
+    # Income Taxes Payable is folded in below, behind Carson's guard — see
+    # pull_bs_accounts. FMP sometimes stuffs the same amount into taxPayables AND
+    # otherPayables, so counting it unconditionally double-counts it.
+    "other_current_liab":   ["Other Current Liabilities", "Deferred Revenue"],
     # --- Non-Current Liabilities ---
     "long_term_debt":       ["Long-Term Debt"],
     "deferred_tax_liab":    ["Deferred Tax Liabilities"],
@@ -64,12 +67,30 @@ BS_CHECK_LINES = {
 }
 
 
+# Carson's guard tolerance (BS_Map D266): sub-$1M imbalances are FMP rounding.
+ITP_TOLERANCE = 1_000_000
+
+
 def pull_bs_accounts(bs_record, records=None, ticker=None):
     """Pull one year's detail lines. `records` is the full history — synonym
     resolution spans all years."""
     records = records if records is not None else [bs_record]
     a = pull_aliased(STATEMENT, bs_record, records, BS_ALIASES, ticker)
     a["prepaid"] = 0.0  # kept for API shape; folded into other_current (see BS_ALIASES)
+
+    # Carson's Income Taxes Payable guard (BS_Map current-liabilities
+    # reconciliation): count ITP only when it fits inside the gap between FMP's
+    # reported current-liabilities total and the other mapped lines. If it doesn't
+    # fit, FMP already embedded it in another field (typically otherPayables), and
+    # counting it again would double it.
+    itp = resolve_line_value(STATEMENT, "Income Taxes Payable", bs_record, records) or 0.0
+    if itp:
+        reported_tcl = resolve_line_value(
+            STATEMENT, "Total Current Liabilities (reported)", bs_record, records)
+        others = (a["accounts_payable"] + a["accrued_expenses"] +
+                  a["current_ltd"] + a["other_current_liab"])
+        if reported_tcl is None or itp <= reported_tcl - others + ITP_TOLERANCE:
+            a["other_current_liab"] += itp
     return a
 
 
