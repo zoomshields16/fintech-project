@@ -88,6 +88,28 @@ python backfill_checks.py --all
 - [ ] Deploy to Railway (needs Postgres + prod table setup)
 - [ ] Custom domain
 
+## Deploy checklist (Railway / Render — known issues to fix at deploy time)
+
+The app runs locally as-is, but deploying to a public URL needs these five
+fixes. None are done yet — do them as one bundle when deploying:
+
+1. **SQLite → Postgres.** Hosts give the app an ephemeral disk, so `app.db`
+   is wiped on every redeploy. Provision the host's Postgres and set the
+   `DATABASE_URL` environment variable (`db.py` already reads it). Add the
+   Postgres driver (`psycopg2-binary`) to `requirements.txt`.
+2. **Create tables on startup.** `init_db.py` is a manual script and never
+   runs on a server — call `Base.metadata.create_all()` on app startup so a
+   fresh database gets its tables.
+3. **CORS + API URL.** `main.py` only allows requests from
+   `localhost:5500` — add the deployed frontend's domain to `allow_origins`.
+   Likewise the frontend JavaScript points at `127.0.0.1:8000` — point it at
+   the deployed backend URL.
+4. **FMP API key.** Set `FMP_API_KEY` as an environment variable in the
+   host's dashboard. It is never committed to the repo.
+5. **Concurrent-fetch race.** Two simultaneous requests for the same brand-new
+   ticker can both try to insert the company row in `save_fetch`
+   (read-then-insert race). Rare at low traffic, but fix before real users.
+
 ## Tech Stack
 
 - Backend: Python, FastAPI, SQLAlchemy, SQLite
