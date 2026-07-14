@@ -1,23 +1,23 @@
-# Read/write layer over the raw-pull log.
+# Read/write layer over the fetch log.
 #
-# save_raw_pulls()  — append one PullBatch (a fetch event) plus its RawPull rows.
-# load_recent_pull() — serve the newest complete batch for a ticker if it is
-#                      fresh enough, so we skip the FMP (Financial Modeling Prep)
-#                      API call entirely.
+# save_fetch()        — append one Fetch (a fetch event) plus its ApiResponse rows.
+# load_recent_fetch() — serve the newest complete fetch for a ticker if it is
+#                       fresh enough, so we skip the FMP (Financial Modeling Prep)
+#                       API call entirely.
 #
-# Nothing here mutates an existing row: a new fetch appends a new batch, and old
-# batches stay as history.
+# Nothing here mutates an existing row: a new fetch appends new rows, and old
+# fetches stay as history.
 
 import json
 from datetime import datetime, timezone, timedelta
 
 from db import SessionLocal
-from models import Company, PullBatch, RawPull
+from models import Company, Fetch, ApiResponse
 
 # Keys of get_financials() that come back as a list of per-year records.
 STATEMENT_KEYS = ("income_statement", "cash_flow", "balance_sheet")
 
-# A batch is only usable as a cache hit if all of these are present.
+# A fetch is only usable as a cache hit if all of these are present.
 REQUIRED_KEYS = STATEMENT_KEYS + ("profile",)
 
 
@@ -25,8 +25,8 @@ def _utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def save_raw_pulls(ticker, company_name, data):
-    """Append a fetch event and every record it returned. Returns the new batch id."""
+def save_fetch(ticker, company_name, data):
+    """Append a fetch event and every record it returned. Returns the new fetch id."""
     session = SessionLocal()
     try:
         company = session.query(Company).filter_by(ticker=ticker).first()
@@ -37,59 +37,59 @@ def save_raw_pulls(ticker, company_name, data):
         elif company_name:
             company.company_name = company_name
 
-        batch = PullBatch(
+        fetch = Fetch(
             company_id=company.id,
             source="fmp",
             fetched_at=_utcnow(),
             status="pending",
         )
-        session.add(batch)
+        session.add(fetch)
         session.flush()
 
         for statement_type, payload in data.items():
             if not payload:
                 continue
             if statement_type in STATEMENT_KEYS:
-                # Per-year records: one row each, position preserved in seq.
+                # Per-year records: one row each, position preserved in year_position.
                 for i, record in enumerate(payload):
-                    session.add(RawPull(
-                        batch_id=batch.id,
+                    session.add(ApiResponse(
+                        fetch_id=fetch.id,
                         statement_type=statement_type,
                         fiscal_date=record.get("date"),
-                        seq=i,
-                        raw_json=json.dumps(record),
+                        year_position=i,
+                        response_json=json.dumps(record),
                     ))
             else:
                 # profile, enterprise_values, treasury_rates, etc. — store the
                 # payload whole so it round-trips in exactly the shape FMP sent.
-                session.add(RawPull(
-                    batch_id=batch.id,
+                session.add(ApiResponse(
+                    fetch_id=fetch.id,
                     statement_type=statement_type,
                     fiscal_date=None,
-                    seq=0,
-                    raw_json=json.dumps(payload),
+                    year_position=0,
+                    response_json=json.dumps(payload),
                 ))
 
         # Mark complete only once everything we depend on actually landed.
-        batch.status = "complete" if all(data.get(k) for k in REQUIRED_KEYS) else "partial"
+        fetch.status = "complete" if all(data.get(k) for k in REQUIRED_KEYS) else "partial"
         session.commit()
-        return batch.id  # read before close(); the instance expires afterwards
+        return fetch.id  # read before close(); the instance expires afterwards
     finally:
         session.close()
 
 
-def _batch_to_data(session, batch):
-    """Reassemble a batch's RawPull rows into get_financials()'s dict shape."""
+def _fetch_to_data(session, fetch):
+    """Reassemble a fetch's ApiResponse rows into get_financials()'s dict shape."""
     rows = (
-        session.query(RawPull)
-        .filter(RawPull.batch_id == batch.id)
-        .order_by(RawPull.seq)
+        session.query(ApiResponse)
+        .filter(ApiResponse.fetch_id == fetch.id)
+        .order_by(ApiResponse.year_position)
         .all()
     )
 
     data = {}
     for row in rows:
-        payload = json.loads(row.raw_json)
+        payload = json.loads(row.response_json)
         if row.statement_type in STATEMENT_KEYS:
             data.setdefault(row.statement_type, []).append(payload)
         else:
@@ -97,19 +97,19 @@ def _batch_to_data(session, batch):
     return data
 
 
-def load_batch(batch_id):
-    """Rehydrate one batch by id, regardless of age. Used to re-run derived work
-    (like the reconcile checks) over pulls we already have — no network needed."""
+def load_fetch(fetch_id):
+    """Rehydrate one fetch by id, regardless of age. Used to re-run derived work
+    (like the reconcile checks) over data we already have — no network needed."""
     session = SessionLocal()
     try:
-        batch = session.query(PullBatch).filter_by(id=batch_id).first()
-        return _batch_to_data(session, batch) if batch else None
+        fetch = session.query(Fetch).filter_by(id=fetch_id).first()
+        return _fetch_to_data(session, fetch) if fetch else None
     finally:
         session.close()
 
 
-def load_recent_pull(ticker, max_age_hours=24):
-    """Return the newest complete batch for `ticker` as a dict shaped exactly
+def load_recent_fetch(ticker, max_age_hours=24):
+    """Return the newest complete fetch for `ticker` as a dict shaped exactly
     like get_financials()'s return value, or None on a cache miss."""
     session = SessionLocal()
     try:
@@ -118,19 +118,19 @@ def load_recent_pull(ticker, max_age_hours=24):
             return None
 
         cutoff = _utcnow() - timedelta(hours=max_age_hours)
-        batch = (
-            session.query(PullBatch)
+        fetch = (
+            session.query(Fetch)
             .filter(
-                PullBatch.company_id == company.id,
-                PullBatch.status == "complete",
-                PullBatch.fetched_at >= cutoff,
+                Fetch.company_id == company.id,
+                Fetch.status == "complete",
+                Fetch.fetched_at >= cutoff,
             )
-            .order_by(PullBatch.fetched_at.desc())
+            .order_by(Fetch.fetched_at.desc())
             .first()
         )
-        if not batch:
+        if not fetch:
             return None
 
-        return _batch_to_data(session, batch)
+        return _fetch_to_data(session, fetch)
     finally:
         session.close()

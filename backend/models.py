@@ -1,10 +1,10 @@
 # SQLAlchemy models.
 #
-# Shape: companies -> pull_batches -> raw_pulls
+# Shape: companies -> fetches -> api_responses
 #
-# A PullBatch is one fetch event: "we went to FMP for AAPL at this instant."
-# RawPull rows are the immutable records that event produced. Together they are
-# an append-only log — nothing here is ever updated in place, and everything
+# A Fetch is one fetch event: "we went to FMP for AAPL at this instant."
+# ApiResponse rows are the immutable records that event produced. Together they
+# are an append-only log — nothing here is ever updated in place, and everything
 # downstream (computed statements, reconcile results) is derived from it and can
 # be rebuilt from it without re-fetching.
 
@@ -30,38 +30,38 @@ class Company(Base):
     company_name = Column(String)
     first_seen_at = Column(DateTime, default=_utcnow)
 
-    batches = relationship("PullBatch", back_populates="company")
+    fetches = relationship("Fetch", back_populates="company")
 
 
-class PullBatch(Base):
-    __tablename__ = "pull_batches"
+class Fetch(Base):
+    __tablename__ = "fetches"
 
     id = Column(Integer, primary_key=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
     source = Column(String, nullable=False, default="fmp")
     fetched_at = Column(DateTime, nullable=False, default=_utcnow, index=True)
-    # "complete" once every expected statement landed; only complete batches are
+    # "complete" once every expected statement landed; only complete fetches are
     # served from cache, so a half-failed fetch can never masquerade as a good one.
     status = Column(String, nullable=False, default="pending")
 
-    company = relationship("Company", back_populates="batches")
-    raw_pulls = relationship("RawPull", back_populates="batch")
-    check_results = relationship("CheckResult", back_populates="batch")
+    company = relationship("Company", back_populates="fetches")
+    api_responses = relationship("ApiResponse", back_populates="fetch")
+    check_results = relationship("CheckResult", back_populates="fetch")
 
 
-class RawPull(Base):
-    __tablename__ = "raw_pulls"
+class ApiResponse(Base):
+    __tablename__ = "api_responses"
 
     id = Column(Integer, primary_key=True)
-    batch_id = Column(Integer, ForeignKey("pull_batches.id"), nullable=False, index=True)
+    fetch_id = Column(Integer, ForeignKey("fetches.id"), nullable=False, index=True)
     statement_type = Column(String, nullable=False)  # income_statement | cash_flow | balance_sheet | profile | ...
     fiscal_date = Column(String, nullable=True)      # e.g. "2024-09-28"; null for profile/rate pulls
     # Position this record held in FMP's response array. Stored, not inferred:
-    # main.py treats index 0 as the most recent year, so order is load-bearing.
-    seq = Column(Integer, nullable=False, default=0)
-    raw_json = Column(Text, nullable=False)          # exactly what FMP returned, unmodified
+    # main.py treats position 0 as the most recent year, so order is load-bearing.
+    year_position = Column(Integer, nullable=False, default=0)
+    response_json = Column(Text, nullable=False)     # exactly what FMP returned, unmodified
 
-    batch = relationship("PullBatch", back_populates="raw_pulls")
+    fetch = relationship("Fetch", back_populates="api_responses")
 
 
 class CheckResult(Base):
@@ -69,7 +69,7 @@ class CheckResult(Base):
 
     Derived data — every row can be rebuilt from the raw log by re-running the
     engines, so this table is a cache of an answer, not a source of truth. It hangs
-    off batch_id rather than off a company so a check is always traceable to the
+    off fetch_id rather than off a company so a check is always traceable to the
     exact fetch whose numbers it validated.
 
     ours/reported/diff are stored as numbers, not formatted strings, so the table
@@ -80,7 +80,7 @@ class CheckResult(Base):
     __tablename__ = "check_results"
 
     id = Column(Integer, primary_key=True)
-    batch_id = Column(Integer, ForeignKey("pull_batches.id"), nullable=False, index=True)
+    fetch_id = Column(Integer, ForeignKey("fetches.id"), nullable=False, index=True)
 
     statement_type = Column(String, nullable=False, index=True)  # income_statement | balance_sheet | cash_flow
     fiscal_date = Column(String, nullable=True, index=True)      # e.g. "2024-09-28"
@@ -95,4 +95,4 @@ class CheckResult(Base):
 
     checked_at = Column(DateTime, nullable=False, default=_utcnow)
 
-    batch = relationship("PullBatch", back_populates="check_results")
+    fetch = relationship("Fetch", back_populates="check_results")

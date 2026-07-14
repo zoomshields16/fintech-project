@@ -1,4 +1,4 @@
-# Runs the reconcile checks across every year of a pull batch and stores the results.
+# Runs the reconcile checks across every year of a fetch and stores the results.
 #
 # This is the validation stage of the pipeline: for each fiscal year FMP gave us, we
 # recompute the subtotals ourselves and assert they equal what FMP reported. Failures
@@ -21,7 +21,7 @@ ENGINES = {
 }
 
 
-def run_checks_for_batch(batch_id, data, ticker=None):
+def run_checks_for_fetch(fetch_id, data, ticker=None):
     """Validate every year of every statement in `data`. Returns rows written."""
     session = SessionLocal()
     written = 0
@@ -35,9 +35,9 @@ def run_checks_for_batch(batch_id, data, ticker=None):
                     rows = reconcile(record, compute(pull(record, records, ticker)), records)
                 except Exception as e:
                     # A year we cannot even compute is itself a data-quality finding.
-                    # Record it and keep going rather than failing the whole batch.
+                    # Record it and keep going rather than failing the whole fetch.
                     session.add(CheckResult(
-                        batch_id=batch_id,
+                        fetch_id=fetch_id,
                         statement_type=statement_type,
                         fiscal_date=record.get("date"),
                         line_item="__engine_error__",
@@ -52,7 +52,7 @@ def run_checks_for_batch(batch_id, data, ticker=None):
 
                 for r in rows:
                     session.add(CheckResult(
-                        batch_id=batch_id,
+                        fetch_id=fetch_id,
                         statement_type=statement_type,
                         fiscal_date=record.get("date"),
                         line_item=r["line_item"],
