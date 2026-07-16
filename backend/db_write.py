@@ -8,6 +8,7 @@
 # Nothing here mutates an existing row: a new fetch appends new rows, and old
 # fetches stay as history.
 #tester
+#tester 3.0
 
 import json
 from datetime import datetime, timezone, timedelta
