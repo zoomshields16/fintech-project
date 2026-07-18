@@ -130,6 +130,60 @@ def compute_bs_formula_lines(a):
     }
 
 
+def compute_equity_rollforward(prev_equity, prev_aoci, curr_equity, curr_aoci,
+                               net_income, dividends_paid, stock_repurchased,
+                               stock_comp, other_financing):
+    """Explain one year's change in total equity.
+
+        ending equity = beginning equity
+                      + net income
+                      + OCI               (change in AOCI)
+                      - dividends
+                      - buybacks
+                      + stock-based comp
+                      + other financing   (RSU tax withholding lives here)
+
+    Rolls TOTAL equity rather than each equity account separately, and that is
+    deliberate: companies differ in where a buyback lands. Apple retires
+    repurchased shares so buybacks reduce retained earnings; Texas Instruments
+    uses the treasury method so they land in treasury stock. Either way total
+    equity falls by the same amount, so rolling the total sidesteps having to
+    detect each company's convention.
+
+    OCI is derived as the change in AOCI. That is a close proxy, not audited
+    comprehensive income — AOCI also moves on reclassifications out of AOCI and
+    on acquisitions or disposals — so it is reported as the change in AOCI.
+
+    Sign convention: dividends, buybacks and other financing arrive already
+    negative from FMP's cash flow (cash out), so they are added, not subtracted.
+
+    Any part of the movement these terms do not explain is returned as
+    `residual` rather than being absorbed into another line. A large residual is
+    a finding about the data, not something to plug.
+    """
+    def s(val):
+        return val or 0
+
+    oci = s(curr_aoci) - s(prev_aoci)
+    actual_change = s(curr_equity) - s(prev_equity)
+    explained_change = (s(net_income) + oci + s(dividends_paid)
+                        + s(stock_repurchased) + s(stock_comp) + s(other_financing))
+
+    return {
+        "beginning_equity":  s(prev_equity),
+        "net_income":        s(net_income),
+        "oci":               oci,
+        "dividends":         s(dividends_paid),
+        "buybacks":          s(stock_repurchased),
+        "stock_comp":        s(stock_comp),
+        "other_financing":   s(other_financing),
+        "explained_change":  explained_change,
+        "actual_change":     actual_change,
+        "residual":          actual_change - explained_change,
+        "ending_equity":     s(curr_equity),
+    }
+
+
 def reconcile_bs_rows(bs_record, computed, records=None):
     """Structured reconcile results — one row per line item. Persisted to check_results."""
     records = records if records is not None else [bs_record]

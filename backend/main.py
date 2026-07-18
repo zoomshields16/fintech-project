@@ -6,7 +6,8 @@ from fmp_test import extract_profile
 from data_source import get_financials_cached
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
-from balance_sheet import pull_bs_accounts, compute_bs_formula_lines, reconcile_bs
+from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile_bs,
+                           compute_equity_rollforward)
 from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
 from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
 
@@ -87,6 +88,10 @@ def run_model(request: ModelRequest):
         })
 
     cash_flow_years = []
+    # Other financing is not displayed on the cash flow, but the equity
+    # roll-forward below needs it (RSU tax withholding lands there), so keep it
+    # aside by year rather than widening the response.
+    cf_other_financing = {}
     cf_records = data["cash_flow"]
     for record in cf_records:
         try:
@@ -96,6 +101,7 @@ def run_model(request: ModelRequest):
         except Exception as e:
             cash_flow_years.append({"date": record.get("date"), "error": str(e)})
             continue
+        cf_other_financing[str(record.get("date", ""))[:4]] = cf_accounts["other_financing"]
         cash_flow_years.append({
             "date": record.get("date", ""),
             # Operating
@@ -175,6 +181,33 @@ def run_model(request: ModelRequest):
             "check_balance":           bs_formulas["check_balance"],
             "reconcile":               bs_checks,
         })
+
+    # Equity roll-forward — explains each year's change in total equity. Needs all
+    # three statements, so it runs once the per-statement loops are done. Historical
+    # years only; OCI is never projected.
+    is_by_year = {str(y.get("date", ""))[:4]: y for y in income_years if "error" not in y}
+    cf_by_year = {str(y.get("date", ""))[:4]: y for y in cash_flow_years if "error" not in y}
+    for i, bs_year in enumerate(bs_years):
+        if "error" in bs_year:
+            continue
+        year = str(bs_year.get("date", ""))[:4]
+        prev = bs_years[i + 1] if (i + 1) < len(bs_years) else None
+        inc, cf_year = is_by_year.get(year), cf_by_year.get(year)
+        # The oldest year has no prior balance sheet to roll from.
+        if not prev or "error" in prev or not inc or not cf_year:
+            bs_year["equity_rollforward"] = None
+            continue
+        bs_year["equity_rollforward"] = compute_equity_rollforward(
+            prev_equity=prev["total_equity"],
+            prev_aoci=prev["aoci"],
+            curr_equity=bs_year["total_equity"],
+            curr_aoci=bs_year["aoci"],
+            net_income=inc.get("net_income"),
+            dividends_paid=cf_year.get("dividends_paid"),
+            stock_repurchased=cf_year.get("stock_repurchased"),
+            stock_comp=cf_year.get("stock_comp"),
+            other_financing=cf_other_financing.get(year),
+        )
 
     valid_is = [y for y in income_years if "error" not in y]
     valid_cf = [y for y in cash_flow_years if "error" not in y]
