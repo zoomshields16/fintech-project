@@ -308,29 +308,9 @@
     const API = 'http://127.0.0.1:8000';
     let histData = null;
 
-    // ── Carson bottom-up UFCF (NOPAT + D&A + CapEx + ΔNWC) ─────────────────
-    function computeCarsonUFCF(hist, proj) {
-        const lastBS  = hist.balance_sheet[0];
-        const lastNWC = (lastBS.accounts_receivable || 0)
-                      + (lastBS.inventory           || 0)
-                      - (lastBS.accounts_payable    || 0);
-        const projNWC = proj.balance_sheet.map(bs =>
-            (bs.accounts_receivable || 0) + (bs.inventory || 0) - (bs.accounts_payable || 0)
-        );
-        return proj.income_statement.map((isYr, i) => {
-            const cfYr   = proj.cash_flow[i];
-            const ebit   = isYr.operating_income || 0;
-            const pretax = isYr.pretax_income    || 0;
-            const tax    = isYr.income_tax        || 0;
-            const tRate  = pretax > 0 ? tax / pretax : 0;
-            const nopat  = ebit * (1 - tRate);
-            const da     = cfYr.depreciation || 0;
-            const capex  = cfYr.capex        || 0;
-            const prior  = i === 0 ? lastNWC : projNWC[i - 1];
-            const dNwc   = prior - projNWC[i];
-            return nopat + da + capex + dNwc;
-        });
-    }
+    // UFCF is computed by the backend (dcf_engine.compute_ufcf) and arrives on the
+    // projection response. Model logic stays in Python so it is testable and
+    // covered by the reconcile checks — never reimplemented here.
 
     // ── Populate driver inputs from fetched data ──────────────────────────────
     function prefillDrivers(data) {
@@ -451,20 +431,35 @@
             errBox.hidden = false;
         }
 
+        let data;
         try {
             const resp = await fetch(`${API}/api/run-model`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ticker }),
             });
-            const data = await resp.json();
-            if (data.error) { fail('Error: ' + data.error); return; }
-
-            localStorage.setItem('model_hist', JSON.stringify(data));
-            showWorkbench(data);
+            data = await resp.json();
         } catch (err) {
-            fail('Network error: ' + err.message);
+            fail(`Could not reach the API at ${API}. Is the backend running? (${err.message})`);
+            return;
         }
+
+        if (data.error) { fail('Error: ' + data.error); return; }
+
+        // The workbench reads the most recent year of each statement, so an empty
+        // statement is a data problem, not a render bug. Say so plainly rather
+        // than letting it surface as an undefined-property error further down.
+        const missing = ['income_statement', 'balance_sheet', 'cash_flow']
+            .filter(k => !Array.isArray(data[k]) || data[k].length === 0);
+        if (missing.length) {
+            fail(`No ${missing.join(', ')} data returned for ${ticker}.`);
+            return;
+        }
+
+        localStorage.setItem('model_hist', JSON.stringify(data));
+        // Rendering runs outside the fetch try/catch: a failure here is a bug in
+        // the page, and mislabelling it "network error" sends debugging the wrong way.
+        showWorkbench(data);
     }
 
     // ── Run Projection ────────────────────────────────────────────────────────
@@ -528,7 +523,7 @@
                 ticker:       histData.ticker,
                 company_name: histData.company_name,
                 stock_price:  histData.stock_price,
-                ufcf:         computeCarsonUFCF(histData, projData),
+                ufcf:         projData.ufcf,
                 proj_years:   projData.income_statement.map(y => y.date.slice(0, 4)),
             }));
 

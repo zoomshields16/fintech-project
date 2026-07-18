@@ -8,7 +8,7 @@ from income_statement import pull_detail_accounts, compute_formula_lines, reconc
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import pull_bs_accounts, compute_bs_formula_lines, reconcile_bs
 from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
-from dcf_engine import compute_wacc, run_dcf, sensitivity_tables
+from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
 
 app = FastAPI()
 
@@ -279,6 +279,7 @@ def run_projection(request: ProjectionRequest):
         "income_statement": proj_is,
         "cash_flow":        proj_cf,
         "balance_sheet":    proj_bs,
+        "ufcf":             compute_ufcf(proj_is, proj_cf, proj_bs, last_bs),
     }
 
 

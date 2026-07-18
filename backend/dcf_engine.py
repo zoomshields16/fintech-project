@@ -1,3 +1,48 @@
+def _operating_nwc(bs_year):
+    """Operating working capital the model projects: receivables + inventory - payables."""
+    return ((bs_year.get("accounts_receivable") or 0)
+            + (bs_year.get("inventory") or 0)
+            - (bs_year.get("accounts_payable") or 0))
+
+
+def compute_ufcf(projected_is, projected_cf, projected_bs, last_bs_actuals):
+    """Unlevered free cash flow per projected year, bottom-up:
+
+        UFCF = NOPAT + D&A - CapEx - change in NWC
+
+    Starts from EBIT (operating income), so financing and other comprehensive
+    income are excluded by construction — an unlevered measure must not carry
+    either. CapEx arrives negative from the cash-flow projection, so it is added
+    rather than subtracted; the same is true of the working-capital delta, which
+    is expressed as prior minus current (a build in NWC consumes cash).
+
+    The tax rate is the effective rate implied by each projected year
+    (income tax / pretax income), falling back to zero when pretax income is not
+    positive.
+    """
+    prior_nwc = _operating_nwc(last_bs_actuals)
+    proj_nwc = [_operating_nwc(bs_year) for bs_year in projected_bs]
+
+    ufcf = []
+    for i, is_year in enumerate(projected_is):
+        cf_year = projected_cf[i]
+
+        ebit = is_year.get("operating_income") or 0
+        pretax = is_year.get("pretax_income") or 0
+        tax = is_year.get("income_tax") or 0
+        tax_rate = tax / pretax if pretax > 0 else 0
+        nopat = ebit * (1 - tax_rate)
+
+        depreciation = cf_year.get("depreciation") or 0
+        capex = cf_year.get("capex") or 0          # already negative
+        previous = prior_nwc if i == 0 else proj_nwc[i - 1]
+        change_nwc = previous - proj_nwc[i]
+
+        ufcf.append(nopat + depreciation + capex + change_nwc)
+
+    return ufcf
+
+
 def compute_wacc(beta, risk_free_rate, market_risk_premium,
                  total_debt, market_cap, pre_tax_cost_of_debt, tax_rate):
     equity_risk_premium  = beta * market_risk_premium
