@@ -153,8 +153,8 @@
      "model_line": "Net Income (reported)",
      "synonym": "netIncome",
      "use_type": "Total/Check",
-     "priority": 1,
-     "notes": "Check vs calculated NI"
+     "priority": 2,
+     "notes": "Bottom line, after noncontrolling interest \u2014 backup"
     },
     {
      "statement": "IS",
@@ -227,6 +227,15 @@
      "use_type": "Detail",
      "priority": 1,
      "notes": "Mapped detail"
+    },
+    {
+     "statement": "IS",
+     "section": "Check",
+     "model_line": "Net Income (reported)",
+     "synonym": "netIncomeFromContinuingOperations",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Consolidated net income before NCI deduction \u2014 matches our computed line"
     }
    ],
    "reclasses": [
@@ -1107,8 +1116,8 @@
      "model_line": "Total Equity (reported)",
      "synonym": "totalStockholdersEquity",
      "use_type": "Total/Check",
-     "priority": 1,
-     "notes": "Reported subtotal \u2014 check only"
+     "priority": 2,
+     "notes": "Excludes noncontrolling interest \u2014 backup only"
     },
     {
      "statement": "BS",
@@ -1116,8 +1125,8 @@
      "model_line": "Total Equity (reported)",
      "synonym": "totalEquity",
      "use_type": "Total/Check",
-     "priority": 2,
-     "notes": "Reported subtotal \u2014 check only"
+     "priority": 1,
+     "notes": "Includes noncontrolling interest \u2014 matches our computed subtotal"
     },
     {
      "statement": "BS",
@@ -1869,6 +1878,15 @@
      "use_type": "Calculated",
      "priority": 1,
      "notes": "Model calculates CFO - CapEx; FMP field shown for check only"
+    },
+    {
+     "statement": "CF",
+     "section": "Financing Activities",
+     "model_line": "Other Financing Activities",
+     "synonym": "netPreferredStockIssuance",
+     "use_type": "Detail",
+     "priority": 1,
+     "notes": "Preferred issuance/redemption, reported outside otherFinancingActivities"
     }
    ],
    "reclasses": [
