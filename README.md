@@ -60,11 +60,51 @@ and reachable by the validation pipeline.
   - `projection_engine.py`, `dcf_engine.py` — forecasting and valuation
     (`dcf_engine.compute_ufcf` derives unlevered free cash flow)
 
+  - `refresh_stale.py`, `restatement_detector.py` — scheduled refresh and
+    upstream-change detection
+
 ### Database
 
-`companies` → `fetches` → `api_responses`, plus `check_results`. One view,
-`company_pull_counts`, reports per-company fetch counts; it is a view rather
-than columns on `companies` so the counts are computed on read and cannot drift.
+`companies` → `fetches` → `api_responses`, plus `check_results`,
+`restatements`, and `pipeline_runs`. One view, `company_pull_counts`, reports
+per-company fetch counts; it is a view rather than columns on `companies` so the
+counts are computed on read and cannot drift.
+
+### Two quality layers
+
+The pipeline answers two different questions, and neither can find what the
+other finds:
+
+| Table | Question | Compares |
+|---|---|---|
+| `check_results` | Is *our* math right? | our computed subtotal vs FMP's reported total, **within one fetch** |
+| `restatements` | Did *their* data change? | one raw FMP field, **across two fetches** of the same company |
+
+Restatement detection reads the raw stored response, before any mapping is
+applied — the question is what FMP said, not what we made of it. It is only
+answerable because `api_responses` is append-only: a pipeline that overwrote each
+fetch would have destroyed the evidence.
+
+### Scheduled refresh
+
+`refresh_stale.py` finds companies whose data has gone stale, re-fetches them,
+re-runs the checks, and compares each new fetch against the previous one. Every
+execution writes a `pipeline_runs` row recording what it attempted, what
+succeeded, and what it found.
+
+```bash
+python refresh_stale.py --dry-run     # show what would be refreshed
+python refresh_stale.py --days 1      # tighter staleness window
+python refresh_stale.py --limit 5     # cap tickers per run (API budget)
+```
+
+Tickers that never return usable data are retried a few times and then reported
+rather than retried forever, so a typo'd symbol cannot quietly drain the API
+budget. Wire to a scheduler at deploy time, e.g. nightly:
+
+```
+0 2 * * *  cd /path/to/backend && /path/to/venv/bin/python refresh_stale.py
+```
 
 ## Running locally
 
@@ -104,6 +144,11 @@ python backfill_checks.py --all
       R&D / D&A / tax / SBC / buyback overrides)
 - [x] All model computation in Python — no engine logic in the frontend
 - [x] Historical equity roll-forward with an explicit unexplained residual
+- [x] Restatement detection — flags figures FMP reports differently than before
+- [x] Scheduled refresh job with a `pipeline_runs` audit log
+- [ ] Wire the refresh job to a real scheduler (needs deploy — see checklist)
+- [ ] Reject tickers outside the Nasdaq-100 (the supported universe) instead of
+      attempting a fetch
 - [ ] Equity roll-forward shown on the frontend (data is in the API, no UI yet)
 - [ ] Check results shown on the frontend
 - [ ] Output pages (Summary, DuPont, Drivers)
