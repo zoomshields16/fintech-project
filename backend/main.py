@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from fmp_test import extract_profile
-from data_source import get_financials_cached
+from data_source import get_financials_cached, UnsupportedTicker
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile_bs,
@@ -43,6 +43,8 @@ def run_model(request: ModelRequest):
 
     try:
         data, from_cache = get_financials_cached(ticker)
+    except UnsupportedTicker as e:
+        return {"error": str(e), "unsupported": True}
     except Exception as e:
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
 
@@ -269,6 +271,8 @@ def run_projection(request: ProjectionRequest):
 
     try:
         data, _ = get_financials_cached(ticker)
+    except UnsupportedTicker as e:
+        return {"error": str(e), "unsupported": True}
     except Exception as e:
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
 
@@ -334,6 +338,8 @@ def run_dcf_endpoint(request: DCFRequest):
     ticker = request.ticker.upper()
     try:
         data, _ = get_financials_cached(ticker)
+    except UnsupportedTicker as e:
+        return {"error": str(e), "unsupported": True}
     except Exception as e:
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
 
