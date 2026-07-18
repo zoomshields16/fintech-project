@@ -30,8 +30,19 @@ FMP API  →  SQLite log  →  mapping engine  →  statement engines  →  proj
    compares them against FMP's own reported totals. Every comparison is graded
    (MATCH / MISMATCH) and stored in `check_results`, so data-quality issues are
    caught and logged instead of silently corrupting valuations.
-5. **Value** — historical statements feed a driver-based projection engine and
-   a DCF with WACC computation and sensitivity tables.
+5. **Explain** — each historical year carries an equity roll-forward that
+   accounts for the change in total equity (net income, other comprehensive
+   income, dividends, buybacks, stock compensation, other financing). Whatever
+   those terms do not explain is reported as an explicit `residual` rather than
+   being absorbed into another line — an unexplained movement is a finding, not
+   something to plug.
+6. **Value** — historical statements feed a driver-based projection engine,
+   unlevered free cash flow (NOPAT + D&A − CapEx − ΔNWC), and a DCF with WACC
+   computation and sensitivity tables.
+
+**All model computation lives in Python.** The frontend collects inputs and
+renders results; it never computes a model line. That keeps the logic testable
+and reachable by the validation pipeline.
 
 ## Architecture
 
@@ -44,8 +55,16 @@ FMP API  →  SQLite log  →  mapping engine  →  statement engines  →  proj
   - `db.py`, `models.py`, `db_write.py` — SQLite/SQLAlchemy persistence
   - `mapping_engine.py`, `mappings.json`, `export_mappings.py` — field mapping
   - `income_statement.py`, `balance_sheet.py`, `cash_flow.py` — statement engines
+    (`balance_sheet.compute_equity_rollforward` explains each year's equity change)
   - `checks.py`, `check_runner.py`, `backfill_checks.py` — validation pipeline
   - `projection_engine.py`, `dcf_engine.py` — forecasting and valuation
+    (`dcf_engine.compute_ufcf` derives unlevered free cash flow)
+
+### Database
+
+`companies` → `fetches` → `api_responses`, plus `check_results`. One view,
+`company_pull_counts`, reports per-company fetch counts; it is a view rather
+than columns on `companies` so the counts are computed on read and cannot drift.
 
 ## Running locally
 
@@ -81,8 +100,12 @@ python backfill_checks.py --all
 - [x] SQLite caching + append-only raw fetch log
 - [x] Data-driven mapping engine exported from the Excel reference model
 - [x] Automated reconcile checks stored per fetch (`check_results`)
+- [x] User-adjustable model drivers (growth, margins, CapEx, and optional
+      R&D / D&A / tax / SBC / buyback overrides)
+- [x] All model computation in Python — no engine logic in the frontend
+- [x] Historical equity roll-forward with an explicit unexplained residual
+- [ ] Equity roll-forward shown on the frontend (data is in the API, no UI yet)
 - [ ] Check results shown on the frontend
-- [ ] User-adjustable model inputs
 - [ ] Output pages (Summary, DuPont, Drivers)
 - [ ] Screener across many tickers
 - [ ] Deploy to Railway (needs Postgres + prod table setup)
@@ -90,7 +113,7 @@ python backfill_checks.py --all
 
 ## Deploy checklist (Railway / Render — known issues to fix at deploy time)
 
-The app runs locally as-is, but deploying to a public URL needs these five
+The app runs locally as-is, but deploying to a public URL needs these six
 fixes. None are done yet — do them as one bundle when deploying:
 
 1. **SQLite → Postgres.** Hosts give the app an ephemeral disk, so `app.db`
@@ -109,6 +132,14 @@ fixes. None are done yet — do them as one bundle when deploying:
 5. **Concurrent-fetch race.** Two simultaneous requests for the same brand-new
    ticker can both try to insert the company row in `save_fetch`
    (read-then-insert race). Rare at low traffic, but fix before real users.
+6. **`/api/run-dcf` trusts a client-supplied `ufcf` array.** UFCF is computed in
+   Python now (`dcf_engine.compute_ufcf`), but the frontend still stores the
+   result in `localStorage` and posts it back when running the DCF. The risk is
+   staleness, not tampering: after a redeploy that changes the projection
+   engine, a browser holding an old `dcf_input` will mix stale cash flows with a
+   freshly computed WACC and return a wrong answer with no error. Fix by having
+   the endpoint accept `drivers` and recompute the projection and UFCF
+   server-side, so the DCF depends on nothing the client did.
 
 ## Tech Stack
 
