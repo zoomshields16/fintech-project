@@ -13,6 +13,9 @@ env/
 # Local SQLite database
 *.db
 
+# Pipeline job logs (runtime output, regenerated on every run)
+backend/logs/
+
 # Excel temp files
 ~$*.xlsx
 

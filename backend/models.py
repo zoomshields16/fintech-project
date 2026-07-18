@@ -47,6 +47,8 @@ class Fetch(Base):
     company = relationship("Company", back_populates="fetches")
     api_responses = relationship("ApiResponse", back_populates="fetch")
     check_results = relationship("CheckResult", back_populates="fetch")
+    restatements = relationship("Restatement", back_populates="fetch",
+                                foreign_keys="Restatement.fetch_id")
 
 
 class ApiResponse(Base):
@@ -96,3 +98,69 @@ class CheckResult(Base):
     checked_at = Column(DateTime, nullable=False, default=_utcnow)
 
     fetch = relationship("Fetch", back_populates="check_results")
+
+
+class Restatement(Base):
+    """One historical figure that FMP reported differently than it did last time.
+
+    This is the second quality question, and it is not the one `check_results`
+    answers. CheckResult asks "is our math right?" by comparing our computed
+    subtotal against FMP's reported total *within a single fetch*. This table
+    asks "did their data change?" by comparing one raw FMP field *across two
+    fetches* of the same company.
+
+    Deliberately compares the raw stored response, before any mapping is applied
+    — the question is what FMP said, not what we made of it. That is only
+    answerable because api_responses is append-only and nothing is overwritten.
+
+    Companies restate prior periods, and data providers quietly fix bugs; either
+    shows up here as a row.
+    """
+
+    __tablename__ = "restatements"
+
+    id = Column(Integer, primary_key=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
+    # The fetch that introduced the change, and the one it was compared against.
+    fetch_id = Column(Integer, ForeignKey("fetches.id"), nullable=False, index=True)
+    prior_fetch_id = Column(Integer, ForeignKey("fetches.id"), nullable=False)
+
+    statement_type = Column(String, nullable=False, index=True)
+    fiscal_date = Column(String, nullable=True, index=True)
+    field = Column(String, nullable=False)  # FMP's raw field name, not a model line
+
+    old_value = Column(Float, nullable=True)
+    new_value = Column(Float, nullable=True)
+    delta = Column(Float, nullable=True)  # new - old
+
+    detected_at = Column(DateTime, nullable=False, default=_utcnow)
+
+    company = relationship("Company")
+    fetch = relationship("Fetch", foreign_keys=[fetch_id], back_populates="restatements")
+
+
+class PipelineRun(Base):
+    """One execution of a scheduled job.
+
+    Without this a scheduled job is a script that prints into the void. This is
+    what makes the pipeline observable: every run leaves a record of what it
+    attempted, what it managed, and what it found.
+    """
+
+    __tablename__ = "pipeline_runs"
+
+    id = Column(Integer, primary_key=True)
+    job_name = Column(String, nullable=False, index=True)  # e.g. "refresh_stale"
+
+    started_at = Column(DateTime, nullable=False, default=_utcnow, index=True)
+    finished_at = Column(DateTime, nullable=True)
+    # running | success | partial | failed
+    status = Column(String, nullable=False, default="running", index=True)
+
+    tickers_attempted = Column(Integer, nullable=False, default=0)
+    tickers_succeeded = Column(Integer, nullable=False, default=0)
+    tickers_failed = Column(Integer, nullable=False, default=0)
+    checks_written = Column(Integer, nullable=False, default=0)
+    restatements_found = Column(Integer, nullable=False, default=0)
+
+    notes = Column(Text, nullable=True)  # failure detail, or a one-line summary
