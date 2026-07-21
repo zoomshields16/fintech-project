@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline status — The Retail Analyst</title>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        .page { padding: 36px 0 72px; }
+        .page h1 {
+            font-family: Georgia, serif; font-size: 30px; font-weight: 700;
+            letter-spacing: -0.4px; margin-bottom: 6px;
+        }
+        .page .sub { color: var(--muted); font-size: 15px; margin-bottom: 30px; }
+        .stamp { font-size: 12.5px; color: var(--faint); }
+
+        /* ── Top tiles ── */
+        .tiles {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px; margin-bottom: 34px;
+        }
+        .tile {
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: 3px; padding: 16px 18px;
+        }
+        .tile .lbl {
+            font-size: 10.5px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+        }
+        .tile .val {
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
+            font-size: 27px; font-weight: 600; line-height: 1.1;
+        }
+        .tile .note { font-size: 12.5px; color: var(--faint); margin-top: 6px; }
+        .tile.good .val { color: var(--green); }
+        .tile.warn .val { color: var(--red); }
+        .tile.alert { border-color: var(--red); background: var(--red-tint); }
+
+        /* ── Sections ── */
+        section.block { margin-bottom: 38px; }
+        section.block > h2 {
+            font-family: Georgia, serif; font-size: 20px; font-weight: 700;
+            margin-bottom: 4px;
+        }
+        section.block > .hint {
+            font-size: 13.5px; color: var(--muted); margin-bottom: 14px; max-width: 640px;
+        }
+
+        table.grid {
+            width: 100%; border-collapse: collapse; font-size: 13.5px;
+            background: var(--card); border: 1px solid var(--line); border-radius: 3px;
+        }
+        table.grid th {
+            font-size: 10.5px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            text-align: right; padding: 9px 12px; white-space: nowrap;
+            border-bottom: 1px solid var(--ink); background: var(--paper-2);
+        }
+        table.grid th:first-child, table.grid td:first-child { text-align: left; }
+        table.grid td {
+            padding: 8px 12px; text-align: right; white-space: nowrap;
+            border-bottom: 1px solid #f0ece3;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        table.grid td.txt {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            white-space: normal;
+        }
+        table.grid tr:last-child td { border-bottom: none; }
+        .scroll { overflow-x: auto; }
+
+        .pass { color: var(--green); font-weight: 600; }
+        .fail { color: var(--red); font-weight: 600; }
+        .dim  { color: var(--faint); }
+
+        .pill {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .pill.ok   { background: var(--green-tint); color: var(--green); }
+        .pill.bad  { background: var(--red-tint);   color: var(--red); }
+        .pill.warn { background: #fdf3e0;           color: #8a5a12; }
+
+        /* ── Restatement queue ── */
+        .queue-empty {
+            background: var(--green-tint); border: 1px solid #c9dfd2;
+            border-radius: 3px; padding: 16px 18px; font-size: 14px; color: var(--green);
+        }
+        .btn-sm {
+            font-family: inherit; font-size: 12px; font-weight: 500;
+            border: 1px solid var(--line); background: var(--paper);
+            color: var(--ink); padding: 4px 10px; border-radius: 2px; cursor: pointer;
+        }
+        .btn-sm:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+        .btn-lead {
+            font-family: inherit; font-size: 13px; font-weight: 500;
+            border: 1px solid var(--ink); background: var(--ink); color: #fff;
+            padding: 7px 14px; border-radius: 2px; cursor: pointer; margin-bottom: 14px;
+        }
+        .btn-lead:hover { background: var(--navy); border-color: var(--navy); }
+        .btn-lead[disabled] { opacity: 0.45; cursor: default; }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+
+        .loading { color: var(--muted); font-size: 14px; padding: 40px 0; }
+        .err {
+            background: var(--red-tint); border: 1px solid var(--red); color: var(--red);
+            padding: 14px 16px; border-radius: 3px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-head">
+    <div class="shell">
+        <a class="brand" href="index.html">The Retail Analyst<span class="dot">.</span></a>
+        <nav class="head-links">
+            <a href="index.html">Home</a>
+            <a href="app.html">Workbench</a>
+        </nav>
+    </div>
+</header>
+
+<div class="page">
+    <div class="shell wide">
+        <h1>Pipeline status.</h1>
+        <p class="sub">
+            What the quality layers found the last time each company was pulled.
+            <span class="stamp" id="stamp"></span>
+        </p>
+
+        <div id="body"><div class="loading">Loading…</div></div>
+    </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// Figures arrive in raw dollars. Statement lines run to the hundreds of
+// billions, so abbreviate rather than printing sixteen digits.
+function money(v) {
+    if (v === null || v === undefined) return '—';
+    const abs = Math.abs(v);
+    const sign = v < 0 ? '-' : '';
+    if (abs >= 1e9) return sign + '$' + (abs / 1e9).toFixed(2) + 'B';
+    if (abs >= 1e6) return sign + '$' + (abs / 1e6).toFixed(2) + 'M';
+    if (abs >= 1e3) return sign + '$' + (abs / 1e3).toFixed(1) + 'K';
+    return sign + '$' + abs.toFixed(0);
+}
+function pct(v) { return v === null || v === undefined ? '—' : v.toFixed(1) + '%'; }
+function rateClass(v) { return v === null ? 'dim' : (v >= 95 ? 'pass' : (v < 80 ? 'fail' : '')); }
+// Underscored column names are how they read in the database; keep them
+// recognizable rather than prettifying into something un-greppable.
+function humanize(s) { return String(s).replace(/_/g, ' '); }
+function when(ts) { return ts ? String(ts).slice(0, 16).replace('T', ' ') : '—'; }
+
+let STATE = null;
+
+async function load() {
+    const el = document.getElementById('body');
+    try {
+        const res = await fetch(`${API}/api/pipeline-status`);
+        const data = await res.json();
+        if (data.error) { el.innerHTML = `<div class="err">${esc(data.error)}</div>`; return; }
+        STATE = data;
+        render(data);
+    } catch (e) {
+        el.innerHTML = `<div class="err">Could not reach the backend at ${API}. ` +
+                       `Is uvicorn running?<br><span class="dim">${esc(e.message)}</span></div>`;
+    }
+}
+
+function render(d) {
+    document.getElementById('stamp').textContent = 'Generated ' + when(d.generated_at) + ' UTC';
+
+    const cov = d.coverage, ch = d.checks, rs = d.restatements;
+    const unreviewed = rs.unreviewed;
+
+    const tiles = `
+      <div class="tiles">
+        <div class="tile ${ch.pass_rate >= 90 ? 'good' : 'warn'}">
+          <div class="lbl">Reconcile pass rate</div>
+          <div class="val">${pct(ch.pass_rate)}</div>
+          <div class="note">${ch.matched.toLocaleString()} of ${ch.total_checks.toLocaleString()} checks</div>
+        </div>
+        <div class="tile">
+          <div class="lbl">Companies loaded</div>
+          <div class="val">${cov.companies}</div>
+          <div class="note">${cov.never_fetched} never fetched</div>
+        </div>
+        <div class="tile ${cov.stale_count ? 'warn' : 'good'}">
+          <div class="lbl">Stale</div>
+          <div class="val">${cov.stale_count}</div>
+          <div class="note">older than ${cov.stale_after_days} days</div>
+        </div>
+        <div class="tile ${unreviewed ? 'alert' : ''}">
+          <div class="lbl">Unreviewed restatements</div>
+          <div class="val ${unreviewed ? 'fail' : ''}">${unreviewed}</div>
+          <div class="note">${rs.total} found all time</div>
+        </div>
+      </div>`;
+
+    const html = tiles
+        + restatementBlock(d.unreviewed_restatements, unreviewed)
+        + runsBlock(d.recent_runs)
+        + `<div class="two-col">${companiesBlock(d)}${linesBlock(d.worst_line_items)}</div>`
+        + staleBlock(cov);
+
+    document.getElementById('body').innerHTML = html;
+    wire();
+}
+
+// ── The queue: figures FMP now reports differently than it did before ──
+function restatementBlock(rows, unreviewed) {
+    const head = `<section class="block">
+        <h2>Restatement queue</h2>
+        <p class="hint">Figures FMP reports differently than it did on an earlier pull —
+        either the company restated a prior period, or the provider quietly corrected itself.
+        Mark one reviewed once you've looked at it, so tomorrow's findings stand out.</p>`;
+
+    if (!rows.length) {
+        return head + `<div class="queue-empty">
+            Nothing unreviewed. ${unreviewed === 0 ? 'Every figure matched what FMP reported last time.' : ''}
+        </div></section>`;
+    }
+
+    const body = rows.map(r => `
+        <tr data-id="${r.id}">
+          <td class="txt"><strong>${esc(r.ticker)}</strong></td>
+          <td class="txt dim">${esc(humanize(r.statement_type))}</td>
+          <td class="txt">${esc(r.fiscal_date || '—')}</td>
+          <td class="txt">${esc(r.field)}</td>
+          <td>${money(r.old_value)}</td>
+          <td>${money(r.new_value)}</td>
+          <td class="${r.delta > 0 ? 'pass' : 'fail'}">${money(r.delta)}</td>
+          <td class="${Math.abs(r.pct_change ?? 0) >= 5 ? 'fail' : 'dim'}">${
+              r.pct_change === null ? '—' : r.pct_change.toFixed(1) + '%'}</td>
+          <td class="txt dim">${when(r.detected_at)}</td>
+          <td class="txt"><button class="btn-sm review-one" data-id="${r.id}">Reviewed</button></td>
+        </tr>`).join('');
+
+    return head + `
+        <button class="btn-lead" id="review-all">Mark all ${rows.length} reviewed</button>
+        <div class="scroll"><table class="grid">
+          <thead><tr>
+            <th>Ticker</th><th>Statement</th><th>FY</th><th>Field</th>
+            <th>Was</th><th>Now</th><th>Δ</th><th>Δ%</th><th>Detected</th><th></th>
+          </tr></thead>
+          <tbody>${body}</tbody>
+        </table></div></section>`;
+}
+
+function runsBlock(runs) {
+    if (!runs.length) return '';
+    const body = runs.map(r => {
+        const cls = r.status === 'success' ? 'ok' : (r.status === 'failed' ? 'bad' : 'warn');
+        return `<tr>
+            <td class="txt">${esc(r.job_name)}</td>
+            <td class="txt"><span class="pill ${cls}">${esc(r.status)}</span></td>
+            <td class="txt dim">${when(r.started_at)}</td>
+            <td>${r.tickers_succeeded}/${r.tickers_attempted}</td>
+            <td class="${r.tickers_failed ? 'fail' : 'dim'}">${r.tickers_failed}</td>
+            <td>${(r.checks_written || 0).toLocaleString()}</td>
+            <td class="${r.restatements_found ? 'fail' : 'dim'}">${r.restatements_found}</td>
+        </tr>`;
+    }).join('');
+
+    return `<section class="block">
+        <h2>Recent job runs</h2>
+        <p class="hint">Every execution of the scheduled refresh leaves a row. This is what
+        answers "did it run, and did it work?" without reading a log file.</p>
+        <div class="scroll"><table class="grid">
+          <thead><tr>
+            <th>Job</th><th>Status</th><th>Started</th><th>Succeeded</th>
+            <th>Failed</th><th>Checks</th><th>Restated</th>
+          </tr></thead>
+          <tbody>${body}</tbody>
+        </table></div></section>`;
+}
+
+function companiesBlock(d) {
+    const row = c => `<tr>
+        <td class="txt"><strong>${esc(c.ticker)}</strong>
+            <span class="dim">${esc((c.company_name || '').slice(0, 22))}</span></td>
+        <td class="${rateClass(c.pass_rate)}">${pct(c.pass_rate)}</td>
+        <td class="dim">${c.matched}/${c.total_checks}</td>
+    </tr>`;
+
+    return `<section class="block">
+        <h2>Weakest companies</h2>
+        <p class="hint">Lowest reconcile pass rates. Foreign filers reporting under IFRS
+        sit at the bottom structurally — their statements don't carry the subtotals the model expects.</p>
+        <table class="grid">
+          <thead><tr><th>Company</th><th>Pass</th><th>Checks</th></tr></thead>
+          <tbody>${d.worst_companies.map(row).join('')}</tbody>
+        </table></section>`;
+}
+
+function linesBlock(lines) {
+    const body = lines.map(l => `<tr>
+        <td class="txt">${esc(humanize(l.line_item))}
+            <span class="dim">${esc(humanize(l.statement_type))}</span></td>
+        <td class="fail">${l.mismatches}</td>
+        <td class="dim">${pct(l.fail_rate)}</td>
+    </tr>`).join('');
+
+    return `<section class="block">
+        <h2>Worst line items</h2>
+        <p class="hint">Where the mismatches concentrate. A line failing across many companies
+        usually means a mapping gap, not a hundred separate data problems — this is the list
+        a recalibration pass works down.</p>
+        <table class="grid">
+          <thead><tr><th>Line item</th><th>Misses</th><th>Fail rate</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table></section>`;
+}
+
+function staleBlock(cov) {
+    if (!cov.stale_tickers.length) return '';
+    return `<section class="block">
+        <h2>Stale companies</h2>
+        <p class="hint">Not refreshed in over ${cov.stale_after_days} days. The scheduled job
+        picks these up; they're listed here so a job that quietly stopped running is visible.</p>
+        <p class="mono">${cov.stale_tickers.map(esc).join('  ·  ')}</p>
+    </section>`;
+}
+
+// ── Triage ──
+async function review(ids) {
+    const res = await fetch(`${API}/api/restatements/review`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ids, reviewed: true}),
+    });
+    const out = await res.json();
+    if (out.error) { alert(out.error); return; }
+    load();  // re-read rather than patching the DOM, so the tiles stay truthful
+}
+
+function wire() {
+    document.querySelectorAll('.review-one').forEach(btn =>
+        btn.addEventListener('click', () => review([Number(btn.dataset.id)])));
+    const all = document.getElementById('review-all');
+    if (all) all.addEventListener('click', () => {
+        const ids = STATE.unreviewed_restatements.map(r => r.id);
+        if (ids.length && confirm(`Mark all ${ids.length} findings reviewed?`)) review(ids);
+    });
+}
+
+load();
+</script>
+</body>
+</html>
