@@ -7,7 +7,7 @@
 # The returned dict is the same shape either way, so callers can't tell the
 # difference — only the log knows.
 
-from fmp_test import get_financials, extract_profile
+from fmp_client import get_financials, extract_profile
 from db_write import load_recent_fetch, save_fetch
 from check_runner import run_checks_for_fetch
 from restatement_detector import detect_restatements

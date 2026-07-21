@@ -15,7 +15,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fmp_test import fmp_get
+from fmp_client import fmp_get
 
 CACHE_PATH = Path(__file__).resolve().parent / "universe.json"
 ENDPOINT = "stable/nasdaq-constituent"

@@ -50,7 +50,7 @@ and reachable by the validation pipeline.
   three-statement model view, DCF output.
 - **Backend** — Python + FastAPI (`backend/`):
   - `main.py` — API endpoints (`POST /api/run-model`, projections, DCF)
-  - `fmp_test.py` — FMP fetch layer
+  - `fmp_client.py` — FMP fetch layer
   - `data_source.py` — cache-first data access
   - `db.py`, `models.py`, `db_write.py` — SQLite/SQLAlchemy persistence
   - `mapping_engine.py`, `mappings.json`, `export_mappings.py`,

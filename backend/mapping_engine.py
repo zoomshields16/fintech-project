@@ -34,7 +34,9 @@ MAPPINGS_PATH = Path(__file__).resolve().parent / "mappings.json"
 DETAIL = "Detail"
 BACKUP = "Duplicate/Backup"
 PULLABLE = (DETAIL, BACKUP)          # only these are ever pulled into the model
-CHECK_TYPES = ("Total/Check", "Check")  # never pulled; only reconciled against
+# The workbook's other use_types are "Total/Check" and "Check". They are never
+# pulled into the model — they are the reported figures we reconcile against, and
+# checks.py reads them straight from mappings.json rather than through here.
 
 
 @lru_cache(maxsize=1)
@@ -160,58 +162,4 @@ def reclass_adjustments(statement, ticker):
             continue
         key = (r["fiscal_year"], r["to_line"])
         out[key] = out.get(key, 0.0) + r["amount"]
-    return out
-
-
-def pull_statement(statement, records, ticker=None):
-    """Map a company's full statement history.
-
-    Returns {fiscal_year: {model_line: value}}, with reclass adjustments already
-    applied — i.e. Carson's "adjusted" row: adjusted = mapped + reclass_adj.
-    """
-    active = resolve_active(statement, records)
-    adjustments = reclass_adjustments(statement, ticker) if ticker else {}
-
-    out = {}
-    for record in records:
-        year = fiscal_year(record)
-        if year is None:
-            continue
-
-        line_values = {}
-        for model_line, rows in active.items():
-            # Ties are summed; no active synonym means the company does not report it.
-            mapped = sum(_value(record, r["synonym"]) for r in rows) if rows else 0.0
-            line_values[model_line] = mapped + adjustments.get((year, model_line), 0.0)
-
-        out[year] = line_values
-
-    return out
-
-
-def pull_reported_checks(statement, records):
-    """The Total/Check rows — what FMP *reported*, for reconciling against what we built.
-
-    These are never summed on ties: a reported total is a single figure, so the
-    lowest-priority synonym that has data wins outright.
-    """
-    master = load_mappings()["statements"][statement]["master"]
-    check_rows = [r for r in master if r["use_type"] in CHECK_TYPES]
-
-    out = {}
-    for record in records:
-        year = fiscal_year(record)
-        if year is None:
-            continue
-
-        values = {}
-        for model_line, rows in _by_model_line(check_rows).items():
-            with_data = sorted(
-                (r for r in rows if _has_data(r, records)),
-                key=lambda r: r["priority"],
-            )
-            values[model_line] = _value(record, with_data[0]["synonym"]) if with_data else None
-
-        out[year] = values
-
     return out

@@ -1,3 +1,11 @@
+# The FMP (Financial Modeling Prep) HTTP client — the only module that talks to
+# the network. Everything else reaches FMP through data_source.py, which checks
+# the local log first, so a call from here always means a real API request.
+#
+# Nothing is interpreted here: responses are returned as FMP sent them, and the
+# mapping engine decides what the fields mean. That separation is what lets
+# api_responses store the raw payload and be re-read years later.
+
 import os
 import requests
 from dotenv import load_dotenv

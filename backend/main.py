@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-from fmp_test import extract_profile
+from fmp_client import extract_profile
 from data_source import get_financials_cached, UnsupportedTicker
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf

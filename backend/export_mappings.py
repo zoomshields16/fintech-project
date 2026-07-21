@@ -1,9 +1,16 @@
 # Exports Carson's mapping spec out of the .xlsm into mappings.json.
 #
-#   python export_mappings.py "../reference/model 55.xlsm"
+#   python export_mappings.py "../reference/model 56.xlsm"
+#   python apply_overrides.py        <- ALWAYS run this second
 #
 # Run this whenever a new model workbook lands. Nothing is transcribed by hand — the
 # workbook is the source of truth and mappings.json is a build artifact of it.
+#
+# This script REBUILDS mappings.json from scratch, discarding whatever was there.
+# Our own mapping decisions (the pre-NCI net income target, preferred stock
+# issuance, the dropped Other-Income reclasses) are therefore NOT preserved by it —
+# apply_overrides.py reapplies them, and skipping that step silently costs about
+# half a point of reconcile pass rate with no error to warn you.
 #
 # The .xlsm is gitignored (an API key is embedded in it), so mappings.json is what
 # actually ships: it carries the spec without carrying the secret.
