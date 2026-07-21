@@ -53,7 +53,8 @@ and reachable by the validation pipeline.
   - `fmp_test.py` — FMP fetch layer
   - `data_source.py` — cache-first data access
   - `db.py`, `models.py`, `db_write.py` — SQLite/SQLAlchemy persistence
-  - `mapping_engine.py`, `mappings.json`, `export_mappings.py` — field mapping
+  - `mapping_engine.py`, `mappings.json`, `export_mappings.py`,
+    `apply_overrides.py` — field mapping
   - `income_statement.py`, `balance_sheet.py`, `cash_flow.py` — statement engines
     (`balance_sheet.compute_equity_rollforward` explains each year's equity change)
   - `checks.py`, `check_runner.py`, `backfill_checks.py` — validation pipeline
@@ -62,6 +63,34 @@ and reachable by the validation pipeline.
 
   - `refresh_stale.py`, `restatement_detector.py` — scheduled refresh and
     upstream-change detection
+
+### Loading a new model workbook
+
+The Excel workbook is the source of truth for the mappings and `mappings.json` is
+a build artifact of it. When a new workbook lands, run both steps — never one:
+
+```bash
+python export_mappings.py "../reference/model 56.xlsm"   # rebuild from the workbook
+python apply_overrides.py                                # reapply our decisions
+python backfill_checks.py --all                          # re-grade, 0 API calls
+```
+
+**`apply_overrides.py` is not optional.** The export overwrites `mappings.json`
+wholesale, so anything edited directly into the JSON is destroyed by the next
+export. That nearly happened: three fixes worth ~4.5 points of pass rate lived
+only in the JSON, and model 56's export would have silently reverted them. The
+overrides now live in code — versioned, commented with the reasoning, and
+reapplied identically every time. The script is idempotent and prints what it
+changed, so a second run reporting `0 override(s) applied` is the expected result.
+
+Where we knowingly diverge from the workbook is documented inline in that file.
+The substantive one: our net income is `pretax - tax`, which is consolidated and
+**pre**-NCI, while FMP's `netIncome` is **post**-NCI, so the check is pointed at
+`netIncomeFromContinuingOperations` instead. That one mapping change closes the
+gap for every company at once, which is why the workbook's per-ticker reclasses
+into `Other Income (Expense)` are dropped — they patch the same gap a second
+time, and because Other Income sits *above* pretax while NCI sits *below* the tax
+line, they fix `net_income` while breaking `pretax_income` by the same amount.
 
 ### Database
 
