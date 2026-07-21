@@ -10,6 +10,7 @@ from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile
                            compute_equity_rollforward)
 from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
 from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
+import pipeline_status
 
 app = FastAPI()
 
@@ -482,3 +483,49 @@ def run_dcf_endpoint(request: DCFRequest):
             "pre_tax_cost_debt_used": pre_tax_cost_debt,
         },
     }
+
+# ── Pipeline health ────────────────────────────────────────────────────────
+# The quality layers write to the database on every fetch, but nothing surfaced
+# what they found — a restatement could sit in a table for months. These read it
+# back out so the status page (and a banner in the workbench) can show it.
+
+
+class ReviewRequest(BaseModel):
+    ids: List[int]
+    reviewed: bool = True
+
+
+@app.get("/api/pipeline-status")
+def pipeline_status_endpoint():
+    """Everything the status page needs: coverage, pass rates, worst lines,
+    unreviewed restatements, recent job runs."""
+    try:
+        return pipeline_status.full_status()
+    except Exception as e:
+        return {"error": f"Failed to read pipeline status: {str(e)}"}
+
+
+@app.get("/api/restatements")
+def restatements_endpoint(ticker: Optional[str] = None,
+                          only_unreviewed: bool = True,
+                          limit: int = 100):
+    """Restated figures, optionally scoped to one ticker. Drives the workbench
+    banner ("FMP changed N figures for AAPL since our last pull")."""
+    try:
+        return {
+            "counts": pipeline_status.restatement_counts(ticker),
+            "restatements": pipeline_status.restatements(
+                ticker=ticker, only_unreviewed=only_unreviewed, limit=limit),
+        }
+    except Exception as e:
+        return {"error": f"Failed to read restatements: {str(e)}"}
+
+
+@app.post("/api/restatements/review")
+def review_restatements(request: ReviewRequest):
+    """Mark findings reviewed (or un-review them) so the queue can be worked down."""
+    try:
+        changed = pipeline_status.mark_reviewed(request.ids, reviewed=request.reviewed)
+        return {"updated": changed, "reviewed": request.reviewed}
+    except Exception as e:
+        return {"error": f"Failed to update restatements: {str(e)}"}

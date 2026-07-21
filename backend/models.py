@@ -135,6 +135,16 @@ class Restatement(Base):
 
     detected_at = Column(DateTime, nullable=False, default=_utcnow)
 
+    # Triage state. Without this the table only grows, and a finding from this
+    # morning is indistinguishable from one already looked at six months ago —
+    # which is how a real restatement ends up sitting undiscovered.
+    #
+    # The one column here that is deliberately mutable: every other table in this
+    # schema is append-only, but "have we looked at this yet" is a fact about us,
+    # not about what FMP reported, so updating it destroys no evidence.
+    reviewed = Column(Integer, nullable=False, default=0, index=True)
+    reviewed_at = Column(DateTime, nullable=True)
+
     company = relationship("Company")
     fetch = relationship("Fetch", foreign_keys=[fetch_id], back_populates="restatements")
 

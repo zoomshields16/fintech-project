@@ -253,7 +253,10 @@ def main(stale_days=DEFAULT_STALE_DAYS, limit=None, dry_run=False, seed=False):
     if restated_tickers:
         log(f"[{JOB_NAME}] ** REVIEW NEEDED — FMP changed previously reported figures: "
             f"{', '.join(restated_tickers)} **")
-        log(f"[{JOB_NAME}]    query: SELECT * FROM restatements ORDER BY detected_at DESC;")
+        log(f"[{JOB_NAME}]    review them at frontend/status.html "
+            f"(or GET /api/pipeline-status)")
+        log(f"[{JOB_NAME}]    query: SELECT * FROM restatements WHERE reviewed = 0 "
+            f"ORDER BY detected_at DESC;")
 
 
 if __name__ == "__main__":
