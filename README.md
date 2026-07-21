@@ -106,6 +106,30 @@ budget. Wire to a scheduler at deploy time, e.g. nightly:
 0 2 * * *  cd /path/to/backend && /path/to/venv/bin/python refresh_stale.py
 ```
 
+### Surfacing what it finds
+
+A finding that sits in a table nobody opens is not a finding. Three things make
+the pipeline's output visible:
+
+- **`backend/logs/pipeline.log`** — every run appends here, with restatements
+  called out at the end of the run rather than buried mid-log.
+- **`GET /api/pipeline-status`** — coverage, reconcile pass rates, the worst
+  line items, recent job runs, and the unreviewed restatement queue, all in one
+  response. Rates are measured against the *latest* complete fetch per company,
+  so old fetches taken before a mapping fix don't drag down a number meant to
+  describe the engine as it stands today.
+- **`frontend/status.html`** — that endpoint rendered, with a button to mark
+  findings reviewed.
+
+The `reviewed` flag on `restatements` is what turns the table into a queue you
+can work down instead of a pile that only grows. It is the one deliberately
+mutable column in an otherwise append-only schema — "have we looked at this yet"
+is a fact about us, not about what FMP reported, so updating it destroys no
+evidence.
+
+`app.html` also shows a banner when the loaded company has restated figures, so
+the notice reaches whoever is valuing that stock without them going looking.
+
 ## Running locally
 
 ```bash
