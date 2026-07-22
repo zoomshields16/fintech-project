@@ -63,6 +63,7 @@ and reachable by the validation pipeline.
 
   - `refresh_stale.py`, `restatement_detector.py` — scheduled refresh and
     upstream-change detection
+  - `tests/` — unit tests for the engine math and mapping semantics (pytest)
 
 ### Loading a new model workbook
 
@@ -187,6 +188,19 @@ To re-run the validation checks over everything already stored (no API calls):
 python backfill_checks.py --all
 ```
 
+To run the unit tests (from `backend/`):
+
+```bash
+python -m pytest tests/
+```
+
+The reconcile pipeline grades our math against FMP's reported totals; the unit
+tests grade it against answers computed by hand. They cover the mapping engine's
+resolution semantics (priority, ties-are-additive, whole-history HasData), the
+UFCF/WACC/DCF math, the equity roll-forward, and — via `test_shipped_mappings.py`
+— the content of `mappings.json` itself, so an export run without
+`apply_overrides.py` now fails a test instead of silently losing pass rate.
+
 ## Status
 
 - [x] End-to-end: ticker in → real statements, projections, and DCF out
@@ -199,6 +213,7 @@ python backfill_checks.py --all
 - [x] Historical equity roll-forward with an explicit unexplained residual
 - [x] Restatement detection — flags figures FMP reports differently than before
 - [x] Scheduled refresh job with a `pipeline_runs` audit log
+- [x] Unit tests on the engines and the shipped mapping spec (`backend/tests/`)
 - [ ] Wire the refresh job to a real scheduler (needs deploy — see checklist)
 - [ ] Reject tickers outside the Nasdaq-100 (the supported universe) instead of
       attempting a fetch
