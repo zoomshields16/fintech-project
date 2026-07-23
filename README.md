@@ -71,10 +71,16 @@ The Excel workbook is the source of truth for the mappings and `mappings.json` i
 a build artifact of it. When a new workbook lands, run both steps — never one:
 
 ```bash
-python export_mappings.py "../reference/model 56.xlsm"   # rebuild from the workbook
+python export_mappings.py "../reference/model 62.xlsm"   # rebuild from the workbook
 python apply_overrides.py                                # reapply our decisions
 python backfill_checks.py --all                          # re-grade, 0 API calls
 ```
+
+The exporter assumes nothing about where the two tables sit. Model 62 moved both
+one column right and swapped their order, so each is located by its own header
+labels and bounded by the other. Live per-ticker formula columns (`Active`, and
+model 62's `Applies now?`) are never exported — the engine recomputes them from
+real data, and freezing one company's shape would corrupt every other company.
 
 **`apply_overrides.py` is not optional.** The export overwrites `mappings.json`
 wholesale, so anything edited directly into the JSON is destroyed by the next
@@ -83,6 +89,22 @@ only in the JSON, and model 56's export would have silently reverted them. The
 overrides now live in code — versioned, commented with the reasoning, and
 reapplied identically every time. The script is idempotent and prints what it
 changed, so a second run reporting `0 override(s) applied` is the expected result.
+
+### How a reclass is directed
+
+A reclass row is a transfer: the amount is subtracted from `from_line` and added
+to `to_line`. The workbook says which it is by which of the two columns holds a
+real model line — a gross-up names only the target and describes the source in
+prose ("FMP unallocated non-current assets"); a removal names only the source and
+describes the target in prose ("FMP over-listed NCL"). Prose matches no model line
+and is dropped, and that asymmetry is what makes one add and the other subtract.
+
+Note that a reclass can make a check *fail* while making the model more correct.
+Carson's corrections are sourced to the audited 10-K, but the checks grade against
+FMP, so where FMP is the party that is wrong the two disagree by design. MAR
+fiscal 2017 is the clean example: our total liabilities now come to $20,217M,
+which is the 10-K figure to the dollar, and the check reports a mismatch because
+FMP carries $20,264M.
 
 Where we knowingly diverge from the workbook is documented inline in that file.
 The substantive one: our net income is `pretax - tax`, which is consolidated and
