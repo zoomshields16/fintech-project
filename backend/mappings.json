@@ -2503,16 +2503,6 @@
     },
     {
      "ticker": "TSLA",
-     "fiscal_year": 2021,
-     "statement": "CF",
-     "source_field": "(FMP internal)",
-     "from_line": null,
-     "to_line": "Investing",
-     "amount": 1500000000.0,
-     "reason": "FY2021: digital-asset purchases sit in FMP components but net differently in its reported investing total; align build to reported."
-    },
-    {
-     "ticker": "TSLA",
      "fiscal_year": 2022,
      "statement": "CF",
      "source_field": "(FMP internal)",

@@ -123,6 +123,29 @@ def apply_overrides(path=MAPPINGS):
     else:
         print("  ok    none present")
 
+    # 5. Drop TSLA FY2021's investing plug. The workbook adds +$1.5B to Investing
+    #    because "digital-asset purchases sit in FMP components but net differently
+    #    in its reported investing total". FMP has since restated: its components now
+    #    sum to its reported total exactly (-6,514M property and equipment, -132M
+    #    purchases of investments, -1,222M other = -7,868M). The plug is therefore
+    #    added on top of a figure that already ties, and it is the entire reason our
+    #    investing cash flow and net change in cash break for that year.
+    #
+    #    Scoped to the one row rather than the whole "components don't tie; align"
+    #    family, because the others still correspond to real gaps. Revisit the rest
+    #    if FMP restates again — they fail the same way once upstream data is fixed.
+    print("[5] stale TSLA FY2021 investing plug")
+    before = len(CF["reclasses"])
+    CF["reclasses"] = [r for r in CF["reclasses"]
+                       if not (r["ticker"] == "TSLA" and r["fiscal_year"] == 2021
+                               and r["to_line"] == "Investing")]
+    dropped = before - len(CF["reclasses"])
+    if dropped:
+        print(f"  drop  {dropped} TSLA FY2021 investing reclass (FMP components now tie)")
+        changed += dropped
+    else:
+        print("  ok    none present")
+
     Path(path).write_text(json.dumps(data, indent=1))
     print(f"\n{changed} override(s) applied to {path}")
     return changed
