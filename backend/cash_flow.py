@@ -81,6 +81,7 @@ def pull_cf_accounts(cf_record, records=None, ticker=None):
     a["_reclass_operating"] = adj.get((year, "Operating"), 0.0)
     a["_reclass_investing"] = adj.get((year, "Investing"), 0.0)
     a["_reclass_financing"] = adj.get((year, "Financing"), 0.0)
+    a["_reclass_fx"] = adj.get((year, "FX"), 0.0)
     return a
 
 
@@ -113,7 +114,8 @@ def compute_cf_formula_lines(a):
     # Modeled change in cash (no FX line, matching Carson's template);
     # actual cash balances still come from FMP so the balance sheet balances.
     net_change_cash = operating_cf + investing_cf + financing_cf
-    net_change_cash_full = operating_cf + investing_cf_full + financing_cf_full + s(a["fx_effect"])
+    net_change_cash_full = (operating_cf + investing_cf_full + financing_cf_full +
+                            s(a["fx_effect"]) + s(a.get("_reclass_fx")))
 
     return {
         "other_adjustments": other_adjustments,
