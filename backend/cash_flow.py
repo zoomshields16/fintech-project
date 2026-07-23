@@ -50,12 +50,24 @@ CF_SINGLE_LINES = {
 }
 
 # Reconcile targets: our computed subtotal -> Carson's reported model line
+#
+# Free Cash Flow is deliberately NOT reconciled. FMP derives its freeCashFlow from
+# `capitalExpenditure`, while our CapEx line maps to
+# `investmentsInPropertyPlantAndEquipment` (priority 1, with capitalExpenditure kept
+# only as a backup), so the two disagree whenever those FMP fields disagree — and
+# ours is the better number. MSTR is the clearest case: FMP's capitalExpenditure
+# absorbs about $22B of bitcoin purchases where ours is $13.5M of actual property
+# and equipment. Grading one against the other measured the field choice, not our
+# math, and it accounted for 52 of the 99 material recent mismatches.
+#
+# Nothing downstream needs the check either: the valuation runs on unlevered free
+# cash flow from dcf_engine.compute_ufcf, which is built from NOPAT, D&A, CapEx and
+# the change in working capital rather than from this line. Carson's call, July 23.
 CF_CHECK_LINES = {
     "operating_cf":    "Net Cash Provided by Operating Activities",
     "investing_cf":    "Net Cash Provided by Investing Activities",
     "financing_cf":    "Net Cash Provided by Financing Activities",
     "net_change_cash": "Net Change in Cash",
-    "free_cash_flow":  "Free Cash Flow",
 }
 
 

@@ -122,6 +122,18 @@ line, they fix `net_income` while breaking `pretax_income` by the same amount.
 per-company fetch counts; it is a view rather than columns on `companies` so the
 counts are computed on read and cannot drift.
 
+### What is not reconciled, and why
+
+Free Cash Flow is computed and displayed but deliberately not graded. FMP derives
+its `freeCashFlow` from `capitalExpenditure`, while our CapEx maps to
+`investmentsInPropertyPlantAndEquipment` (FMP's own field is kept only as a
+priority-2 backup), so the check fired whenever those two FMP fields disagreed and
+measured the field choice rather than our math. MSTR shows why ours is the better
+number: FMP's `capitalExpenditure` absorbs roughly $22B of bitcoin purchases where
+ours is $13.5M of actual property and equipment. Nothing downstream wanted the
+check either — the valuation runs on unlevered free cash flow from
+`dcf_engine.compute_ufcf`, which never reads this line.
+
 ### Two quality layers
 
 The pipeline answers two different questions, and neither can find what the
