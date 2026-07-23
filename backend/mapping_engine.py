@@ -150,8 +150,20 @@ def reclass_adjustments(statement, ticker):
     """{(fiscal_year, target): summed amount} for this ticker.
 
     `target` is a model line for IS/BS. For CF the workbook reclasses between
-    SECTIONS (Operating/Investing/Financing) rather than lines, so the target is a
-    section name there — the caller decides what to do with it.
+    SECTIONS (Operating/Investing/Financing/FX) rather than lines, so the target is
+    a section name there — the caller decides what to do with it.
+
+    A reclass is a transfer, so the amount is added to `to_line` AND subtracted from
+    `from_line`. The workbook encodes direction by which of the two columns holds a
+    real model line: a gross-up names only the target and describes the source in
+    prose ("FMP unallocated non-current assets"), while a removal names only the
+    source and describes the target in prose ("FMP over-listed NCL"). Prose resolves
+    to no model line and is silently dropped, which is exactly what makes one a
+    gross-up and the other a removal. Model 62 splits 69/47 between the two and has
+    no row where both columns are real.
+
+    Honouring `from_line` is what makes removals work at all; before it, the 47
+    removal rows were parsed, stored, and then quietly ignored.
 
     Multiple rows can hit the same target in the same year, so they are summed.
     """
@@ -160,6 +172,9 @@ def reclass_adjustments(statement, ticker):
     for r in reclasses:
         if r["ticker"] != ticker:
             continue
-        key = (r["fiscal_year"], r["to_line"])
-        out[key] = out.get(key, 0.0) + r["amount"]
+        year = r["fiscal_year"]
+        for line, sign in ((r.get("to_line"), 1.0), (r.get("from_line"), -1.0)):
+            if not line:
+                continue
+            out[(year, line)] = out.get((year, line), 0.0) + sign * r["amount"]
     return out

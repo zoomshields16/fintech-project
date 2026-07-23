@@ -174,6 +174,33 @@ def test_reclasses_on_the_same_target_sum(monkeypatch):
     assert me.reclass_adjustments(IS, "HON") == {(2023, "SG&A"): 7.0}
 
 
+def test_reclass_subtracts_from_its_source_line(monkeypatch):
+    """A reclass is a transfer: the amount leaves from_line and arrives at to_line.
+
+    The workbook encodes direction by which column holds a real model line. A
+    removal names the source and puts prose in the target ("FMP over-listed NCL"),
+    which resolves to nothing and drops the amount — that is what makes it a
+    removal rather than a move.
+    """
+    patch_mappings(monkeypatch, _spec([], reclasses=[
+        {"ticker": "KLAC", "fiscal_year": 2018, "from_line": "Other Long-Term Liabilities",
+         "to_line": "FMP over-listed NCL", "amount": 23.0},
+    ]))
+    adj = me.reclass_adjustments(IS, "KLAC")
+    assert adj[(2018, "Other Long-Term Liabilities")] == -23.0
+    assert adj[(2018, "FMP over-listed NCL")] == 23.0  # no such line, so never applied
+
+
+def test_reclass_with_a_blank_source_is_a_pure_addition(monkeypatch):
+    """Most rows gross up a line from nowhere — a missing from_line must not
+    become a phantom (year, None) subtraction."""
+    patch_mappings(monkeypatch, _spec([], reclasses=[
+        {"ticker": "MAR", "fiscal_year": 2017, "from_line": None,
+         "to_line": "Retained Earnings", "amount": 149.0},
+    ]))
+    assert me.reclass_adjustments(IS, "MAR") == {(2017, "Retained Earnings"): 149.0}
+
+
 # ------------------------------------------------------------------ fiscal_year
 
 def test_fiscal_year_prefers_calendar_year():
