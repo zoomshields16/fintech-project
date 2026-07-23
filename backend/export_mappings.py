@@ -20,7 +20,14 @@
 # live per-ticker formulas, and mapping_engine.py recomputes them from real FMP data
 # at runtime. Freezing them would bake one company's shape into every other company:
 # the workbook ships with PEP loaded, PEP has no R&D, so a frozen Active would zero
-# out R&D for every company that does have it.
+# out R&D for every company that does have it. Model 62's new "Applies now?" column
+# on the reclass tables is the same kind of thing — `=IF($B115=$C$4,"● THIS TICKER","")`
+# just highlights the loaded ticker's rows — so it is not exported either.
+#
+# Nothing about the sheet layout is hardcoded, because model 62 changed all of it:
+# both tables moved one column right, and the reclass table now comes BEFORE the
+# mapping dictionary instead of after it. Tables are located by their own header
+# labels and bounded by each other, so either order and any column works.
 
 import json
 import sys
@@ -40,17 +47,32 @@ RECLASS_COLS = ["ticker", "fiscal_year", "statement", "source_field", "from_line
 OUT_PATH = Path(__file__).resolve().parent / "mappings.json"
 
 
-def _find_header_rows(ws):
-    """Locate the two tables: the master map starts at 'Statement', reclasses at 'Ticker'."""
-    master_hdr = reclass_hdr = None
-    for i in range(1, ws.max_row + 1):
-        first = ws.cell(row=i, column=1).value
-        first = str(first).strip() if first else ""
-        if first == "Statement" and master_hdr is None:
-            master_hdr = i
-        elif first == "Ticker" and reclass_hdr is None:
-            reclass_hdr = i
-    return master_hdr, reclass_hdr
+def _find_tables(rows):
+    """Locate both tables by their own header labels, wherever they sit.
+
+    Each header is matched on its first two labels rather than on a fixed column,
+    and the row/column of each is returned, so a workbook that shifts columns or
+    swaps the order of the two tables still exports.
+    """
+    master = reclass = None
+    for i, r in enumerate(rows, start=1):
+        vals = [str(v).strip() if v is not None else "" for v in r]
+        for c, v in enumerate(vals):
+            if master is None and v == "Statement" and vals[c + 1:c + 2] == ["Section"]:
+                master = (i, c)
+            if reclass is None and v == "Ticker" and vals[c + 1:c + 2] == ["Fiscal Year"]:
+                reclass = (i, c)
+    if master is None or reclass is None:
+        raise SystemExit(f"could not find both tables (master={master}, reclass={reclass})")
+    return master, reclass
+
+
+def _body(rows, header_row, other_header_row):
+    """The data rows of one table: everything below its header, stopping short of
+    the other table's header. Either table may come first."""
+    if other_header_row > header_row:
+        return rows[header_row:other_header_row - 1]
+    return rows[header_row:]
 
 
 def export(xlsm_path):
@@ -59,26 +81,36 @@ def export(xlsm_path):
 
     for statement, sheet_name in SHEETS.items():
         ws = wb[sheet_name]
-        rows = list(ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=8, values_only=True))
-        master_hdr, reclass_hdr = _find_header_rows(ws)
+        rows = list(ws.iter_rows(min_row=1, max_row=ws.max_row,
+                                 max_col=ws.max_column, values_only=True))
+        (master_hdr, master_col), (reclass_hdr, reclass_col) = _find_tables(rows)
 
         master = []
-        for r in rows[master_hdr:reclass_hdr - 1]:
-            if not r[2] or not r[3]:  # a real mapping row needs a model line and a synonym
+        for r in _body(rows, master_hdr, reclass_hdr):
+            cells = r[master_col:master_col + len(MASTER_COLS)]
+            if not cells[2] or not cells[3]:  # a real mapping row needs a model line and a synonym
                 continue
-            row = dict(zip(MASTER_COLS, r))
+            row = dict(zip(MASTER_COLS, cells))
             row.pop("active")  # recomputed per ticker at runtime, never frozen
             row["priority"] = int(row["priority"]) if row["priority"] is not None else 99
             master.append(row)
 
-        reclasses = []
-        for r in rows[reclass_hdr:]:
-            if not r[0] or r[6] in (None, ""):  # need a ticker and an amount
+        reclasses, skipped = [], 0
+        for r in _body(rows, reclass_hdr, master_hdr):
+            cells = r[reclass_col:reclass_col + len(RECLASS_COLS)]
+            if not cells[0] or cells[6] in (None, ""):  # need a ticker and an amount
                 continue
-            row = dict(zip(RECLASS_COLS, r))
-            row["fiscal_year"] = int(row["fiscal_year"])
-            row["amount"] = float(row["amount"])
+            row = dict(zip(RECLASS_COLS, cells))
+            try:
+                row["fiscal_year"] = int(row["fiscal_year"])
+                row["amount"] = float(row["amount"])
+            except (TypeError, ValueError):
+                skipped += 1  # reported below rather than swallowed
+                continue
             reclasses.append(row)
+        if skipped:
+            print(f"{sheet_name:<7} !! {skipped} reclass row(s) skipped: "
+                  f"unreadable fiscal year or amount")
 
         out["statements"][statement] = {"master": master, "reclasses": reclasses}
         print(f"{sheet_name:<7} -> {statement:<17} {len(master):>3} mapping rows, {len(reclasses):>3} reclasses")
