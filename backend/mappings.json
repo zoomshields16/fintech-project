@@ -1,5 +1,5 @@
 {
- "source": "model 56.xlsm",
+ "source": "model 62.xlsm",
  "statements": {
   "income_statement": {
    "master": [
@@ -254,6 +254,15 @@
      "use_type": "Total/Check",
      "priority": 1,
      "notes": "Check only \u2014 discontinued-ops flag vs total Net Income"
+    },
+    {
+     "statement": "IS",
+     "section": "Memo/Check",
+     "model_line": "Net Income from Discontinued Ops (reported)",
+     "synonym": "netIncomeFromDiscontinuedOperations",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check only \u2014 discontinued-ops line; reconciles built NI vs reported when present. Not summed (Total/Check)."
     },
     {
      "statement": "IS",
@@ -925,6 +934,24 @@
      "use_type": "Detail",
      "priority": 1,
      "notes": "P1 tie \u2014 preferred stock bundled into share capital (no dedicated preferred line in the model; typically immaterial, e.g., AVGO FY2019-21 $27-29M)."
+    },
+    {
+     "statement": "BS",
+     "section": "Memo/Check",
+     "model_line": "Total Debt (reported)",
+     "synonym": "totalDebt",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check only \u2014 reported total debt (ST + LT + leases); cross-check for valuation debt bridge. Not summed (Total/Check)."
+    },
+    {
+     "statement": "BS",
+     "section": "Memo/Check",
+     "model_line": "Net Debt (reported)",
+     "synonym": "netDebt",
+     "use_type": "Total/Check",
+     "priority": 1,
+     "notes": "Check only \u2014 reported net debt (total debt \u2212 cash); valuation reference. Not summed (Total/Check)."
     }
    ],
    "reclasses": [
@@ -1527,6 +1554,566 @@
      "to_line": "AOCI",
      "amount": -8000000.0,
      "reason": "CMCSA FY2024: model Liab+Equity exceed Total Assets by $8M (FMP footing residual). Park \u2212$8M in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "DDOG",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(NCL double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": "FMP over-listed NCL",
+     "amount": 140805000.0,
+     "reason": "DDOG FY2017: FMP longTermDebt ($140.805M convertible notes) is also embedded inside otherNonCurrentLiabilities \u2014 reported totalNonCurrentLiabilities (145,508) foots as otherNCL (141,690) + defRevNC (3,818) only, so the standalone longTermDebt line double-counts. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K; the $140.8M stays classified as Long-Term Debt. Special case."
+    },
+    {
+     "ticker": "DDOG",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(NCL double-count)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": "FMP over-listed NCL",
+     "amount": 140805000.0,
+     "reason": "DDOG FY2018: FMP longTermDebt ($140.805M convertible notes) also embedded inside otherNonCurrentLiabilities \u2014 reported totalNonCurrentLiabilities (143,557) foots as otherNCL (142,164) + defRevNC (1,393) only, so the standalone longTermDebt line double-counts. Removed from Other Long-Term Liabilities so total liabilities tie to the reported 10-K; the $140.8M stays classified as Long-Term Debt. Special case."
+    },
+    {
+     "ticker": "MPWR",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 1122000.0,
+     "reason": "MPWR FY2017: raw balance-sheet components don't tie to reported totals by +$1.122M (source rounding \u2014 assets exceed liab+equity). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "ZS",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 9426000.0,
+     "reason": "ZS FY2017 (pre-IPO): FMP balance-sheet components don't tie to reported totals by +$9.4M (residual after folding redeemable convertible preferred stock into equity). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "ZS",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 3800000.0,
+     "reason": "ZS FY2020: FMP balance-sheet components don't tie to reported totals by +$3.8M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "ZS",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 1930000.0,
+     "reason": "ZS FY2022: FMP balance-sheet components don't tie to reported totals by +$1.93M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "CHTR",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(unitemized NCA)",
+     "from_line": "FMP unallocated non-current asset",
+     "to_line": "Other Long-Term Assets",
+     "amount": 689000000.0,
+     "reason": "CHTR FY2017: FMP itemized non-current asset fields sum to $143,379M vs reported totalNonCurrentAssets $144,068M \u2014 $689M unitemized. Added to Other Long-Term Assets so total assets tie to the reported 10-K (top-level BS already balances). Special case."
+    },
+    {
+     "ticker": "CHTR",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(unitemized NCA)",
+     "from_line": "FMP unallocated non-current asset",
+     "to_line": "Other Long-Term Assets",
+     "amount": 476000000.0,
+     "reason": "CHTR FY2018: itemized NCA $142,924M vs reported totalNonCurrentAssets $143,400M \u2014 $476M unitemized. Added to Other Long-Term Assets to tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "CHTR",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(over-itemized NCA)",
+     "from_line": "Other Long-Term Assets",
+     "to_line": "FMP over-itemized NCA",
+     "amount": 1092000000.0,
+     "reason": "CHTR FY2019: itemized NCA $142,809M exceeds reported totalNonCurrentAssets $141,717M by $1,092M (FMP over-itemizes). Removed from Other Long-Term Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "CTSH",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 67000000.0,
+     "reason": "CTSH FY2018: FMP itemized current-asset fields sum to $8,610M vs reported totalCurrentAssets $8,677M \u2014 $67M unitemized. Added to Other Current Assets so total assets tie to reported 10-K (top-level BS already balances). Special case."
+    },
+    {
+     "ticker": "VRSK",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 3800000.0,
+     "reason": "VRSK FY2017: FMP balance-sheet components don't tie to reported totals by +$3.8M (source rounding). Parked in AOCI to balance; special case."
+    },
+    {
+     "ticker": "GEHC",
+     "fiscal_year": 2025,
+     "statement": "BS",
+     "source_field": "(unmapped otherAssets)",
+     "from_line": "FMP unallocated asset (otherAssets)",
+     "to_line": "Other Long-Term Assets",
+     "amount": 4003000000.0,
+     "reason": "GEHC FY2025: FMP reports $4,003M in its top-level otherAssets bucket (beyond current + non-current), populated only in 2025; the model's otherAssets synonym is a dormant backup (otherNonCurrentAssets present-but-zero) so it's dropped. Added to Other Long-Term Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 3519000.0,
+     "reason": "WDAY fiscalYear 2019 (Jan-2019 FYE; maps to model calendar column 2018): FMP itemized current assets $3.519M short of reported totalCurrentAssets. Added to Other Current Assets to tie to reported 10-K. WDAY Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 3459000.0,
+     "reason": "WDAY fiscalYear 2020 (model col 2019): FMP itemized current assets $3.459M short of reported totalCurrentAssets. Added to Other Current Assets. Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 3602000.0,
+     "reason": "WDAY fiscalYear 2021 (model col 2020): FMP itemized current assets $3.602M short of reported totalCurrentAssets. Added to Other Current Assets. Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 6472000.0,
+     "reason": "WDAY fiscalYear 2022 (model col 2021): FMP itemized current assets $6.472M short of reported totalCurrentAssets. Added to Other Current Assets. Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 8929000.0,
+     "reason": "WDAY fiscalYear 2023 (model col 2022): FMP itemized current assets $8.929M short of reported totalCurrentAssets. Added to Other Current Assets. Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 12000000.0,
+     "reason": "WDAY fiscalYear 2024 (model col 2023): FMP itemized current assets $12.0M short of reported totalCurrentAssets. Added to Other Current Assets. Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "WDAY",
+     "fiscal_year": 2025,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 11000000.0,
+     "reason": "WDAY fiscalYear 2025 (model col 2024): FMP itemized current assets $11.0M short of reported totalCurrentAssets. Added to Other Current Assets. Jan-FYE offset. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 56800000.0,
+     "reason": "ROP FY2019: model's non-current Operating Lease Liabilities line picks up the capitalLeaseObligations aggregate ($56.8M), but that is entirely the CURRENT portion (already in Current Portion of LT Debt); non-current liab double-counts it. Removed from Operating Lease Liabilities so total liabilities tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 56800000.0,
+     "reason": "ROP FY2020: capitalLeaseObligations aggregate ($56.8M) is the current lease portion double-counted in non-current Operating Lease Liabilities. Removed to tie total liabilities to reported 10-K. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 41500000.0,
+     "reason": "ROP FY2021: capitalLeaseObligations aggregate ($41.5M) is the current lease portion double-counted in non-current Operating Lease Liabilities. Removed to tie total liabilities to reported 10-K. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 46400000.0,
+     "reason": "ROP FY2022: capitalLeaseObligations aggregate ($46.4M) is the current lease portion double-counted in non-current Operating Lease Liabilities. Removed to tie total liabilities to reported 10-K. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 43300000.0,
+     "reason": "ROP FY2023: capitalLeaseObligations aggregate ($43.3M) is the current lease portion double-counted in non-current Operating Lease Liabilities. Removed to tie total liabilities to reported 10-K. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 46200000.0,
+     "reason": "ROP FY2024: capitalLeaseObligations aggregate ($46.2M) is the current lease portion double-counted in non-current Operating Lease Liabilities. Removed to tie total liabilities to reported 10-K. Special case."
+    },
+    {
+     "ticker": "AXON",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(over-itemized CA)",
+     "from_line": "Other Current Assets",
+     "to_line": "FMP over-itemized CA",
+     "amount": 9731000.0,
+     "reason": "AXON FY2023: FMP itemized current-asset fields sum to $2,403.373M vs reported totalCurrentAssets $2,393.642M \u2014 $9.731M over-itemized. Removed from Other Current Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "PAYX",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 21800000.0,
+     "reason": "PAYX fiscalYear 2018 (May-2018 FYE; maps to model calendar column 2017): FMP balance-sheet components don't tie to reported totals by +$21.8M (source footing residual; not NCI). Parked in AOCI to balance. PAYX May-FYE offset. Special case."
+    },
+    {
+     "ticker": "PAYX",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 8000000.0,
+     "reason": "PAYX fiscalYear 2019 (May-2019 FYE; maps to model calendar column 2018): FMP components don't tie to reported totals by +$8.0M (source footing residual). Parked in AOCI to balance. PAYX May-FYE offset. Special case."
+    },
+    {
+     "ticker": "MSTR",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(unitemized liability)",
+     "from_line": "FMP unallocated liability",
+     "to_line": "Other Long-Term Liabilities",
+     "amount": 82304000.0,
+     "reason": "MSTR FY2017: FMP reported totalLiabilities ($327.5M) exceeds itemized current + non-current liabilities ($245.2M) by $82.3M (carried by no field). Added to Other Long-Term Liabilities so total liabilities tie to reported. Special case."
+    },
+    {
+     "ticker": "MSTR",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(equity residual)",
+     "from_line": "FMP unallocated equity",
+     "to_line": "AOCI",
+     "amount": 15187000.0,
+     "reason": "MSTR FY2017: FMP reported totalEquity ($605.7M) exceeds totalStockholdersEquity ($590.5M) by $15.2M with minorityInterest=0 (NOT NCI). Added to AOCI so total equity ties to reported. Special case."
+    },
+    {
+     "ticker": "ADSK",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "(over-itemized CA)",
+     "from_line": "Other Current Assets",
+     "to_line": "FMP over-itemized CA",
+     "amount": 7300000.0,
+     "reason": "ADSK fiscalYear 2021 (Jan-2021 FYE): FMP itemized current assets ($2,706.5M) exceed reported totalCurrentAssets ($2,699.2M) by $7.3M over-itemized. Removed from Other Current Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "IDXX",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(over-itemized CA)",
+     "from_line": "Other Current Assets",
+     "to_line": "FMP over-itemized CA",
+     "amount": 64442000.0,
+     "reason": "IDXX FY2017: FMP itemized current assets ($1,036.4M) exceed reported totalCurrentAssets ($972.0M) by $64.442M over-itemized. Removed from Other Current Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "IDXX",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(unitemized CA)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 14098000.0,
+     "reason": "IDXX FY2018: FMP itemized current assets ($640.1M) fall $14.098M short of reported totalCurrentAssets ($654.2M). Added to Other Current Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "TTWO",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(over-itemized CA)",
+     "from_line": "Other Current Assets",
+     "to_line": "FMP over-itemized CA",
+     "amount": 133454000.0,
+     "reason": "TTWO fiscalYear 2018 (Mar-2018 FYE): model double-counts prepaids ($133.454M) \u2014 FMP reported totalCurrentAssets ($2,409.2M) excludes separately-listed prepaids (already in otherCurrentAssets), but build adds it. Removed from Other Current Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "TTWO",
+     "fiscal_year": 2025,
+     "statement": "BS",
+     "source_field": "(unmapped otherAssets)",
+     "from_line": "FMP unallocated asset (otherAssets)",
+     "to_line": "Other Long-Term Assets",
+     "amount": 36000000.0,
+     "reason": "TTWO fiscalYear 2025 (Mar-2025 FYE): FMP reports $36M in top-level otherAssets bucket (beyond current + non-current); build drops it. Added to Other Long-Term Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "EXC",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -33000000.0,
+     "reason": "EXC FY2017: FMP balance-sheet components don't tie to reported totals by \u2212$33M (multiple small source footing gaps; not NCI). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "EXC",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -48000000.0,
+     "reason": "EXC FY2018: FMP components don't tie to reported totals by \u2212$48M (source footing). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 27850000.0,
+     "reason": "FANG FY2017: capitalLeaseObligations aggregate ($27.85M) is the current lease portion double-counted in non-current Operating Lease Liabilities (also in Current Portion of LT Debt). Removed to tie total liabilities to reported 10-K. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 119000000.0,
+     "reason": "FANG FY2019: capital-lease current portion ($119M) double-counted in non-current Operating Lease Liabilities. Removed to tie to reported. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2020,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 115000000.0,
+     "reason": "FANG FY2020: capital-lease current portion ($115M) double-counted in non-current Operating Lease Liabilities. Removed to tie to reported. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2021,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 86000000.0,
+     "reason": "FANG FY2021: capital-lease current portion ($86M) double-counted in non-current Operating Lease Liabilities. Removed to tie to reported. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 131000000.0,
+     "reason": "FANG FY2022: capital-lease current portion ($131M) double-counted in non-current Operating Lease Liabilities. Removed to tie to reported. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 159000000.0,
+     "reason": "FANG FY2023: capital-lease current portion (~$159M net) double-counted in non-current Operating Lease Liabilities. Removed to tie to reported. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "(capital-lease double-count)",
+     "from_line": "Operating Lease Liabilities",
+     "to_line": "FMP capital-lease misclassification",
+     "amount": 354000000.0,
+     "reason": "FANG FY2024: capital-lease current portion ($354M) double-counted in non-current Operating Lease Liabilities. Removed to tie to reported. Special case."
+    },
+    {
+     "ticker": "FANG",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 93725000.0,
+     "reason": "FANG FY2018 (Energen acquisition year): FMP components don't tie to reported totals by +$93.7M (mixed asset/liability footing gaps, no single clean component). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "MCHP",
+     "fiscal_year": 2026,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": 6000000.0,
+     "reason": "MCHP fiscalYear 2026 (Mar-2026 FYE): FMP balance-sheet components don't tie to reported totals by +$6M (source footing residual; not NCI). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "BKR",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -1000000.0,
+     "reason": "BKR FY2022: FMP balance-sheet components don't tie to reported totals by \u2212$1M (borderline source rounding; not NCI). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "BKR",
+     "fiscal_year": 2023,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": "FMP internal rounding",
+     "to_line": "AOCI",
+     "amount": -1000000.0,
+     "reason": "BKR FY2023: FMP components don't tie to reported totals by \u2212$1M (borderline source rounding). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "PCAR",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(unitemized CA \u2014 finance receivables)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 9697100000.0,
+     "reason": "PCAR FY2017: PACCAR Financial finance receivables (~$9.697B) are in FMP totalCurrentAssets but unitemized (no mapped field; FMP folds them into netReceivables only from 2020). Added to Other Current Assets so total assets tie to reported 10-K. Special case."
+    },
+    {
+     "ticker": "PCAR",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(unitemized CA \u2014 finance receivables)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 10840800000.0,
+     "reason": "PCAR FY2018: finance receivables (~$10.841B) in FMP totalCurrentAssets but unitemized pre-2020. Added to Other Current Assets to tie to reported. Special case."
+    },
+    {
+     "ticker": "PCAR",
+     "fiscal_year": 2019,
+     "statement": "BS",
+     "source_field": "(unitemized CA \u2014 finance receivables)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 12086000000.0,
+     "reason": "PCAR FY2019: finance receivables (~$12.086B) in FMP totalCurrentAssets but unitemized pre-2020. Added to Other Current Assets to tie to reported. Special case."
+    },
+    {
+     "ticker": "LITE",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(unitemized current assets)",
+     "from_line": "FMP unallocated current asset",
+     "to_line": "Other Current Assets",
+     "amount": 28800000.0,
+     "reason": "LITE FY2018: itemized current assets (cash $397.3M + ST inv $314.2M + receivables $197.1M + inventory $153.6M + prepaids $33.5M + other $2.7M = $1,098.4M) fall $28.8M short of FMP reported totalCurrentAssets ($1,127.2M). Added to Other Current Assets to tie to reported. Equity foots; FMP top-level totals balance at $1,581.5M."
+    },
+    {
+     "ticker": "REGN",
+     "fiscal_year": 2017,
+     "statement": "BS",
+     "source_field": "(FMP double-count \u2014 convertible notes)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 797170000.0,
+     "reason": "REGN FY2017: model Other Long-Term Liabilities = FMP otherNonCurrentLiabilities ($949.29M) + capitalLeaseObligationsNonCurrent ($703.5M) = $1,652.79M, but FMP reported totalNonCurrentLiabilities = $1,484.7M. FMP double-counts REGN's convertible senior notes in otherNonCurrentLiabilities. Removed $797.17M from Other Long-Term Liabilities to align to reported. Assets & equity foot to reported totals."
+    },
+    {
+     "ticker": "REGN",
+     "fiscal_year": 2018,
+     "statement": "BS",
+     "source_field": "(FMP double-count \u2014 convertible notes)",
+     "from_line": "Other Long-Term Liabilities",
+     "to_line": null,
+     "amount": 184900000.0,
+     "reason": "REGN FY2018: model Other Long-Term Liabilities = FMP otherNonCurrentLiabilities ($546.6M) + capitalLeaseObligationsNonCurrent ($708.5M) = $1,255.1M, but reported totalNonCurrentLiabilities = $1,534.4M; itemized NC-liab detail overstates reported by $184.9M (FMP convertible-note double-count). Removed $184.9M from Other Long-Term Liabilities to align to reported. Assets & equity foot to reported totals."
+    },
+    {
+     "ticker": "GILD",
+     "fiscal_year": 2022,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": null,
+     "to_line": "AOCI",
+     "amount": -1000000.0,
+     "reason": "GILD FY2022: FMP mapped components don't tie to reported totals by \u2212$1M (borderline source rounding). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "GILD",
+     "fiscal_year": 2024,
+     "statement": "BS",
+     "source_field": "(rounding)",
+     "from_line": null,
+     "to_line": "AOCI",
+     "amount": 1000000.0,
+     "reason": "GILD FY2024: FMP mapped components don't tie to reported totals by +$1M (borderline source rounding). Parked in AOCI to balance. Special case."
     }
    ]
   },
@@ -2203,6 +2790,186 @@
      "to_line": "FX",
      "amount": 1000000.0,
      "reason": "CMCSA FY2024: after aligning Operating to reported, park +$1M in FX so sections foot to reported net change. Special case."
+    },
+    {
+     "ticker": "MDLZ",
+     "fiscal_year": 2022,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": -8000000.0,
+     "reason": "MDLZ FY2022: FMP CFO components over-foot its reported netCashProvidedByOperatingActivities by $8M (build 3,916 vs reported 3,908); align build to reported. Special case."
+    },
+    {
+     "ticker": "MDLZ",
+     "fiscal_year": 2023,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 22000000.0,
+     "reason": "MDLZ FY2023: FMP CFO components under-foot its reported netCashProvidedByOperatingActivities by $22M (build 4,692 vs reported 4,714); align build to reported. Special case."
+    },
+    {
+     "ticker": "ROST",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 18291000.0,
+     "reason": "ROST FY2017: FMP investing components (capex \u2212$371,423K + proceeds $40K = \u2212$371,383K) don't tie to its reported netCashProvidedByInvestingActivities (\u2212$353,092K) by +$18,291K (FMP includes an ~$18.3M investing inflow in its total but doesn't itemize it). Align build to reported 10-K subtotal. Special case."
+    },
+    {
+     "ticker": "INTU",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 89000000.0,
+     "reason": "INTU FY2018: FMP working-capital detail (AR/Inv/AP/otherWC) doesn't foot to its summary changeInWorkingCapital, so CFO build ($2,023M) falls short of reported netCashProvidedByOperatingActivities ($2,112M) by $89M; align build to reported. Special case."
+    },
+    {
+     "ticker": "INTU",
+     "fiscal_year": 2019,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 28000000.0,
+     "reason": "INTU FY2019: CFO build ($2,296M) falls short of reported netCashProvidedByOperatingActivities ($2,324M) by $28M (FMP WC detail vs summary); align build to reported. Special case."
+    },
+    {
+     "ticker": "AEP",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": -73600000.0,
+     "reason": "AEP FY2018: FMP netCommonStockIssuance ($73.6M) contradicts its own netStockIssuance ($0); the build picks up the $73.6M but FMP's reported netCashProvidedByFinancingActivities ($1,161.9M) excludes it \u2014 build over-states CFF by $73.6M. Align build to reported. Special case."
+    },
+    {
+     "ticker": "CTSH",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": -181000000.0,
+     "reason": "CTSH FY2018: FMP netPreferredStockIssuance ($181M) duplicates commonStockIssuance ($181M) \u2014 CTSH has no preferred; the build's stock-issuance line picks it up, but reported netCashProvidedByFinancingActivities (\u2212$1,693M) excludes it, so build overstates CFF by $181M. Align build to reported. Special case."
+    },
+    {
+     "ticker": "KHC",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": -5000000.0,
+     "reason": "KHC FY2017: FMP financing components sum to \u2212$4,221M but its reported netCashProvidedByFinancingActivities is \u2212$4,226M ($5M unitemized); align build to reported. Special case."
+    },
+    {
+     "ticker": "DXCM",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 78400000.0,
+     "reason": "DXCM FY2017: FMP otherInvestingActivities (\u2212$78.4M) is included in its itemized components (sum \u2212$222.8M) but excluded from its reported netCashProvidedByInvestingActivities (\u2212$144.4M); align build to reported. Special case."
+    },
+    {
+     "ticker": "DXCM",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 61400000.0,
+     "reason": "DXCM FY2018: FMP otherInvestingActivities (\u2212$61.4M) included in itemized components (sum \u2212$201.2M) but excluded from reported netCashProvidedByInvestingActivities (\u2212$139.8M); align build to reported. Special case."
+    },
+    {
+     "ticker": "ROP",
+     "fiscal_year": 2019,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Operating",
+     "amount": 3300000.0,
+     "reason": "ROP FY2019: CFO build ($1,458.5M) falls $3.3M short of reported netCashProvidedByOperatingActivities ($1,461.8M); align build to reported. Special case."
+    },
+    {
+     "ticker": "AXON",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": -6269000.0,
+     "reason": "AXON FY2018: FMP otherInvestingActivities (+$6.269M) included in itemized components (sum \u2212$3.591M) but excluded from reported netCashProvidedByInvestingActivities (\u2212$9.860M); align build to reported. Special case."
+    },
+    {
+     "ticker": "MSTR",
+     "fiscal_year": 2025,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": 15178000.0,
+     "reason": "MSTR FY2025: FMP financing components sum to $24,828.3M but reported netCashProvidedByFinancingActivities is $24,843.5M ($15.178M unitemized); align build to reported. Special case."
+    },
+    {
+     "ticker": "KDP",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 6000000.0,
+     "reason": "KDP FY2017: FMP investing components sum to \u2212$1,769M but reported netCashProvidedByInvestingActivities is \u2212$1,763M ($6M over-itemized); align build to reported. Special case."
+    },
+    {
+     "ticker": "KDP",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": 4000000.0,
+     "reason": "KDP FY2018: FMP investing components sum to \u2212$19,135M but reported netCashProvidedByInvestingActivities is \u2212$19,131M ($4M over-itemized; merger year); align build to reported. Special case."
+    },
+    {
+     "ticker": "XEL",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Financing",
+     "amount": -422000000.0,
+     "reason": "XEL FY2017: model double-counts shortTermNetDebtIssuance ($422M) \u2014 FMP reported netCashProvidedByFinancingActivities ($168M) uses netDebtIssuance ($488M) which already nets short-term; build adds ST on top of LT. Align build to reported. Special case."
+    },
+    {
+     "ticker": "PCAR",
+     "fiscal_year": 2017,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": -470700000.0,
+     "reason": "PCAR FY2017: FMP acquisitionsNet (+$470.7M) is in itemized investing components but excluded from reported netCashProvidedByInvestingActivities (\u2212$1,964.6M); build over-states CFI. Align build to reported. Special case."
+    },
+    {
+     "ticker": "PCAR",
+     "fiscal_year": 2018,
+     "statement": "CF",
+     "source_field": "(FMP internal)",
+     "from_line": null,
+     "to_line": "Investing",
+     "amount": -653700000.0,
+     "reason": "PCAR FY2018: FMP acquisitionsNet (+$653.7M) in itemized components but excluded from reported investing total (\u2212$1,930.7M); align build to reported. Special case."
     }
    ]
   }
