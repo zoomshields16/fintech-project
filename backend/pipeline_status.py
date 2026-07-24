@@ -17,12 +17,31 @@ from datetime import datetime, timezone
 
 from sqlalchemy import text
 
+from checks import MATCH_TOLERANCE, MATERIAL_TOLERANCE_PCT
 from db import SessionLocal
 from models import Restatement
 
 # Matches the default staleness threshold in refresh_stale.py. Kept as its own
 # constant because this module only reports; it never triggers a refresh.
 STALE_AFTER_DAYS = 7
+
+# Earliest fiscal year the headline rate grades. Carson's reclass table does not
+# touch 2016, so grading it holds the engine to a spec that was never written for
+# those years; the failures there are un-curated FMP data, not mapping errors.
+# fiscal_date is stored as 'YYYY-MM-DD', so a string compare on the year works.
+EARLIEST_GRADED_YEAR = "2017"
+_YEAR_FILTER = f"AND substr(cr.fiscal_date, 1, 4) >= '{EARLIEST_GRADED_YEAR}'"
+
+# A check counts as a MATCH for the headline rate if it either cleared the strict
+# grade or is within materiality (0.1%, $1 floor). Built from the constants in
+# checks.py so the threshold has one home. NO_REPORTED_VALUE rows have a NULL diff
+# and so fall through to non-match, same as the strict grade. SQLite MAX(a, b) is
+# the scalar (two-argument) form.
+_MATERIAL_MATCH = (
+    f"(cr.status = 'MATCH' OR (cr.diff IS NOT NULL AND ABS(cr.diff) <= "
+    f"MAX({MATCH_TOLERANCE}, {MATERIAL_TOLERANCE_PCT} * "
+    f"MAX(ABS(cr.ours), ABS(cr.reported)))))"
+)
 
 # Common table expression reused by the check queries below.
 _LATEST_FETCHES = """
@@ -114,16 +133,24 @@ def coverage():
 
 
 def check_summary():
-    """Overall reconcile pass rate across the latest fetch of every company."""
+    """Overall reconcile pass rate across the latest fetch of every company.
+
+    The headline `pass_rate` is graded at materiality (0.1%) over 2017+. The strict
+    $1 grade is kept alongside as `strict_pass_rate` so the tripwire stays visible
+    and a regression in it is never masked by the looser headline."""
     session = SessionLocal()
     try:
-        row = session.execute(text(_LATEST_FETCHES + """
+        row = session.execute(text(_LATEST_FETCHES + f"""
             SELECT COUNT(*) AS total,
-                   SUM(CASE WHEN cr.status = 'MATCH' THEN 1 ELSE 0 END) AS matched,
-                   SUM(CASE WHEN cr.status = 'MISMATCH' THEN 1 ELSE 0 END) AS mismatched,
+                   SUM(CASE WHEN {_MATERIAL_MATCH} THEN 1 ELSE 0 END) AS matched,
+                   SUM(CASE WHEN cr.status = 'MATCH' THEN 1 ELSE 0 END) AS strict_matched,
+                   SUM(CASE WHEN NOT {_MATERIAL_MATCH}
+                            AND cr.status <> 'NO_REPORTED_VALUE'
+                            THEN 1 ELSE 0 END) AS mismatched,
                    SUM(CASE WHEN cr.status = 'NO_REPORTED_VALUE' THEN 1 ELSE 0 END) AS no_value
             FROM latest l
             JOIN check_results cr ON cr.fetch_id = l.fetch_id
+            WHERE 1=1 {_YEAR_FILTER}
         """)).mappings().first()
 
         total = row["total"] or 0
@@ -134,6 +161,9 @@ def check_summary():
             "mismatched": row["mismatched"] or 0,
             "no_reported_value": row["no_value"] or 0,
             "pass_rate": _rate(matched, total),
+            "strict_pass_rate": _rate(row["strict_matched"] or 0, total),
+            "graded_from_year": int(EARLIEST_GRADED_YEAR),
+            "materiality_pct": MATERIAL_TOLERANCE_PCT * 100,
         }
     finally:
         session.close()
@@ -143,13 +173,14 @@ def company_pass_rates(limit=None, worst_first=True):
     """Per-company pass rate on that company's latest fetch."""
     session = SessionLocal()
     try:
-        rows = session.execute(text(_LATEST_FETCHES + """
+        rows = session.execute(text(_LATEST_FETCHES + f"""
             SELECT c.ticker, c.company_name,
                    COUNT(*) AS total,
-                   SUM(CASE WHEN cr.status = 'MATCH' THEN 1 ELSE 0 END) AS matched
+                   SUM(CASE WHEN {_MATERIAL_MATCH} THEN 1 ELSE 0 END) AS matched
             FROM latest l
             JOIN companies c ON c.id = l.company_id
             JOIN check_results cr ON cr.fetch_id = l.fetch_id
+            WHERE 1=1 {_YEAR_FILTER}
             GROUP BY c.ticker, c.company_name
         """)).mappings().all()
 
@@ -173,15 +204,20 @@ def worst_line_items(limit=12):
     """Which model lines fail most often — where a mapping fix would pay off most."""
     session = SessionLocal()
     try:
-        rows = session.execute(text(_LATEST_FETCHES + """
+        rows = session.execute(text(_LATEST_FETCHES + f"""
             SELECT cr.line_item, cr.statement_type,
                    COUNT(*) AS total,
-                   SUM(CASE WHEN cr.status = 'MISMATCH' THEN 1 ELSE 0 END) AS mismatches,
+                   SUM(CASE WHEN NOT {_MATERIAL_MATCH}
+                            AND cr.status <> 'NO_REPORTED_VALUE'
+                            THEN 1 ELSE 0 END) AS mismatches,
                    COUNT(DISTINCT l.company_id) AS companies
             FROM latest l
             JOIN check_results cr ON cr.fetch_id = l.fetch_id
+            WHERE 1=1 {_YEAR_FILTER}
             GROUP BY cr.line_item, cr.statement_type
-            HAVING SUM(CASE WHEN cr.status = 'MISMATCH' THEN 1 ELSE 0 END) > 0
+            HAVING SUM(CASE WHEN NOT {_MATERIAL_MATCH}
+                            AND cr.status <> 'NO_REPORTED_VALUE'
+                            THEN 1 ELSE 0 END) > 0
             ORDER BY mismatches DESC
             LIMIT :limit
         """), {"limit": limit}).mappings().all()
