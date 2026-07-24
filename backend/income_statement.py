@@ -11,6 +11,7 @@ from mapping_engine import (
     resolve_line_value,
     pull_aliased,
     fiscal_year,
+    reclass_adjustments,
 )
 
 STATEMENT = "income_statement"
@@ -59,6 +60,17 @@ def pull_detail_accounts(income_record, records=None, ticker=None):
     # anchor), but the built statement still adds it into Total OpEx.
     other_opex = resolve_line_value(STATEMENT, "Other Operating Expenses", income_record, records)
     a["other_opex"] = other_opex if other_opex is not None else 0.0
+
+    # Reclass adjustments land on model lines inside pull_aliased, but this line is
+    # resolved outside the alias fold — without this, a workbook reclass targeting
+    # Other Operating Expenses is parsed, stored, and silently ignored. The case
+    # that needs it: charges a filer itemizes in its 10-K (TXN's acquisition
+    # charges through 2019) that FMP folds into operatingIncome without surfacing
+    # in ANY itemized field, so no synonym mapping can ever reach them.
+    if ticker:
+        adj = reclass_adjustments(STATEMENT, ticker)
+        a["other_opex"] += adj.get(
+            (fiscal_year(income_record), "Other Operating Expenses"), 0.0)
 
     a["date"] = (income_record.get("fiscalYear")
                  or income_record.get("date")
