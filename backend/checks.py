@@ -9,6 +9,35 @@
 
 MATCH_TOLERANCE = 1.0  # dollars; FMP rounds, so sub-$1 gaps are not real breaks
 
+# The $1 grade above is the STRICT one and is what gets stored on every
+# check_results row — an internal tripwire that still catches a sub-dollar mapping
+# slip. It is deliberately never loosened.
+#
+# But $1 is the wrong yardstick for the headline "how good is the engine" number.
+# On a $100B line it demands precision no filing carries, so it flags FMP's own
+# rounding as our error. For the reported rate we grade at materiality instead: a
+# line matches if we are within 0.1% of it. That is still TIGHTER than standard
+# audit materiality (~0.5-1% of revenue), so it is not gaming the score — and the
+# mismatches are bimodal (noise under 0.1%, real problems over 1%, almost nothing
+# between), so this cut removes rounding noise without hiding a single real break.
+#
+# is_material works off the numbers already persisted on a check_results row, so the
+# reporting layer can apply it with no re-run and without touching the stored grade.
+MATERIAL_TOLERANCE_PCT = 0.001  # 0.1% of the larger of the two figures
+
+
+def material_tolerance(ours, reported):
+    """The dollar tolerance a check is graded against for the headline rate."""
+    return max(MATCH_TOLERANCE, MATERIAL_TOLERANCE_PCT * max(abs(ours), abs(reported)))
+
+
+def is_material(ours, reported, diff):
+    """True if a stored check is within materiality (0.1%, $1 floor)."""
+    if ours is None or reported is None or diff is None:
+        return False
+    return abs(diff) <= material_tolerance(ours, reported)
+
+
 MATCH = "MATCH"
 MISMATCH = "MISMATCH"
 NO_REPORTED_VALUE = "NO_REPORTED_VALUE"
