@@ -20,6 +20,16 @@ from fmp_client import fmp_get
 CACHE_PATH = Path(__file__).resolve().parent / "universe.json"
 ENDPOINT = "stable/nasdaq-constituent"
 
+# Symbols that are in the index but we deliberately do NOT support. Ferrovial (FER)
+# reports under IFRS; its filings don't carry the GAAP subtotals the model
+# reconciles against, so it sits around 48% and only drags the headline rate down.
+#
+# This is a named exclusion rather than a database delete on purpose: the universe
+# is re-pulled live from FMP, so a deleted FER row simply comes back on the next
+# refresh. Excluding it here keeps it out of both the fetch loop and the reported
+# rate (pipeline_status imports this set). To re-enable a ticker, remove it here.
+EXCLUDED_TICKERS = {"FER"}
+
 
 def fetch_universe():
     """Pull current Nasdaq-100 constituents from FMP. One API call."""
@@ -60,8 +70,11 @@ def universe_symbols(refresh=False):
     The Nasdaq-100 usually carries slightly more than 100 symbols because some
     companies have dual share classes (GOOG/GOOGL). Both are kept: they are
     separate symbols with separate share counts, so they value differently.
+
+    Symbols in EXCLUDED_TICKERS are dropped — see that set for why.
     """
-    return [m["symbol"] for m in load_universe(refresh)["members"]]
+    return [m["symbol"] for m in load_universe(refresh)["members"]
+            if m["symbol"] not in EXCLUDED_TICKERS]
 
 
 def is_supported(ticker):

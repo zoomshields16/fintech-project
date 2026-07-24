@@ -20,6 +20,7 @@ from sqlalchemy import text
 from checks import MATCH_TOLERANCE, MATERIAL_TOLERANCE_PCT
 from db import SessionLocal
 from models import Restatement
+from universe import EXCLUDED_TICKERS
 
 # Matches the default staleness threshold in refresh_stale.py. Kept as its own
 # constant because this module only reports; it never triggers a refresh.
@@ -43,13 +44,22 @@ _MATERIAL_MATCH = (
     f"MAX(ABS(cr.ours), ABS(cr.reported)))))"
 )
 
-# Common table expression reused by the check queries below.
-_LATEST_FETCHES = """
+# Excluded tickers, as a SQL literal list for a NOT IN clause. Built from the set
+# in universe.py so exclusion has one home. Falls back to a value no ticker equals
+# when the set is empty, so NOT IN never removes a real row by accident.
+_EXCLUDED_SQL = ", ".join(f"'{t}'" for t in sorted(EXCLUDED_TICKERS)) or "''"
+
+# Common table expression reused by the check queries below. The latest fetch per
+# company, with excluded tickers (IFRS filers) dropped here so every rate query
+# that builds on it inherits the exclusion.
+_LATEST_FETCHES = f"""
 WITH latest AS (
-    SELECT company_id, MAX(id) AS fetch_id
-    FROM fetches
-    WHERE status = 'complete'
-    GROUP BY company_id
+    SELECT f.company_id, MAX(f.id) AS fetch_id
+    FROM fetches f
+    JOIN companies c ON c.id = f.company_id
+    WHERE f.status = 'complete'
+      AND c.ticker NOT IN ({_EXCLUDED_SQL})
+    GROUP BY f.company_id
 )
 """
 

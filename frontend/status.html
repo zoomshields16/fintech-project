@@ -188,7 +188,9 @@ function render(d) {
         <div class="tile ${ch.pass_rate >= 90 ? 'good' : 'warn'}">
           <div class="lbl">Reconcile pass rate</div>
           <div class="val">${pct(ch.pass_rate)}</div>
-          <div class="note">${ch.matched.toLocaleString()} of ${ch.total_checks.toLocaleString()} checks</div>
+          <div class="note">${ch.matched.toLocaleString()} of ${ch.total_checks.toLocaleString()} checks
+              · ${pct(ch.strict_pass_rate)} strict</div>
+          <div class="note">graded at ${ch.materiality_pct}% materiality · FY${ch.graded_from_year}+</div>
         </div>
         <div class="tile">
           <div class="lbl">Companies loaded</div>
