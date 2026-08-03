@@ -30,9 +30,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# A browser blocks a page on one origin from calling an API on another unless the
+# API names that origin here, so the deployed frontend's domain has to be listed.
+# Read from the environment rather than hardcoded, because the domain does not
+# exist until the frontend is deployed — and needing a code change plus a redeploy
+# to add it is exactly how this ends up set to "*" as a temporary fix. Comma
+# separated; the localhost defaults keep the local workflow working unchanged.
+DEFAULT_ORIGINS = "http://127.0.0.1:5500,http://localhost:5500"
+ALLOWED_ORIGINS = [origin.strip()
+                   for origin in os.getenv("ALLOWED_ORIGINS", DEFAULT_ORIGINS).split(",")
+                   if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

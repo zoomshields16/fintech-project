@@ -258,27 +258,48 @@ UFCF/WACC/DCF math, the equity roll-forward, and — via `test_shipped_mappings.
 - [ ] Deploy to Railway (needs Postgres + prod table setup)
 - [ ] Custom domain
 
-## Deploy checklist (Railway / Render — known issues to fix at deploy time)
+## Deploy checklist (Railway)
 
-The app runs locally as-is, but deploying to a public URL needs these six
-fixes. None are done yet — do them as one bundle when deploying:
+### Done — the code is ready for a host
 
-1. **SQLite → Postgres.** Hosts give the app an ephemeral disk, so `app.db`
-   is wiped on every redeploy. Provision the host's Postgres and set the
-   `DATABASE_URL` environment variable (`db.py` already reads it). Add the
-   Postgres driver (`psycopg2-binary`) to `requirements.txt`.
-2. **Create tables on startup.** `init_db.py` is a manual script and never
-   runs on a server — call `Base.metadata.create_all()` on app startup so a
-   fresh database gets its tables.
-3. **CORS + API URL.** `main.py` only allows requests from
-   `localhost:5500` — add the deployed frontend's domain to `allow_origins`.
-   Likewise the frontend JavaScript points at `127.0.0.1:8000` — point it at
-   the deployed backend URL.
-4. **FMP API key.** Set `FMP_API_KEY` as an environment variable in the
-   host's dashboard. It is never committed to the repo.
-5. **Concurrent-fetch race.** Two simultaneous requests for the same brand-new
+- [x] **SQLite → Postgres.** `db.py` reads `DATABASE_URL` and drops the
+      SQLite-only `check_same_thread` flag when it is set; `psycopg2-binary` is
+      in `requirements.txt`. Verified against a local PostgreSQL 17: the entire
+      status payload is byte-identical on both engines.
+- [x] **Schema created on startup.** The API calls `init_schema()` from a
+      lifespan hook, so an empty database gets its tables without anyone running
+      a script by hand. It only ever creates what is missing — a schema *change*
+      still needs a migration (see Alembic, below).
+- [x] **Data migration.** `backend/migrate_to_postgres.py` copies the database
+      row for row. It is not a re-seed: re-fetching from FMP would collapse the
+      fetch history that makes restatements detectable in the first place.
+- [x] **Start command.** `Procfile` at the repo root. Needed because `main.py`
+      lives in `backend/`, so a host cannot guess how to launch the app.
+- [x] **CORS.** Read from `ALLOWED_ORIGINS` (comma separated) rather than
+      hardcoded, so adding the frontend's domain is an environment variable
+      instead of a code change and a redeploy.
+- [x] **Auth on the one write endpoint.** `POST /api/restatements/review`
+      requires `X-API-Key`, matched against `STATUS_API_KEY`. Unset refuses
+      writes with a 503 rather than failing open. The GET endpoints are open on
+      purpose — this status page is meant to be shown to people — and the tests
+      assert that, so locking them down has to be a deliberate choice.
+
+### Still to do
+
+1. **Set the environment variables** in the host dashboard: `DATABASE_URL`,
+   `FMP_API_KEY`, `STATUS_API_KEY`, `ALLOWED_ORIGINS`. None are ever committed.
+2. **Point the frontend at the deployed API.** `app.html`, `dcf.html` and
+   `status.html` each hardcode `http://127.0.0.1:8000`. Left until the backend's
+   real URL exists.
+3. **Concurrent-fetch race.** Two simultaneous requests for the same brand-new
    ticker can both try to insert the company row in `save_fetch`
    (read-then-insert race). Rare at low traffic, but fix before real users.
+4. **Schedule `refresh_stale.py`.** Could not be scheduled against a local
+   SQLite file. Suggested cadence: `--days 7 --limit 15` nightly, which cycles
+   all 102 companies weekly at roughly 0.13% of the API bandwidth.
+5. **Alembic**, while the schema is still small. `init_schema()` adds missing
+   tables but never alters an existing one, so today a column change means
+   editing the database by hand.
 6. **`/api/run-dcf` trusts a client-supplied `ufcf` array.** UFCF is computed in
    Python now (`dcf_engine.compute_ufcf`), but the frontend still stores the
    result in `localStorage` and posts it back when running the DCF. The risk is
