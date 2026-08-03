@@ -242,7 +242,11 @@ def worst_line_items(limit=12):
             HAVING SUM(CASE WHEN NOT {_MATERIAL_MATCH}
                             AND cr.status <> 'NO_REPORTED_VALUE'
                             THEN 1 ELSE 0 END) > 0
-            ORDER BY mismatches DESC
+            -- line_item breaks ties. Without it the order among lines with equal
+            -- mismatch counts is whatever the engine happens to emit, and SQLite
+            -- and Postgres disagree — which would make every future "did the
+            -- numbers move?" comparison of this page noisy for no reason.
+            ORDER BY mismatches DESC, cr.line_item
             LIMIT :limit
         """), {"limit": limit}).mappings().all()
 
