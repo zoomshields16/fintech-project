@@ -335,12 +335,35 @@ function staleBlock(cov) {
 }
 
 // ── Triage ──
+// Marking findings reviewed is the one call that writes, so it carries a key.
+// Held in localStorage so it is typed once per browser rather than per click.
+function apiKey() {
+    let key = localStorage.getItem('statusApiKey');
+    if (!key) {
+        key = prompt('Enter the status API key to mark findings reviewed:');
+        if (key) localStorage.setItem('statusApiKey', key);
+    }
+    return key;
+}
+
 async function review(ids) {
+    const key = apiKey();
+    if (!key) return;
     const res = await fetch(`${API}/api/restatements/review`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'X-API-Key': key},
         body: JSON.stringify({ids, reviewed: true}),
     });
+    if (res.status === 401) {
+        // Forget it, so the next click re-prompts instead of failing forever.
+        localStorage.removeItem('statusApiKey');
+        alert('That key was rejected. Click again to re-enter it.');
+        return;
+    }
+    if (res.status === 503) {
+        alert('The server has no STATUS_API_KEY set, so it is refusing writes.');
+        return;
+    }
     const out = await res.json();
     if (out.error) { alert(out.error); return; }
     load();  // re-read rather than patching the DOM, so the tiles stay truthful

@@ -4,8 +4,16 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+
+# Loaded here as well as in fmp_client. DATABASE_URL is read at import time, so
+# without this the value depends on whether something that loads .env happened to
+# be imported first — true in main.py today, silently false for any script that
+# imports db directly. load_dotenv is idempotent and never overrides a real
+# environment variable, so the deployed host's setting still wins.
+load_dotenv()
 
 # Anchored to this file, not the working directory: a relative path would resolve
 # against wherever the process was launched from, so running a script from the

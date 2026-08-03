@@ -1,6 +1,8 @@
+import hmac
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -504,6 +506,35 @@ def run_dcf_endpoint(request: DCFRequest):
 # back out so the status page (and a banner in the workbench) can show it.
 
 
+# Only the write endpoint is protected, and that asymmetry is deliberate.
+#
+# The GETs stay open because this project exists to be shown to people: a status
+# page that cannot be opened without a secret demonstrates nothing, and what it
+# publishes — pass rates and job history derived from public companies' filings
+# — is not sensitive.
+#
+# The POST is different in kind. It is the only call that changes state, and
+# what it changes is triage. Marking a restatement reviewed removes it from the
+# queue, so left open, anyone who found the URL could clear every finding and
+# the alerting would then look healthy exactly when it had stopped working. A
+# silent failure of the thing built to prevent silent failures.
+STATUS_API_KEY = os.getenv("STATUS_API_KEY")
+
+
+def require_api_key(x_api_key: Optional[str] = Header(None)):
+    # Fails closed when the variable is unset, rather than falling back to open.
+    # A deploy that forgets it then rejects writes loudly instead of accepting
+    # anonymous ones, which would be indistinguishable from having no auth.
+    if not STATUS_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="STATUS_API_KEY is not configured on the server.")
+    # compare_digest, not ==: a plain string comparison returns as soon as two
+    # characters differ, so how long it takes leaks how much of the key is right.
+    if not x_api_key or not hmac.compare_digest(x_api_key, STATUS_API_KEY):
+        raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key.")
+
+
 class ReviewRequest(BaseModel):
     ids: List[int]
     reviewed: bool = True
@@ -535,7 +566,7 @@ def restatements_endpoint(ticker: Optional[str] = None,
         return {"error": f"Failed to read restatements: {str(e)}"}
 
 
-@app.post("/api/restatements/review")
+@app.post("/api/restatements/review", dependencies=[Depends(require_api_key)])
 def review_restatements(request: ReviewRequest):
     """Mark findings reviewed (or un-review them) so the queue can be worked down."""
     try:
