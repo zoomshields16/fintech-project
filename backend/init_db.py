@@ -12,8 +12,12 @@ import models  # noqa: F401  (import registers the model classes with Base)
 # Storing it on `companies` would be a second copy of the same truth — one that
 # silently goes stale if a fetch fails partway, or a row is deleted. A view is
 # computed on read, so it cannot drift.
+#
+# Dropped and recreated rather than created with IF NOT EXISTS: that spelling is
+# SQLite-only, and Postgres has no IF NOT EXISTS for views. DROP-then-CREATE is
+# the one form both accept, and it costs nothing — a view holds no data.
 COMPANY_PULL_COUNTS_VIEW = """
-CREATE VIEW IF NOT EXISTS company_pull_counts AS
+CREATE VIEW company_pull_counts AS
 SELECT
     c.id                AS company_id,
     c.ticker            AS ticker,
@@ -29,13 +33,25 @@ GROUP BY c.id, c.ticker, c.company_name
 
 
 def create_views(connection):
-    """Create derived-data views. Safe to re-run — each uses IF NOT EXISTS."""
+    """Create derived-data views. Safe to re-run."""
+    connection.execute(text("DROP VIEW IF EXISTS company_pull_counts"))
     connection.execute(text(COMPANY_PULL_COUNTS_VIEW))
 
 
-if __name__ == "__main__":
+def init_schema():
+    """Create any missing tables and the derived views.
+
+    Importable so the API can call it on startup: a deployed host hands the app
+    an empty database, and this file as a manual script has only ever been run on
+    a laptop. Creating what is missing is all it does — it never alters or drops
+    an existing table, so a schema change still needs a migration.
+    """
     Base.metadata.create_all(bind=engine)
     with engine.begin() as connection:
         create_views(connection)
+
+
+if __name__ == "__main__":
+    init_schema()
     print("Tables created:", list(Base.metadata.tables.keys()))
     print("Views created: ['company_pull_counts']")

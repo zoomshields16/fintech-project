@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,8 +13,20 @@ from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile
 from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
 from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
 import pipeline_status
+from init_db import init_schema
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # A deployed host provisions an EMPTY database, and init_db.py is a manual
+    # script that has only ever run on a laptop — without this every endpoint
+    # fails on a fresh Postgres until someone connects and runs it by hand.
+    # Creates only missing tables, so it is a no-op against the local app.db.
+    init_schema()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

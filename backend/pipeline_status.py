@@ -33,15 +33,29 @@ STALE_AFTER_DAYS = 7
 EARLIEST_GRADED_YEAR = "2017"
 _YEAR_FILTER = f"AND substr(cr.fiscal_date, 1, 4) >= '{EARLIEST_GRADED_YEAR}'"
 
+def _greatest(a, b):
+    """Scalar two-argument max, in the one spelling both engines accept.
+
+    SQLite writes it MAX(a, b); Postgres reserves MAX for aggregates and writes
+    the scalar form GREATEST(a, b), so the SQLite spelling does not merely return
+    a different answer there — it fails to parse, taking every pass-rate query
+    with it. CASE is portable.
+
+    The two forms differ on NULL (MAX returns NULL, CASE falls to `b`), which
+    does not matter here: the only caller guards on `cr.diff IS NOT NULL`, and
+    compare_line writes a NULL diff whenever either side is missing.
+    """
+    return f"(CASE WHEN {a} > {b} THEN {a} ELSE {b} END)"
+
+
 # A check counts as a MATCH for the headline rate if it either cleared the strict
 # grade or is within materiality (0.1%, $1 floor). Built from the constants in
 # checks.py so the threshold has one home. NO_REPORTED_VALUE rows have a NULL diff
-# and so fall through to non-match, same as the strict grade. SQLite MAX(a, b) is
-# the scalar (two-argument) form.
+# and so fall through to non-match, same as the strict grade.
+_LARGER_FIGURE = _greatest("ABS(cr.ours)", "ABS(cr.reported)")
 _MATERIAL_MATCH = (
     f"(cr.status = 'MATCH' OR (cr.diff IS NOT NULL AND ABS(cr.diff) <= "
-    f"MAX({MATCH_TOLERANCE}, {MATERIAL_TOLERANCE_PCT} * "
-    f"MAX(ABS(cr.ours), ABS(cr.reported)))))"
+    f"{_greatest(f'{MATCH_TOLERANCE}', f'{MATERIAL_TOLERANCE_PCT} * {_LARGER_FIGURE}')}))"
 )
 
 # Excluded tickers, as a SQL literal list for a NOT IN clause. Built from the set
