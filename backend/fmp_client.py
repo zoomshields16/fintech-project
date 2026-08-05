@@ -15,6 +15,31 @@ load_dotenv()
 API_KEY = os.getenv("FMP_API_KEY")
 BASE_URL = "https://financialmodelingprep.com"
 
+# Without this a hung FMP connection holds a worker open indefinitely. Locally
+# that is a stuck terminal; on a deployed host it is a worker that never returns.
+REQUEST_TIMEOUT = 20
+
+
+class FMPRequestError(RuntimeError):
+    """A network-level failure talking to FMP, with the API key stripped out."""
+
+
+def redact(text):
+    """Remove the API key from a string.
+
+    The key travels as a query parameter, so requests' own exception messages
+    quote it back in full — "Max retries exceeded with url: ...?apikey=KEY".
+    main.py returns str(e) to the browser on a failed fetch, and those endpoints
+    need no authentication, so an unreachable FMP would have handed the key to
+    anyone who asked. Proven, not theorised: a ConnectionError raised here does
+    contain it.
+
+    Redacting at the boundary that owns the key is the one place this can be
+    fixed once rather than at every caller that might echo an error.
+    """
+    text = str(text)
+    return text.replace(API_KEY, "***REDACTED***") if API_KEY else text
+
 
 def fmp_get(endpoint, ticker=None, extra_params=None):
     url = f"{BASE_URL}/{endpoint}"
@@ -23,8 +48,23 @@ def fmp_get(endpoint, ticker=None, extra_params=None):
         params["symbol"] = ticker
     if extra_params:
         params.update(extra_params)
-    response = requests.get(url, params=params)
-    return response.json()
+
+    try:
+        response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+    except requests.RequestException as e:
+        # `from None` on purpose: the original exception carries the unredacted
+        # URL in its own message, and a chained traceback would print it into
+        # the host's logs.
+        raise FMPRequestError(f"{endpoint} request failed: {redact(e)}") from None
+
+    try:
+        return response.json()
+    except ValueError:
+        # A non-JSON body means an outage page or a rate-limit notice. Surface
+        # the status and a short excerpt rather than a bare parse error.
+        raise FMPRequestError(
+            f"{endpoint} returned {response.status_code}, not JSON: "
+            f"{redact(response.text)[:200]}") from None
 
 
 def get_financials(ticker):
