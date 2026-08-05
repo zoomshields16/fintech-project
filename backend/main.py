@@ -16,6 +16,7 @@ from projection_engine import project_income_statement, project_cash_flow, proje
 from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
 import pipeline_status
 from init_db import init_schema
+from universe import universe_symbols, EXCLUDED_TICKERS
 
 
 @asynccontextmanager
@@ -56,6 +57,22 @@ class ModelRequest(BaseModel):
 @app.get("/")
 def home():
     return {"message": "Backend is running"}
+
+
+@app.get("/api/universe")
+def universe_endpoint():
+    """The supported ticker universe, so the frontend can reject a symbol before
+    it costs anything.
+
+    data_source enforces the same rule server-side and is the real guard — this
+    exists so the user is told at the input box rather than after a page load,
+    and so the list can never drift from the one the backend actually honours.
+    """
+    return {
+        "index": "Nasdaq-100",
+        "symbols": universe_symbols(),
+        "excluded": sorted(EXCLUDED_TICKERS),
+    }
 
 
 def _avg_pct(numerators, denominators, n=4):

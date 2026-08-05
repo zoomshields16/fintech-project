@@ -43,6 +43,8 @@
         .ticker-form button:hover { background: var(--navy); }
         .ticker-hint { margin-top: 14px; font-size: 13.5px; color: var(--muted); }
         .ticker-note { margin-top: 6px; font-size: 13px; font-style: italic; color: var(--faint); }
+        .ticker-hint.bad { color: var(--red); font-style: normal; }
+        .ticker-form input.bad { border-color: var(--red); background: var(--red-tint); }
         .ast { color: var(--navy); font-weight: 600; font-style: normal; }
 
         /* ── Specimen (real model excerpt) ── */
@@ -167,8 +169,8 @@
                        autocomplete="off" spellcheck="false" aria-label="Stock ticker">
                 <button id="home-go-btn" type="submit">Pull financials →</button>
             </form>
-            <div class="ticker-hint">Try AAPL, MSFT, NVDA, COST<span class="ast">*</span></div>
-            <div class="ticker-note"><span class="ast">*</span>Nasdaq-100 companies for now — the model is in beta.</div>
+            <div class="ticker-hint" id="ticker-hint">Try AAPL, MSFT, NVDA, COST<span class="ast">*</span></div>
+            <div class="ticker-note"><span class="ast">*</span>Nasdaq-100 companies only, US-listed — the model is in beta.</div>
         </div>
 
         <figure class="specimen">
@@ -298,10 +300,47 @@
 </footer>
 
 <script>
-    function go() {
-        const t = document.getElementById('home-ticker').value.trim().toUpperCase();
-        if (t) window.location.href = `app.html?ticker=${encodeURIComponent(t)}`;
+    const API = 'http://127.0.0.1:8000';
+
+    const input = document.getElementById('home-ticker');
+    const hint  = document.getElementById('ticker-hint');
+    const HINT  = hint.innerHTML;
+
+    // The supported universe, pulled once. The backend enforces the same rule in
+    // data_source, so this is a courtesy rather than a security boundary: it tells
+    // the user at the input box instead of after a page load and a failed fetch.
+    // If the list can't be reached we let the submit through and let the backend
+    // answer — a down universe endpoint should not block every search.
+    let universe = null;
+    fetch(`${API}/api/universe`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d && d.symbols) universe = new Set(d.symbols); })
+        .catch(() => {});
+
+    function clearError() {
+        hint.classList.remove('bad');
+        hint.innerHTML = HINT;
+        input.classList.remove('bad');
     }
+
+    function reject(message) {
+        hint.classList.add('bad');
+        hint.textContent = message;
+        input.classList.add('bad');
+        input.focus();
+    }
+
+    function go() {
+        const t = input.value.trim().toUpperCase();
+        if (!t) return;
+        if (universe && !universe.has(t)) {
+            reject(`${t} isn't in the Nasdaq-100. This tool covers those 100-odd US-listed companies only.`);
+            return;
+        }
+        window.location.href = `app.html?ticker=${encodeURIComponent(t)}`;
+    }
+
+    input.addEventListener('input', clearError);
     document.getElementById('home-go-btn').addEventListener('click', go);
     document.getElementById('ticker-form').addEventListener('submit', go);
 </script>
