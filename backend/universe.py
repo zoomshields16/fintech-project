@@ -101,10 +101,19 @@ if __name__ == "__main__":
 
     refresh = "--refresh" in sys.argv
     data = load_universe(refresh=refresh)
-    print(f"{data['count']} constituents (fetched {data['fetched_at'][:19]}, "
+
+    # Print the SUPPORTED list, not the raw cache. The cache is a faithful record
+    # of what FMP returned and still contains excluded members; showing it here
+    # would list tickers the rest of the system refuses to touch.
+    symbols = universe_symbols()
+    print(f"{len(symbols)} supported (fetched {data['fetched_at'][:19]}, "
           f"{'re-pulled' if refresh else 'cached'})")
     print(f"cache: {CACHE_PATH}")
     print()
-    symbols = [m["symbol"] for m in data["members"]]
     for i in range(0, len(symbols), 12):
         print("  " + ", ".join(symbols[i:i + 12]))
+
+    dropped = sorted(EXCLUDED_TICKERS)
+    if dropped:
+        print()
+        print(f"  excluded ({len(dropped)}): {', '.join(dropped)} — see EXCLUDED_TICKERS")
