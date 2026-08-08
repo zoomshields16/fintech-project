@@ -1,0 +1,13 @@
+# Cloudflare deploy config for the static frontend.
+#
+# The site is plain HTML/CSS/JS with no build step, so there is nothing to compile —
+# this only tells Cloudflare which directory to serve. The pages live in frontend/,
+# not at the repo root, which is the setting that would otherwise silently publish
+# an empty site.
+#
+# The backend is NOT deployed from here; it runs on Railway. See README.
+name = "fintech-project"
+compatibility_date = "2026-08-01"
+
+[assets]
+directory = "./frontend"
