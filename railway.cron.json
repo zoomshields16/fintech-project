@@ -1,0 +1,8 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "deploy": {
+    "startCommand": "python backend/refresh_stale.py --days 7 --limit 15",
+    "cronSchedule": "0 7 * * *",
+    "restartPolicyType": "NEVER"
+  }
+}
