@@ -11,3 +11,14 @@ compatibility_date = "2026-08-01"
 
 [assets]
 directory = "./frontend"
+
+# The public addresses, declared here rather than clicked into the dashboard so the
+# domain a deploy answers on is reviewable in git. Cloudflare creates the DNS records
+# itself because the zone lives in the same account.
+[[routes]]
+pattern = "theretailanalyst.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.theretailanalyst.com"
+custom_domain = true
