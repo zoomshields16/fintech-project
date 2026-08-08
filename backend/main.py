@@ -12,7 +12,9 @@ from income_statement import pull_detail_accounts, compute_formula_lines, reconc
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile_bs,
                            compute_equity_rollforward)
-from projection_engine import project_income_statement, project_cash_flow, project_balance_sheet
+from projection_engine import (project_income_statement, project_cash_flow,
+                               project_balance_sheet, project_working_capital,
+                               working_capital_days, WC_HISTORY_YEARS)
 from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
 import pipeline_status
 from init_db import init_schema
@@ -354,9 +356,21 @@ def run_projection(request: ProjectionRequest):
     date_str = last_is.get("date") or last_is_raw.get("date", "")
     base_year = int(date_str[:4]) if date_str else 2025
 
+    # Working capital comes first: the cash flow's AR/inventory/AP movements are
+    # derived from the change in these balances, the way Carson wires it, rather than
+    # repeating the last actual year's movement forever. The days ratios are averaged
+    # over recent history, so they need the mapped historical years, not just the last.
+    is_history = [pull_detail_accounts(r, is_records, ticker)
+                  for r in is_records[:WC_HISTORY_YEARS]]
+    bs_history = [pull_bs_accounts(r, bs_records, ticker)
+                  for r in bs_records[:WC_HISTORY_YEARS]]
+    wc_days = working_capital_days(is_history, bs_history)
+
     proj_is = project_income_statement(last_is, drivers, base_year)
-    proj_cf = project_cash_flow(proj_is, last_cf, drivers)
-    proj_bs = project_balance_sheet(proj_is, proj_cf, last_bs)
+    proj_wc = project_working_capital(proj_is, wc_days)
+    proj_cf = project_cash_flow(proj_is, last_cf, drivers,
+                                projected_wc=proj_wc, last_bs_actuals=last_bs)
+    proj_bs = project_balance_sheet(proj_is, proj_cf, last_bs, projected_wc=proj_wc)
 
     return {
         "ticker":           ticker,
