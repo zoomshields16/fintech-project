@@ -11,4 +11,4 @@ const LOCAL_HOSTNAMES = ['localhost', '127.0.0.1', ''];
 
 const API = LOCAL_HOSTNAMES.includes(location.hostname)
     ? 'http://127.0.0.1:8000'
-    : 'https://web-production-cb587.up.railway.app';
+    : 'https://api.theretailanalyst.com';
