@@ -2114,6 +2114,26 @@
      "to_line": "AOCI",
      "amount": 1000000.0,
      "reason": "GILD FY2024: FMP mapped components don't tie to reported totals by +$1M (borderline source rounding). Parked in AOCI to balance. Special case."
+    },
+    {
+     "ticker": "WDC",
+     "fiscal_year": 2026,
+     "statement": "BS",
+     "source_field": "accountPayables",
+     "from_line": "Accounts Payable",
+     "to_line": "FMP double-count, already inside otherCurrentLiabilities",
+     "amount": 1774000000.0,
+     "reason": "FMP FY2026: otherCurrentLiabilities 3,188M + shortTermDebt 1,052M equal reported totalCurrentLiabilities 4,240M exactly, so accountPayables 1,774M is already included and we count it twice."
+    },
+    {
+     "ticker": "WDC",
+     "fiscal_year": 2026,
+     "statement": "BS",
+     "source_field": "preferredStock",
+     "from_line": "Common Stock / APIC",
+     "to_line": "FMP preferredStock reported as total assets",
+     "amount": 4997000000.0,
+     "reason": "FMP FY2026: preferredStock reported as 13,861M, identical to totalAssets and impossible. No equity components are supplied, only the 8,864M total, so Common Stock / APIC is overstated by 4,997M."
     }
    ]
   },

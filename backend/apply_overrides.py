@@ -77,6 +77,55 @@ def _add_synonym(rows, model_line, synonym, priority, notes, label):
 RECLASS_TARGET = "Other Income (Expense)"
 
 
+def _add_reclass(reclasses, row, label):
+    """Append a reclass unless an identical ticker/year/line is already present."""
+    if any(r["ticker"] == row["ticker"] and r["fiscal_year"] == row["fiscal_year"]
+           and r.get("from_line") == row.get("from_line") for r in reclasses):
+        print(f"  ok    {label}: workbook already carries it")
+        return False
+    reclasses.append(row)
+    print(f"  add   {label}: {row['ticker']} FY{row['fiscal_year']} "
+          f"{row['from_line']} -{row['amount']:,.0f}")
+    return True
+
+
+# WDC's FY2026 record arrives with two separate FMP errors. Both are corrections to one
+# company-year, so they belong in the reclass table — the master dictionary stays
+# universal, which is what lets the same mapping serve all 101 companies.
+#
+# Measured before writing them: our assets already match FMP's reported total exactly.
+# Only liabilities (+$1,774M) and equity (+$4,997M) are overstated, and removing exactly
+# those two amounts makes the balance sheet tie to the dollar.
+#
+#   1. accountPayables is double-counted. FMP's own otherCurrentLiabilities ($3,188M)
+#      plus shortTermDebt ($1,052M) equal its reported totalCurrentLiabilities ($4,240M)
+#      on the nose, so accountPayables ($1,774M) is already inside otherCurrentLiabilities
+#      and we add it a second time.
+#   2. preferredStock is reported as $13,861M, which is exactly totalAssets — impossible,
+#      and the field Carson maps into Common Stock / APIC. FMP supplies no equity detail
+#      at all for this record (commonStock, retainedEarnings, APIC and AOCI are all zero),
+#      only the $8,864M total, so the line is overstated by $4,997M.
+#
+# Scoped to FY2026 rather than the ticker, because this is a bad filing record and not a
+# permanent trait of the company — see [Carson owns the finance logic].
+WDC_RECLASSES = [
+    {"ticker": "WDC", "fiscal_year": 2026, "statement": "BS",
+     "source_field": "accountPayables",
+     "from_line": "Accounts Payable", "to_line": "FMP double-count, already inside otherCurrentLiabilities",
+     "amount": 1774000000.0,
+     "reason": "FMP FY2026: otherCurrentLiabilities 3,188M + shortTermDebt 1,052M equal "
+               "reported totalCurrentLiabilities 4,240M exactly, so accountPayables "
+               "1,774M is already included and we count it twice."},
+    {"ticker": "WDC", "fiscal_year": 2026, "statement": "BS",
+     "source_field": "preferredStock",
+     "from_line": "Common Stock / APIC", "to_line": "FMP preferredStock reported as total assets",
+     "amount": 4997000000.0,
+     "reason": "FMP FY2026: preferredStock reported as 13,861M, identical to totalAssets "
+               "and impossible. No equity components are supplied, only the 8,864M total, "
+               "so Common Stock / APIC is overstated by 4,997M."},
+]
+
+
 def apply_overrides(path=MAPPINGS):
     data = json.loads(Path(path).read_text())
     IS = data["statements"]["income_statement"]
@@ -145,6 +194,11 @@ def apply_overrides(path=MAPPINGS):
         changed += dropped
     else:
         print("  ok    none present")
+
+    # 6. WDC FY2026's two FMP errors (see WDC_RECLASSES above for the measurements).
+    print("[6] WDC FY2026 corrupt balance sheet record")
+    for row in WDC_RECLASSES:
+        changed += _add_reclass(BS["reclasses"], row, "WDC FY2026")
 
     Path(path).write_text(json.dumps(data, indent=1))
     print(f"\n{changed} override(s) applied to {path}")
