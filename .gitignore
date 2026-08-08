@@ -33,12 +33,22 @@ build/
 *.xlsm
 reference/
 
-# Personal headshots / photos (privacy - keep off GitHub)
-# NOTE: these must be uploaded directly to the host (e.g. Vercel) for the
-# About section to display on the live site.
+# Personal photos stay out of the repo by default — full-resolution originals are
+# camera files with EXIF and no business being in git.
+#
+# The two web-sized headshots below are the exception: the About section is meant
+# to be seen, the site is public, and Cloudflare deploys from this repo, so a file
+# that is not committed is a 404 on the live site. There is no separate upload step
+# (the earlier note here said to upload to the host directly — that was written for
+# a different host and was never true of this one).
+#
+# Keep the masters (carson.png, zoom.jpeg) local and ignored; commit only the
+# 500px JPEGs, which are ~66 KB and ~86 KB against 4.1 MB and 2.8 MB.
 frontend/assets/*.jpg
 frontend/assets/*.jpeg
 frontend/assets/*.png
 frontend/assets/*.webp
 frontend/assets/*.gif
 !frontend/assets/.gitkeep
+!frontend/assets/carson.jpg
+!frontend/assets/zoom.jpg
