@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from fmp_client import extract_profile
-from data_source import get_financials_cached, UnsupportedTicker
+from data_source import get_financials_cached, live_price, UnsupportedTicker
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
 from cash_flow import pull_cf_accounts, compute_cf_formula_lines, reconcile_cf
 from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile_bs,
@@ -96,6 +96,8 @@ def run_model(request: ModelRequest):
     print(f"[run-model] {ticker}: {'CACHE HIT (no FMP call)' if from_cache else 'CACHE MISS -> fetched from FMP'}")
 
     profile = extract_profile(data["profile"])
+    # The statements may be up to a week old; the price must not be.
+    profile.update(live_price(ticker, fallback=profile))
 
     income_years = []
     is_records = data["income_statement"]
@@ -389,6 +391,8 @@ def run_dcf_endpoint(request: DCFRequest):
         return {"error": f"Failed to fetch data for {ticker}: {str(e)}"}
 
     profile   = extract_profile(data["profile"])
+    # Live, not cached: this price sets the premium/discount the DCF reports against.
+    profile.update(live_price(ticker, fallback=profile))
     ev_data   = data.get("enterprise_values", [])
     treas     = data.get("treasury_rates", [])
     mrp_data  = data.get("market_risk_premium", [])

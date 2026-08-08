@@ -94,6 +94,23 @@ def extract_profile(profile_data):
     }
 
 
+def get_quote(ticker):
+    """Current price and market cap for one ticker. ONE API call.
+
+    Split out from get_financials because price and financials go stale on
+    completely different clocks. Statements change quarterly and are served from
+    the fetch cache for up to a week; a share price is wrong within the minute.
+    Bundling them meant the only way to freshen a price was to re-pull all eight
+    endpoints, so the cache window was really a staleness budget for the price.
+    """
+    quote = fmp_get("stable/quote", ticker)
+    q = quote[0] if isinstance(quote, list) and quote else {}
+    return {
+        "stock_price": q.get("price"),
+        "market_cap": q.get("marketCap"),
+    }
+
+
 def extract_enterprise_values(ev_data):
     e = ev_data[0] if ev_data else {}
     return {
