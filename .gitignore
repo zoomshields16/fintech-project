@@ -52,3 +52,7 @@ frontend/assets/*.gif
 !frontend/assets/.gitkeep
 !frontend/assets/carson.jpg
 !frontend/assets/zoom.jpg
+
+# README screenshots are documentation, not photos — they must ship or the
+# README renders a broken image on GitHub.
+!frontend/assets/screenshot-*.png

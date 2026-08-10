@@ -1,25 +1,53 @@
-# fintech-project
+# The Retail Analyst
 
-A web-based stock valuation tool. Enter a ticker and the app pulls ten years
-of real financial statements, rebuilds the three statements line by line,
-projects them forward, and runs a discounted cash flow (DCF) model to estimate
-fair value.
+[![tests](https://github.com/zoomshields16/fintech-project/actions/workflows/tests.yml/badge.svg)](https://github.com/zoomshields16/fintech-project/actions/workflows/tests.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**Live at [theretailanalyst.com](https://theretailanalyst.com)** · [pipeline status
+board](https://theretailanalyst.com/status.html) · [API](https://api.theretailanalyst.com/api/pipeline-status)
+
+A stock valuation tool that rebuilds public companies' financial statements from
+raw vendor data and **grades its own arithmetic against the filed totals before
+valuing anything**. Enter a ticker: it pulls ten years of statements, remaps them
+line by line, projects them forward, and runs a DCF.
+
+The valuation is the easy half. The interesting half is that vendor financial
+data is inconsistent between companies and silently revised over time, so the
+pipeline treats every number it produces as a claim to be checked:
+
+| | |
+|---|---|
+| **97.0%** | reconcile pass rate — our recomputed subtotals vs. the vendor's own reported totals |
+| **12,538** | automated checks, re-graded on every fetch (12,158 match, 380 mismatch) |
+| **101** | Nasdaq-100 companies, ~10 fiscal years each, refreshed nightly |
+| **93.3%** | strict pass rate (exact match, no materiality threshold) |
+| **76** | unit tests, run in CI on every push |
+
+Every mismatch is stored with both values and the difference, so a data-quality
+problem surfaces as a row in a queue rather than a wrong valuation. Several of
+the remaining 380 are cases where **our number is right and the vendor's is
+wrong** — see [How a reclass is directed](#how-a-reclass-is-directed).
+
+<!-- Screenshot: replace with a real capture of the status board. -->
+![Pipeline status board](frontend/assets/screenshot-status.png)
 
 ## How it works
 
 ```
-FMP API  →  SQLite log  →  mapping engine  →  statement engines  →  projections  →  DCF
-             (cache +        (rules from         (IS / BS / CF)
-              raw log +       Excel model)
-              checks)
+FMP API  →  raw log  →  mapping engine  →  statement engines  →  projections  →  DCF
+            (cache +      (rules from        (IS / BS / CF)
+             append-only   Excel model)
+             + checks)
 ```
 
 1. **Fetch** — financial data comes from the
    [Financial Modeling Prep](https://site.financialmodelingprep.com/) (FMP) API.
-2. **Store** — every response is saved verbatim to a local SQLite log
-   (`fetches` → `api_responses`). Repeat searches within 24 hours are served
-   from the database with zero API calls, and any past fetch can be recomputed
-   later without touching the network.
+2. **Store** — every response is saved verbatim to an append-only log
+   (`fetches` → `api_responses`) — Postgres in production, SQLite locally, same
+   SQLAlchemy models either way. Repeat searches are served from the database
+   with zero API calls, and any past fetch can be recomputed later without
+   touching the network. Nothing is ever overwritten, which is what makes
+   restatement detection possible at all.
 3. **Map** — FMP's raw fields are messy: the same concept appears under
    different names for different companies, and some values are duplicated
    across fields. A data-driven mapping engine (`mapping_engine.py` +
@@ -47,7 +75,9 @@ and reachable by the validation pipeline.
 ## Architecture
 
 - **Frontend** — plain HTML/CSS/JavaScript pages (`frontend/`): ticker input,
-  three-statement model view, DCF output.
+  three-statement model view, DCF output, pipeline status board. `config.js` is
+  the single place the API address lives — it picks localhost vs. production off
+  `location.hostname`, so no page hardcodes a URL.
 - **Backend** — Python + FastAPI (`backend/`):
   - `main.py` — API endpoints (`POST /api/run-model`, projections, DCF)
   - `fmp_client.py` — FMP fetch layer
@@ -71,7 +101,7 @@ The Excel workbook is the source of truth for the mappings and `mappings.json` i
 a build artifact of it. When a new workbook lands, run both steps — never one:
 
 ```bash
-python export_mappings.py "../reference/model 62.xlsm"   # rebuild from the workbook
+python export_mappings.py "../reference/model 80.xlsm"   # rebuild from the workbook
 python apply_overrides.py                                # reapply our decisions
 python backfill_checks.py --all                          # re-grade, 0 API calls
 ```
@@ -164,11 +194,29 @@ python refresh_stale.py --limit 5     # cap tickers per run (API budget)
 
 Tickers that never return usable data are retried a few times and then reported
 rather than retried forever, so a typo'd symbol cannot quietly drain the API
-budget. Wire to a scheduler at deploy time, e.g. nightly:
+budget.
+
+**In production this runs nightly on Railway** as a separate cron service, config
+in [`railway.cron.json`](railway.cron.json):
 
 ```
-0 2 * * *  cd /path/to/backend && /path/to/venv/bin/python refresh_stale.py
+0 7 * * *   python backend/refresh_stale.py --days 5 --limit 50
 ```
+
+The two numbers are the interesting part. All 101 companies were seeded inside a
+four-minute window, so they all fall due on the same night, and `find_stale_tickers`
+orders oldest-first and truncates at `--limit` — which means a cap that is too low
+lets the tail of the universe age well past its target. At `--limit 20` the backlog
+took five nights to clear and the last companies reached **ten days** stale. Raising
+the cap alone was not enough either: it clears the backlog in two nights, but the
+second night's companies are still 7.4 days old. Tightening the staleness threshold
+to five days is what actually holds the guarantee, because it starts the cycle a day
+earlier — worst case **6.4 days**, against a requirement of one week.
+
+Note that `stale_after_days` on the status board is deliberately a *different*
+number (7). The job refreshes at 5 and the alarm trips at 7, so a healthy pipeline
+keeps the stale count pinned at zero and any non-zero reading is a real signal
+rather than normal lag.
 
 ### Surfacing what it finds
 
@@ -237,8 +285,10 @@ UFCF/WACC/DCF math, the equity roll-forward, and — via `test_shipped_mappings.
 
 ## Status
 
+Shipped:
+
 - [x] End-to-end: ticker in → real statements, projections, and DCF out
-- [x] SQLite caching + append-only raw fetch log
+- [x] Append-only raw fetch log with cache-first reads (Postgres / SQLite)
 - [x] Data-driven mapping engine exported from the Excel reference model
 - [x] Automated reconcile checks stored per fetch (`check_results`)
 - [x] User-adjustable model drivers (growth, margins, CapEx, and optional
@@ -247,71 +297,84 @@ UFCF/WACC/DCF math, the equity roll-forward, and — via `test_shipped_mappings.
 - [x] Historical equity roll-forward with an explicit unexplained residual
 - [x] Restatement detection — flags figures FMP reports differently than before
 - [x] Scheduled refresh job with a `pipeline_runs` audit log
-- [x] Unit tests on the engines and the shipped mapping spec (`backend/tests/`)
-- [ ] Wire the refresh job to a real scheduler (needs deploy — see checklist)
-- [ ] Reject tickers outside the Nasdaq-100 (the supported universe) instead of
-      attempting a fetch
+- [x] Unit tests on the engines and the shipped mapping spec, green in CI
+- [x] **Deployed** — API on Railway, frontend on Cloudflare, custom domain, TLS
+- [x] **Nightly refresh cron** with a staleness guarantee under one week
+- [x] Ticker scope enforced at the input box against `GET /api/universe`
+
+Next:
+
 - [ ] Equity roll-forward shown on the frontend (data is in the API, no UI yet)
 - [ ] Check results shown on the frontend
 - [ ] Output pages (Summary, DuPont, Drivers)
-- [ ] Screener across many tickers
-- [ ] Deploy to Railway (needs Postgres + prod table setup)
-- [ ] Custom domain
+- [ ] Screener across the universe, and a reverse DCF (solve for the growth rate
+      the current price implies)
 
-## Deploy checklist (Railway)
+## Deployment
 
-### Done — the code is ready for a host
+```
+theretailanalyst.com          api.theretailanalyst.com         cron-refresh
+  Cloudflare Worker    ──────▶   Railway (FastAPI)     ◀──────  Railway cron
+  static frontend                       │                      0 7 * * * UTC
+                                        ▼
+                                 Railway Postgres
+                                   (private)
+```
 
-- [x] **SQLite → Postgres.** `db.py` reads `DATABASE_URL` and drops the
-      SQLite-only `check_same_thread` flag when it is set; `psycopg2-binary` is
-      in `requirements.txt`. Verified against a local PostgreSQL 17: the entire
-      status payload is byte-identical on both engines.
-- [x] **Schema created on startup.** The API calls `init_schema()` from a
-      lifespan hook, so an empty database gets its tables without anyone running
-      a script by hand. It only ever creates what is missing — a schema *change*
-      still needs a migration (see Alembic, below).
-- [x] **Data migration.** `backend/migrate_to_postgres.py` copies the database
-      row for row. It is not a re-seed: re-fetching from FMP would collapse the
-      fetch history that makes restatements detectable in the first place.
-- [x] **Start command.** `Procfile` at the repo root. Needed because `main.py`
-      lives in `backend/`, so a host cannot guess how to launch the app.
-- [x] **CORS.** Read from `ALLOWED_ORIGINS` (comma separated) rather than
-      hardcoded, so adding the frontend's domain is an environment variable
-      instead of a code change and a redeploy.
-- [x] **Auth on the one write endpoint.** `POST /api/restatements/review`
-      requires `X-API-Key`, matched against `STATUS_API_KEY`. Unset refuses
-      writes with a 503 rather than failing open. The GET endpoints are open on
-      purpose — this status page is meant to be shown to people — and the tests
-      assert that, so locking them down has to be a deliberate choice.
+Three things about this setup were deliberate:
 
-### Still to do
+- **Postgres stays private.** Reaching it from a laptop goes through
+  `railway connect Postgres --tunnel-only` rather than switching on public
+  access, which would assign a permanent internet-reachable host/port that is
+  easy to leave enabled after a one-minute migration.
+- **No environment-specific code.** `db.py` reads `DATABASE_URL`, CORS reads
+  `ALLOWED_ORIGINS`, and `frontend/config.js` picks the API host off
+  `location.hostname`. Local development is unchanged and no deploy needs a
+  code edit. The API creates missing tables on startup via a lifespan hook, so
+  an empty database bootstraps itself.
+- **Only the write endpoint is authenticated.** `POST /api/restatements/review`
+  requires `X-API-Key`; an unset key refuses writes with a 503 rather than
+  failing open. The GETs are open **on purpose** — the status board is meant to
+  be looked at — and `test_api_auth.py` asserts that, so locking them down has
+  to be a deliberate act rather than a drift.
 
-1. **Set the environment variables** in the host dashboard: `DATABASE_URL`,
-   `FMP_API_KEY`, `STATUS_API_KEY`, `ALLOWED_ORIGINS`. None are ever committed.
-2. **Point the frontend at the deployed API.** `app.html`, `dcf.html` and
-   `status.html` each hardcode `http://127.0.0.1:8000`. Left until the backend's
-   real URL exists.
-3. **Concurrent-fetch race.** Two simultaneous requests for the same brand-new
-   ticker can both try to insert the company row in `save_fetch`
-   (read-then-insert race). Rare at low traffic, but fix before real users.
-4. **Schedule `refresh_stale.py`.** Could not be scheduled against a local
-   SQLite file. Suggested cadence: `--days 7 --limit 15` nightly, which cycles
-   all 102 companies weekly at roughly 0.13% of the API bandwidth.
-5. **Alembic**, while the schema is still small. `init_schema()` adds missing
-   tables but never alters an existing one, so today a column change means
-   editing the database by hand.
-6. **`/api/run-dcf` trusts a client-supplied `ufcf` array.** UFCF is computed in
-   Python now (`dcf_engine.compute_ufcf`), but the frontend still stores the
-   result in `localStorage` and posts it back when running the DCF. The risk is
-   staleness, not tampering: after a redeploy that changes the projection
-   engine, a browser holding an old `dcf_input` will mix stale cash flows with a
-   freshly computed WACC and return a wrong answer with no error. Fix by having
-   the endpoint accept `drivers` and recompute the projection and UFCF
-   server-side, so the DCF depends on nothing the client did.
+Migration to a fresh host is `backend/migrate_to_postgres.py`, which copies row
+for row rather than re-seeding: re-fetching from the vendor would collapse the
+fetch history that makes restatements detectable in the first place.
+
+## Known limitations
+
+Things I know are wrong and have chosen not to fix yet, rather than things I
+haven't noticed:
+
+1. **`/api/run-dcf` trusts a client-supplied `ufcf` array.** UFCF is computed in
+   Python (`dcf_engine.compute_ufcf`), but the frontend caches the result in
+   `localStorage` and posts it back. The exposure is staleness, not tampering:
+   after a redeploy that changes the projection engine, a browser holding an old
+   `dcf_input` mixes stale cash flows with a freshly computed WACC and returns a
+   wrong answer with no error. The fix is for the endpoint to accept `drivers`
+   and recompute server-side, so the DCF depends on nothing the client did.
+2. **Concurrent-fetch race in `save_fetch`.** Two simultaneous requests for the
+   same brand-new ticker can both try to insert the company row (read-then-insert).
+   Harmless at current traffic; wants a unique constraint and an upsert.
+3. **No Alembic.** `init_schema()` creates missing tables but never alters an
+   existing one, so a column change today means touching the database by hand.
+   Worth doing while the schema is still six tables.
+4. **No rate limiting on the API.** Statements are cached for a week, so a model
+   run costs one live quote call, and the universe guard caps the surface at 101
+   tickers — but there is nothing stopping someone from looping it.
+5. **IFRS filers are structurally out of reach.** The mapping spec is built
+   around US GAAP statement shapes; the disqualifier is the accounting standard,
+   not foreign domicile. Affected companies are excluded from the universe rather
+   than reported as failures.
 
 ## Tech Stack
 
-- Backend: Python, FastAPI, SQLAlchemy, SQLite
-- Frontend: HTML, CSS, JavaScript
-- Data: Financial Modeling Prep API
+- **Backend** — Python 3.12, FastAPI, SQLAlchemy, pytest
+- **Data** — PostgreSQL in production, SQLite locally; Financial Modeling Prep API
+- **Frontend** — plain HTML/CSS/JavaScript, no framework and no build step
+- **Infrastructure** — Railway (API, Postgres, cron), Cloudflare Workers (static
+  frontend, DNS, TLS), GitHub Actions (CI)
+- **Spec** — an Excel reference model, exported to `mappings.json` by
+  `export_mappings.py` rather than transcribed by hand
 - Hosting (planned): Railway
