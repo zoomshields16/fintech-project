@@ -28,8 +28,13 @@ problem surfaces as a row in a queue rather than a wrong valuation. Several of
 the remaining 380 are cases where **our number is right and the vendor's is
 wrong** — see [How a reclass is directed](#how-a-reclass-is-directed).
 
-<!-- Screenshot: replace with a real capture of the status board. -->
+<!-- TODO before calling the project done: add a screenshot of the status board.
+     Capture https://theretailanalyst.com/status.html with the tiles in frame,
+     resize to ~1400px, save as frontend/assets/screenshot-status.png (the
+     .gitignore already allows screenshot-*.png), then restore the line below.
 ![Pipeline status board](frontend/assets/screenshot-status.png)
+-->
+
 
 ## How it works
 
