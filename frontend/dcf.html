@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=13">
+    <link rel="stylesheet" href="theme.css?v=14">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -71,14 +71,11 @@
            its content instead, and the stepper is drawn rather than native: the
            browser's own spin buttons are a few pixels tall and cannot be resized
            reliably, which is what made them so hard to hit. */
-        /* Four across, so the seven parameters fall 4 + 3. justify-content: start
-           packs the columns left instead of spreading them across the full measure,
-           which is what keeps the second row's three sitting directly under the
-           first row's first three. */
+        /* All seven on one row across the full measure — 158px a column against a
+           126px control, so nothing is squeezed. */
         .wacc-grid {
-            display: grid; grid-template-columns: repeat(4, minmax(150px, 215px));
-            justify-content: start;
-            gap: 18px 22px;
+            display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 18px;
         }
         .wacc-field label {
             display: block; font-size: 12px; color: var(--muted);
@@ -331,11 +328,15 @@
         @media (max-width: 1000px) {
             .stat-cards { grid-template-columns: repeat(3, 1fr); }
         }
+        /* Seven controls need ~990px before the boxes start colliding, so the row
+           breaks to four and then two rather than crushing. */
+        @media (max-width: 1080px) {
+            .wacc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
         @media (max-width: 860px) {
             .stat-cards, .schedule-three-col { grid-template-columns: 1fr 1fr; }
             .sens-grid, .dcf-summary-row, .ir-two-col { grid-template-columns: 1fr; }
-            /* Four fixed columns need ~926px; below that they go two across. */
-            .wacc-grid { grid-template-columns: repeat(2, minmax(150px, 215px)); }
+            .wacc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
     </style>
 </head>
