@@ -78,12 +78,17 @@ body {
 .site-head .shell.centered .head-right {
     justify-self: end; display: flex; align-items: center; gap: 12px;
 }
+/* The wordmark is steel blue on every page — one rule, since all five headers
+   share this class. --blue-ink rather than --blue: the pale steel is 1.68:1 on
+   paper and would be unreadable as text. */
 .brand {
     font-family: var(--font); font-size: 19px; font-weight: 700;
-    color: var(--ink); text-decoration: none; letter-spacing: -0.2px;
+    color: var(--blue-ink); text-decoration: none; letter-spacing: -0.2px;
     white-space: nowrap;
 }
-.brand .dot { color: var(--blue-ink); }
+/* The dot used to be the accent against dark ink. With the wordmark itself blue
+   it goes darker instead, so it still reads as a full stop rather than vanishing. */
+.brand .dot { color: var(--blue-d); }
 
 .head-links { display: flex; align-items: center; gap: 26px; }
 .head-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
