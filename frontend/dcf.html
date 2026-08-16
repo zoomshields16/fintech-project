@@ -692,7 +692,16 @@
     function renderResults(r) {
         lastResult = r;
         const premium = r.premium_discount;
-        const isUnder = premium != null && premium > 0;
+
+        // The verdict, not the direction: a positive premium means the DCF values the
+        // company above where it trades, so it reads undervalued. Judged on the figure
+        // AS DISPLAYED — rounded to one decimal — so a premium of 0.02% cannot show
+        // "0.0%" under an "Undervalued" heading.
+        const shown   = premium != null ? Number((premium * 100).toFixed(1)) : null;
+        const verdict = shown == null ? { label: 'Valuation', cls: '', sign: '' }
+                      : shown > 0     ? { label: 'Undervalued',    cls: 'undervalued', sign: '+' }
+                      : shown < 0     ? { label: 'Overvalued',     cls: 'overvalued',  sign: ''  }
+                      :                 { label: 'Equally Valued', cls: '',            sign: ''  };
 
         document.getElementById('stat-cards').innerHTML = `
             <div class="stat-card">
@@ -716,9 +725,9 @@
                 <div class="value">${fmtB(r.pv_discrete)}</div>
             </div>
             <div class="stat-card">
-                <div class="label">${isUnder ? 'Upside' : 'Downside'}</div>
-                <div class="value ${isUnder ? 'undervalued' : 'overvalued'}">
-                    ${premium != null ? (isUnder ? '+' : '') + (premium * 100).toFixed(1) + '%' : '—'}
+                <div class="label">${verdict.label}</div>
+                <div class="value ${verdict.cls}">
+                    ${shown != null ? verdict.sign + shown.toFixed(1) + '%' : '—'}
                 </div>
             </div>
         `;
