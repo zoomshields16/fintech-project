@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Retail Analyst — Assumptions</title>
-    <link rel="stylesheet" href="theme.css?v=5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css?v=6">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -41,7 +44,7 @@
             border-bottom: 1px solid var(--line);
         }
         .masthead h1 {
-            font-family: Georgia, serif; font-size: 27px; font-weight: 700;
+            font-family: var(--font); font-size: 27px; font-weight: 700;
             letter-spacing: -0.4px;
         }
         .masthead .meta { display: flex; align-items: baseline; gap: 20px; }
@@ -52,11 +55,11 @@
 
         /* ── Driver cards ── */
         .card h2 {
-            font-family: Georgia, serif; font-size: 19px; font-weight: 700;
+            font-family: var(--font); font-size: 19px; font-weight: 700;
             margin-bottom: 2px;
         }
         .card h2 .tag {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
             font-size: 11px; font-weight: 600; color: var(--faint);
             text-transform: uppercase; letter-spacing: 0.09em; margin-left: 10px;
         }
@@ -77,7 +80,7 @@
             appearance: none; border: none; cursor: pointer;
             padding: 6px 15px; font-size: 12.5px; font-weight: 500;
             background: transparent; color: var(--muted);
-            font-family: inherit; letter-spacing: 0.02em;
+            font-family: var(--font); letter-spacing: 0.02em;
         }
         .case-tab + .case-tab { border-left: 1px solid var(--line); }
         .case-tab:hover  { color: var(--ink); }
@@ -93,7 +96,7 @@
         .g1-header-row div {
             text-align: right; font-size: 11px; font-weight: 600; color: var(--muted);
             letter-spacing: 0.06em; padding-right: 9px;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
         }
         .g1-header-row div:first-child { text-align: left; padding-right: 0; }
         .g1-label { font-weight: 500; color: var(--ink); }
@@ -101,7 +104,7 @@
             width: 100%; padding: 7px 9px; font-size: 13px;
             border: 1px solid var(--line); border-radius: 2px;
             background: #fff; color: var(--ink); text-align: right;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         .d-in:focus { outline: none; border-color: var(--blue-ink); }
@@ -119,7 +122,7 @@
         .g2-val {
             text-align: right; padding: 5px 7px; border-radius: 2px;
             background: var(--paper-2); color: var(--faint);
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         .g2-val.active { background: var(--blue-tint); color: var(--blue-ink); font-weight: 600; }
@@ -147,7 +150,7 @@
             width: 100%; padding: 5px 7px; font-size: 12px;
             border: 1px solid var(--line); border-radius: 2px;
             background: #fff; text-align: right;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         .g2-in:disabled { background: var(--paper-2); color: #c9c2b4; border-color: #ece7dc; cursor: not-allowed; }
@@ -171,7 +174,7 @@
         .rn-head { font-size: 14px; font-weight: 600; color: #6b4e0b; }
         .rn-list {
             margin: 8px 0 0 18px; padding: 0; font-size: 13px; color: #6b4e0b;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         .rn-list li { margin-bottom: 2px; }

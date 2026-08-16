@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Retail Analyst — DCF valuation, shown in full</title>
-    <link rel="stylesheet" href="theme.css?v=5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css?v=6">
     <style>
         /* ── Hero ── */
         .hero { padding: 76px 0 72px; }
@@ -15,7 +18,7 @@
             align-items: center;
         }
         .hero h1 {
-            font-family: Georgia, serif; font-weight: 700;
+            font-family: var(--font); font-weight: 700;
             font-size: 44px; line-height: 1.12; letter-spacing: -0.8px;
             margin-bottom: 20px;
         }
@@ -32,13 +35,13 @@
             flex: 1; min-width: 0; border: none; outline: none; background: var(--paper);
             padding: 15px 16px; font-size: 18px; font-weight: 600;
             text-transform: uppercase; letter-spacing: 0.06em;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink);
+            font-family: var(--font); color: var(--ink);
         }
         .ticker-form input::placeholder { color: #b9b3a6; }
         .ticker-form button {
             border: none; background: var(--ink); color: #fff;
             padding: 0 22px; font-size: 14.5px; font-weight: 500; cursor: pointer;
-            transition: background 0.15s; white-space: nowrap; font-family: inherit;
+            transition: background 0.15s; white-space: nowrap; font-family: var(--font);
         }
         .ticker-form button:hover { background: var(--blue-ink); }
         .ticker-hint { margin-top: 14px; font-size: 13.5px; color: var(--muted); }
@@ -53,7 +56,7 @@
             border-radius: 3px; padding: 16px 16px 12px;
         }
         .specimen figcaption {
-            font-family: Georgia, serif; font-style: italic;
+            font-family: var(--font); font-style: italic;
             font-size: 13px; color: var(--muted); margin-bottom: 12px;
         }
         .spec-scroll { overflow-x: auto; }
@@ -67,13 +70,13 @@
         .specimen th:first-child { text-align: left; padding-left: 0; width: 31%; }
         .specimen td {
             padding: 5px 6px; text-align: right; white-space: nowrap;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
             border-bottom: 1px solid #f0ece3;
         }
         .specimen td:first-child {
             text-align: left; padding-left: 0; white-space: normal;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
             color: var(--ink);
         }
         .specimen td:not(:first-child):not(.proj),
@@ -91,7 +94,7 @@
         /* ── Method (what happens to your ticker) ── */
         .method { background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 72px 0; }
         .method h2, .about h2 {
-            font-family: Georgia, serif; font-weight: 700;
+            font-family: var(--font); font-weight: 700;
             font-size: 30px; letter-spacing: -0.4px; margin-bottom: 8px;
         }
         .method .sub, .about .sub { color: var(--muted); font-size: 16px; max-width: 560px; margin-bottom: 40px; }
@@ -101,7 +104,7 @@
         }
         .method-row:last-child { border-bottom: 1px solid var(--line); }
         .method-row dt {
-            font-family: Georgia, serif; font-size: 19px; font-weight: 700;
+            font-family: var(--font); font-size: 19px; font-weight: 700;
             color: var(--blue-ink); line-height: 1.35;
         }
         .method-row dd { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 600px; }
@@ -118,7 +121,7 @@
             overflow: hidden; background: var(--paper-2); border: 1px solid var(--line);
         }
         .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .person .nm { font-family: Georgia, serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .person .nm { font-family: var(--font); font-size: 18px; font-weight: 700; margin-bottom: 6px; }
         .person .ln { font-size: 13.5px; line-height: 1.5; }
         .person .ln.school { color: var(--blue-ink); font-weight: 600; }
         .person .ln.dim { color: var(--muted); }

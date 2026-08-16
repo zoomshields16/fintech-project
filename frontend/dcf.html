@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Retail Analyst — DCF</title>
-    <link rel="stylesheet" href="theme.css?v=5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css?v=6">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -37,14 +40,14 @@
             border-bottom: 1px solid var(--line);
         }
         .masthead .name {
-            font-family: Georgia, serif; font-size: 25px; font-weight: 700;
+            font-family: var(--font); font-size: 25px; font-weight: 700;
             letter-spacing: -0.4px;
         }
         .masthead .price { font-size: 14px; color: var(--muted); }
         .masthead .price b { color: var(--ink); font-weight: 600; }
 
         .card-title {
-            font-family: Georgia, serif;
+            font-family: var(--font);
             font-size: 19px; font-weight: 700; color: var(--ink);
             margin: 0 0 18px 0; padding-bottom: 12px; letter-spacing: -0.2px;
             border-bottom: 1px solid var(--line);
@@ -63,7 +66,7 @@
             width: 100%; padding: 8px 10px; font-size: 14px;
             border: 1px solid var(--line); border-radius: 2px;
             background: #fff; color: var(--ink); text-align: right;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         .wacc-field input:focus { outline: none; border-color: var(--blue-ink); }
@@ -81,7 +84,7 @@
         }
         .stat-card .value {
             font-size: 21px; font-weight: 700; color: var(--blue-ink); margin-top: 4px;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         .stat-card .value.undervalued { color: var(--green); }
@@ -99,22 +102,22 @@
             background: var(--blue); color: var(--on-blue);
             padding: 8px 12px;
             text-align: center; font-weight: 700;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
             box-shadow: 1px 0 0 0 var(--blue), -1px 0 0 0 var(--blue);
         }
         th:first-child {
             text-align: left;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
         }
         td {
             padding: 6px 12px; text-align: center;
-            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            font-family: var(--font);
             font-variant-numeric: tabular-nums;
         }
         td:first-child {
             text-align: left; color: var(--ink);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
         }
         /* No rules between year columns — matches the model page. */
         tr + tr td { border-top: 1px solid #f7f4ee; }

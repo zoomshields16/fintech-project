@@ -1,6 +1,13 @@
 /* ── The Retail Analyst — shared theme ─────────────────────────── */
 
 :root {
+    /* One family for everything — headings, body, and figures alike. The fallbacks
+       carry the page until Open Sans arrives (and if it never does): the system UI
+       face first, then a generic. Loaded per page from Google Fonts; if that
+       dependency is ever unwanted, self-host the woff2 and swap in an @font-face
+       here — nothing else needs to change, because every rule points at this token. */
+    --font: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+
     --paper:      #faf8f4;
     --paper-2:    #f2efe8;
     --card:       #fffefb;
@@ -36,17 +43,17 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--font);
     background: var(--paper);
     color: var(--ink);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
 }
-.serif { font-family: Georgia, 'Times New Roman', serif; }
-.mono {
-    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-    font-variant-numeric: tabular-nums;
-}
+/* Both of these used to switch family — a serif for display, a monospace for
+   figures. With one family everywhere they are kept only for the numeric feature,
+   and the markup that carries them still reads correctly. */
+.serif { font-family: var(--font); }
+.mono  { font-variant-numeric: tabular-nums; }
 .shell { max-width: 960px; margin: 0 auto; padding: 0 28px; }
 .shell.wide { max-width: 1280px; }
 
@@ -72,7 +79,7 @@ body {
     justify-self: end; display: flex; align-items: center; gap: 12px;
 }
 .brand {
-    font-family: Georgia, serif; font-size: 19px; font-weight: 700;
+    font-family: var(--font); font-size: 19px; font-weight: 700;
     color: var(--ink); text-decoration: none; letter-spacing: -0.2px;
     white-space: nowrap;
 }
@@ -98,7 +105,7 @@ a.rail-step:hover { color: var(--ink); }
     display: inline-block;
     background: var(--blue-ink); color: #fff;
     border: none; cursor: pointer;
-    font-family: inherit; font-size: 15px; font-weight: 500;
+    font-family: var(--font); font-size: 15px; font-weight: 500;
     padding: 12px 26px; border-radius: 2px;
     text-decoration: none;
     transition: background 0.15s;
