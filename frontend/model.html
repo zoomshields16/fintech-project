@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=25">
+    <link rel="stylesheet" href="theme.css?v=26">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -42,6 +42,13 @@
         .case-tab:hover { color: var(--ink); }
         .case-tab.is-on { background: var(--blue); color: var(--on-blue); font-weight: 600; }
         .case-tab:focus-visible { outline: 2px solid var(--blue-ink); outline-offset: -2px; }
+        /* Shown in the tabs' place when the saved projection predates cases — hiding
+           them silently just looks like the feature is missing. */
+        .case-hint {
+            font-size: 12.5px; color: var(--blue-ink); text-decoration: none;
+            border-bottom: 1px solid var(--line); padding-bottom: 1px; white-space: nowrap;
+        }
+        .case-hint:hover { border-bottom-color: var(--blue-ink); }
 
 
         /* ── Tables ──
@@ -703,7 +710,8 @@
                 <span class="name">${histData.company_name} (${histData.ticker})</span>
                 <div class="meta">
                     <span class="price mono">Current price <b>$${histData.stock_price}</b></span>
-                    ${names.length > 1 ? caseTabs(names) : ''}
+                    ${names.length > 1 ? caseTabs(names)
+                      : '<a class="case-hint" href="app.html">Re-run the projection to compare cases →</a>'}
                 </div>
             </div>
 

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=25">
+    <link rel="stylesheet" href="theme.css?v=26">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -140,6 +140,12 @@
         .case-tab:hover { color: var(--ink); }
         .case-tab.is-on { background: var(--blue); color: var(--on-blue); font-weight: 600; }
         .case-tab:focus-visible { outline: 2px solid var(--blue-ink); outline-offset: -2px; }
+        /* Shown in the tabs' place when the saved projection predates cases. */
+        .case-hint {
+            font-size: 12.5px; color: var(--blue-ink); text-decoration: none;
+            border-bottom: 1px solid var(--line); padding-bottom: 1px; white-space: nowrap;
+        }
+        .case-hint:hover { border-bottom-color: var(--blue-ink); }
 
         /* --- The verdict ---
            The one number the whole page exists to produce, stated before any of the
@@ -1061,12 +1067,15 @@
     // three cases produce three different numbers on this page.
     function renderHeader() {
         const names = availableCases();
+        // A projection saved before cases existed has none to switch between, so the
+        // tabs correctly hide — but silently, which just looks like the feature is
+        // missing. Say what to do about it instead of showing nothing.
         const tabs = names.length > 1
             ? `<div class="case-tabs" role="tablist" aria-label="Case">` +
               names.map(n => `<button type="button" class="case-tab${n === caseNow ? ' is-on' : ''}"
                         role="tab" aria-selected="${n === caseNow}"
                         data-case="${n}">${CASE_LABELS[n]}</button>`).join('') + `</div>`
-            : '';
+            : `<a class="case-hint" href="app.html">Re-run the projection to compare cases →</a>`;
         const label = CASE_LABELS[caseNow];
         document.getElementById('company-header').innerHTML = `
             <span class="name">${inputData.company_name} (${inputData.ticker})</span>
