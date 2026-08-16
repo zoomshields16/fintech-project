@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=23">
+    <link rel="stylesheet" href="theme.css?v=24">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -295,8 +295,7 @@
             if (pct == null) return `<td${tdCls(y)}></td>`;
 
             // Rounded before the sign is read, so a change that displays as 0% is not
-            // coloured as a move. String(-0) is "0" in JS, so a small negative prints
-            // "0%" rather than "-0%".
+            // coloured as a move.
             const whole   = Math.round(pct * 100);
             const classes = [];
             if (y.projected)   classes.push('proj');
@@ -304,7 +303,9 @@
             if (whole > 0)     classes.push('up');
             else if (whole < 0) classes.push('down');
             const cls = classes.length ? ` class="${classes.join(' ')}"` : '';
-            return `<td${cls}>${whole}%</td>`;
+            // Magnitude only. Green or red is the sign, so printing one as well says
+            // it twice — and Math.abs also disposes of JS's "-0".
+            return `<td${cls}>${Math.abs(whole)}%</td>`;
         }).join('');
         return `<tr class="pct-row"><td></td>${cells}</tr>`;
     }

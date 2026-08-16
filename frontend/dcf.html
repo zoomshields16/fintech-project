@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=23">
+    <link rel="stylesheet" href="theme.css?v=24">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -323,12 +323,14 @@
            label on each axis. Three cells, not a row and a column — filling the whole
            row and column drew a cross, which reads as four highlighted arms rather
            than one number. */
-        .sens-table th.base-col,
-        .sens-table td.row-label.base-row,
-        .sens-table .highlight { background: var(--blue); color: var(--on-blue); }
+        /* The fill goes on the figure alone. The two axis labels that locate it are
+           bold and nothing more — filling those as well made three highlights where
+           only one of them is the answer. */
         .sens-table th.base-col           { font-weight: 700; }  /* the growth rate */
         .sens-table td.row-label.base-row { font-weight: 700; }  /* the WACC */
-        .sens-table .highlight            { font-weight: 800; }  /* where they meet */
+        .sens-table .highlight {
+            background: var(--blue); color: var(--on-blue); font-weight: 800;
+        }
 
         /* Direction, on the premium grid alone. */
         .sens-table .up   { color: var(--green); }
@@ -574,8 +576,9 @@
         if (v == null) return '—';
         const whole = Number((v * 100).toFixed(2));
         const cls   = whole > 0 ? 'up' : whole < 0 ? 'down' : '';
-        const text  = Math.abs(whole).toFixed(2) + '%';
-        return `<span class="${cls}">${whole < 0 ? `(${text})` : text}</span>`;
+        // Magnitude only — green or red carries the direction, so a sign or a set of
+        // brackets would be saying it a second time.
+        return `<span class="${cls}">${Math.abs(whole).toFixed(2)}%</span>`;
     }
 
     // ─── Schedule 1: WACC Schedule ───────────────────────────────────────────
@@ -655,12 +658,11 @@
         const pvDiscPct = totalEv ? r.pv_discrete / totalEv : 0;
         const pvTermPct = totalEv ? r.pv_terminal / totalEv : 0;
 
-        const isUnder  = r.premium_discount != null && r.premium_discount > 0;
-        const prClass  = isUnder ? 'pos' : 'neg';
-        const prSign   = isUnder ? '+' : '';
-        const prValue  = r.premium_discount != null
-            ? `<span class="${prClass}">${prSign}${(r.premium_discount * 100).toFixed(1)}%</span>`
-            : '—';
+        // Unsigned, like every other percentage on the site — the colour is the sign.
+        const prPct   = r.premium_discount != null
+            ? Number((r.premium_discount * 100).toFixed(1)) : null;
+        const prValue = prPct == null ? '—'
+            : `<span class="${prPct > 0 ? 'pos' : prPct < 0 ? 'neg' : ''}">${Math.abs(prPct).toFixed(1)}%</span>`;
 
         return `
         <div class="table-wrap" style="margin-bottom:20px">
@@ -789,10 +791,10 @@
         // AS DISPLAYED — two decimals, matching Carson's 0.00% on DCF!J9 — so a premium
         // of 0.001% cannot show "0.00%" under an "Undervalued" heading.
         const shown   = premium != null ? Number((premium * 100).toFixed(2)) : null;
-        const verdict = shown == null ? { label: 'Valuation', cls: '', sign: '' }
-                      : shown > 0     ? { label: 'Undervalued',    cls: 'undervalued', sign: '+' }
-                      : shown < 0     ? { label: 'Overvalued',     cls: 'overvalued',  sign: ''  }
-                      :                 { label: 'Equally Valued', cls: '',            sign: ''  };
+        const verdict = shown == null ? { label: 'Valuation', cls: '' }
+                      : shown > 0     ? { label: 'Undervalued',    cls: 'undervalued' }
+                      : shown < 0     ? { label: 'Overvalued',     cls: 'overvalued'  }
+                      :                 { label: 'Equally Valued', cls: ''            };
 
         // ── The headline, stated before any of the working ──
         // Carson's DCF sheet opens on exactly this block (DCF!F9:J9): Market price,
@@ -811,7 +813,7 @@
                     <span class="verdict-case">${CASE_LABELS[caseNow] || 'Base'} case</span></p>
                 <div class="verdict-headline">
                     <span class="verdict-word">${verdict.label}</span>
-                    ${shown != null ? `<span class="verdict-pct ${verdict.cls}">${verdict.sign}${shown.toFixed(2)}%</span>` : ''}
+                    ${shown != null ? `<span class="verdict-pct ${verdict.cls}">${Math.abs(shown).toFixed(2)}%</span>` : ''}
                 </div>
                 <p class="verdict-note">
                     ${implied == null ? 'The model produced no per-share value for this case.'
