@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=16">
+    <link rel="stylesheet" href="theme.css?v=17">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -166,8 +166,12 @@
             font-size: 34px; font-weight: 800; letter-spacing: -0.6px;
             line-height: 1.1; color: var(--ink);
         }
-        .verdict.is-under .verdict-word { color: var(--green); }
-        .verdict.is-over  .verdict-word { color: var(--red); }
+        /* Word and figure carry the same colour — they are one statement. This used
+           to come off the stat cards' .value rules; with those gone it belongs here. */
+        .verdict.is-under .verdict-word,
+        .verdict.is-under .verdict-pct  { color: var(--green); }
+        .verdict.is-over  .verdict-word,
+        .verdict.is-over  .verdict-pct  { color: var(--red); }
         .verdict-pct {
             font-size: 34px; font-weight: 800; letter-spacing: -0.6px;
             font-variant-numeric: tabular-nums; margin-left: 14px;
@@ -196,28 +200,6 @@
             .verdict-figures { padding-left: 0; border-left: none; }
         }
 
-        /* --- stat cards --- */
-        /* Six across on one row — they are the headline read, and stacked 3x2 they
-           looked like two unrelated groups. */
-        .stat-cards {
-            display: grid; grid-template-columns: repeat(6, 1fr);
-            gap: 12px; margin-bottom: 34px;
-        }
-        .stat-card {
-            background: var(--card); border: 1px solid var(--line);
-            border-radius: 3px; padding: 14px 16px; text-align: center;
-        }
-        .stat-card .label {
-            font-size: 10.5px; color: var(--faint);
-            text-transform: uppercase; letter-spacing: 0.08em;
-        }
-        .stat-card .value {
-            font-size: 21px; font-weight: 700; color: var(--blue-ink); margin-top: 4px;
-            font-family: var(--font);
-            font-variant-numeric: tabular-nums;
-        }
-        .stat-card .value.undervalued { color: var(--green); }
-        .stat-card .value.overvalued  { color: var(--red); }
 
         /* --- shared table base --- */
         /* No scrollbars anywhere on this page — every table is laid out to fit its
@@ -325,19 +307,13 @@
         .pos { color: var(--green); }
         #no-data { margin-top: 26px; }
 
-        /* Six stat cards need roughly 150px each before the figures start colliding
-           with their labels; below that they go three across, then two. .wacc-grid
-           reflows on its own via auto-fit. */
-        @media (max-width: 1000px) {
-            .stat-cards { grid-template-columns: repeat(3, 1fr); }
-        }
         /* Seven controls need ~990px before the boxes start colliding, so the row
            breaks to four and then two rather than crushing. */
         @media (max-width: 1080px) {
             .wacc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
         @media (max-width: 860px) {
-            .stat-cards, .schedule-three-col { grid-template-columns: 1fr 1fr; }
+            .schedule-three-col { grid-template-columns: 1fr 1fr; }
             .sens-grid, .dcf-summary-row, .ir-two-col { grid-template-columns: 1fr; }
             .wacc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
@@ -467,9 +443,6 @@
         </aside>
 
         <div id="dcf-results">
-            <!-- Summary stat cards -->
-            <div class="stat-cards" id="stat-cards"></div>
-
             <!-- Schedule 1: WACC Schedule -->
             <div class="card">
                 <p class="card-title">WACC schedule</p>
@@ -794,34 +767,6 @@
             </div>
         `;
 
-        // The supporting figures — deliberately NOT market price, enterprise price or
-        // the premium, which are the headline above. These are how it was arrived at.
-        document.getElementById('stat-cards').innerHTML = `
-            <div class="stat-card">
-                <div class="label">WACC</div>
-                <div class="value">${pct(r.wacc_inputs.wacc)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Terminal Growth</div>
-                <div class="value">${pct(r.terminal_growth_rate)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">PV of Discrete CFs</div>
-                <div class="value">${fmtB(r.pv_discrete)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">PV of Terminal</div>
-                <div class="value">${fmtB(r.pv_terminal)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Enterprise Value</div>
-                <div class="value">${fmtB(r.enterprise_value)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Less: Net Debt</div>
-                <div class="value">${fmtB(r.net_debt)}</div>
-            </div>
-        `;
 
         document.getElementById('wacc-schedule').innerHTML = buildWaccSchedule(r);
         document.getElementById('dcf-schedule').innerHTML  = buildDcfSchedule(inputData, r);
