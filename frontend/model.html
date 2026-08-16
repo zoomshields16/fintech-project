@@ -51,15 +51,30 @@
             table-layout: fixed;
         }
         thead th { position: sticky; top: 60px; z-index: 5; }
+        /* Year headers sit optically over their figures rather than geometrically in
+           the middle of the column. The figures are right-aligned, so the block of
+           numbers has its visual centre right of the column's centre: pure centring
+           reads as too far left, pure right-alignment as too far right. This nudges a
+           centred header back toward the numbers. One value, tuned here. */
+        table { --year-nudge: 14px; }
         th {
             background: var(--navy); color: #fff;
-            padding: 8px 10px; text-align: center;
+            padding: 8px 10px 8px calc(10px + var(--year-nudge));
+            text-align: center;
             font-weight: 500; white-space: nowrap; overflow: hidden;
             font-family: ui-monospace, 'SF Mono', Menlo, monospace;
             font-variant-numeric: tabular-nums;
+            /* Closes the hairline seams between adjacent header cells. With
+               table-layout: fixed the column widths land on fractional pixels, so the
+               per-cell navy fill leaves sub-pixel gaps that show the page through and
+               read as rules between the years. Painting 1px of navy either side makes
+               neighbouring cells overlap. Done with a shadow, not a border, because
+               collapsed borders and sticky headers do not survive each other. */
+            box-shadow: 1px 0 0 0 var(--navy), -1px 0 0 0 var(--navy);
         }
         th:first-child {
             text-align: left; width: 250px; white-space: normal;
+            padding-left: 10px;   /* the nudge is for the year columns only */
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         td {
