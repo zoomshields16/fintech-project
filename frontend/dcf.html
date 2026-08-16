@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=20">
+    <link rel="stylesheet" href="theme.css?v=21">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -288,23 +288,26 @@
             width: 100%; border-collapse: collapse; font-size: 11.5px;
             table-layout: fixed;
         }
-        /* No internal grid. Only the outer box and the two rules that separate the
-           axes from the figures — 25 cells boxed individually read as a spreadsheet
-           screenshot rather than a table.
+        /* No internal grid. The box encloses the FIGURES only — it is drawn on the
+           body's edge cells rather than on the table, so the row of growth rates sits
+           above the frame with nothing but the rule beneath it. Boxing the header too
+           put a vertical stroke at each end of that row.
 
-           Weight, not colour, marks the live case: the base WACC row and the base
-           growth column are bold, and everything else is plain. That is the whole
-           marking system, so the axis labels are unbold by default too — otherwise
-           every label competes with the one pair that matters. */
-        .sens-table { border: 1px solid var(--ink); }
+           Weight, not colour, marks the live case, and only on three cells — so the
+           axis labels are unbold by default, otherwise every label competes with the
+           one pair that matters. */
+        .sens-table { border: none; }
         .sens-table th,
         .sens-table td { border: none !important; }
 
         .sens-table th {
             background: transparent; color: var(--ink); padding: 6px 7px;
             text-align: center; font-weight: 400;
-            border-bottom: 1px solid var(--ink) !important;   /* axis rule */
+            border-bottom: 1px solid var(--ink) !important;   /* the frame's top edge */
         }
+        .sens-table tbody td:first-child   { border-left:   1px solid var(--ink) !important; }
+        .sens-table tbody td:last-child    { border-right:  1px solid var(--ink) !important; }
+        .sens-table tbody tr:last-child td { border-bottom: 1px solid var(--ink) !important; }
         .sens-table td {
             padding: 5px 7px; text-align: center;
             white-space: nowrap; color: var(--ink); font-weight: 400;
