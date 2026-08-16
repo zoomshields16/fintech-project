@@ -53,7 +53,7 @@
         thead th { position: sticky; top: 60px; z-index: 5; }
         th {
             background: var(--navy); color: #fff;
-            padding: 8px 10px; text-align: right;
+            padding: 8px 10px; text-align: center;
             font-weight: 500; white-space: nowrap; overflow: hidden;
             font-family: ui-monospace, 'SF Mono', Menlo, monospace;
             font-variant-numeric: tabular-nums;
@@ -72,8 +72,8 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
-        th + th { border-left: 1px solid rgba(255,255,255,0.15); }
-        td + td { border-left: 1px solid #f2eee5; }
+        /* No rules between year columns. The historical/projected tint already
+           separates them, and the grid lines were doing the work twice. */
 
         /* The blank band between categories. `hidden` for the same reason as the
            percent rows — with border-collapse, `none` loses to the table's own
