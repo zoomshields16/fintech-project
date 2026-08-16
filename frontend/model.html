@@ -179,8 +179,6 @@
         table:not(.sched) tr.subtotal  td:not(:first-child):not(.proj) { background: var(--blue-tint-2); }
         table:not(.sched) tr.check-row td:not(:first-child):not(.proj) { background: var(--blue-tint-2); }
 
-        .neg  { color: var(--red); }
-
         /* ── Statement headings ──
            Three levels, so where one statement ends and the next begins is obvious
            at a glance rather than something you work out by reading the row labels:
@@ -240,18 +238,16 @@
 
 <script>
     // ── Format helpers ──
+    // Negatives are shown in parentheses and nothing else — that IS the accounting
+    // convention, and colouring them red as well says the same thing twice on a page
+    // where half the cash-flow lines are legitimately negative. The percent-change
+    // rows keep their red, because there the colour is the only signal of direction.
     function fmt(val) {
         if (val == null) return '—';
         if (val === 0)   return '$-';
         const b   = val / 1e9;
         const str = '$' + Math.abs(b).toFixed(2) + 'B';
-        return val < 0 ? `<span class="neg">(${str})</span>` : str;
-    }
-    function fmtEps(val) {
-        if (val == null) return '—';
-        if (val === 0)   return '$-';
-        const str = '$' + Math.abs(val).toFixed(2);
-        return val < 0 ? `<span class="neg">(${str})</span>` : str;
+        return val < 0 ? `(${str})` : str;
     }
     function fmtDays(val) {
         if (val == null || val === 0) return '—';
@@ -543,9 +539,6 @@
             ${gap()}
             ${row('Net Income',                                   'net_income',        isAll, fmt, true)}
             ${pctChangeRow('net_income', isAll)}
-            ${gap()}
-            ${row('Earnings Per Share',                           'eps',               isAll, fmtEps)}
-            ${row('Diluted Earnings Per Share',                   'eps_diluted',       isAll, fmtEps)}
         `;
 
         // ── Cash Flow Statement ──
