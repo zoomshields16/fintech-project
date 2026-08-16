@@ -8,21 +8,25 @@
     --muted:      #6f6b63;
     --faint:      #a39c8d;
     --line:       #e3ddd1;
-    /* apple.com's button blue — the medium one, a step deeper than the vivid iOS
-       system blue (#007aff), which was too saturated across a full-width header band
-       and too light to read as text. Replaced a dark navy that looked dated. Every
-       blue on the site comes from these five, so the accent moves in one place. */
-    --blue:       #005fbd;
-    --blue-d:     #00498f;   /* pressed / hover */
-    --blue-mid:   #4d8fd4;
+    /* Light steel blue, in two weights of one family.
+       --blue is the colour itself, and it is pale: white text on it is 1.78:1 and
+       it is 1.68:1 against paper, so it can only ever be a fill with dark text on
+       top — never text, never a rule, never behind anything white.
+       --blue-ink is the same hue taken dark enough to do those jobs. Anything
+       carrying white text (buttons, hovers) or needing to read as "on" uses it. */
+    --blue:       #b0c4de;
+    --on-blue:    #1b2b3d;   /* text sitting on --blue — 8.1:1 */
+    --blue-ink:   #3d5a7a;   /* text, rules, and fills that carry white — 6.7:1 */
+    --blue-d:     #2c4460;   /* pressed / hover on --blue-ink */
+    --blue-mid:   #8ba4c4;
     /* The column fills are semi-transparent rather than flat light blues, so they
        read as a wash over whatever is behind them instead of a painted block. At
        ~5% the historical/projected split is still legible but stops competing with
        the figures. Note this tint is now the ONLY thing marking where the forecast
        starts, since the rules between year columns are gone — so there is a floor
        on how faint it can go. */
-    --blue-tint:  rgba(0, 95, 189, 0.05);    /* historical-column fill */
-    --blue-tint-2:rgba(0, 95, 189, 0.09);    /* historical subtotal fill */
+    --blue-tint:  rgba(61, 90, 122, 0.05);   /* historical-column fill */
+    --blue-tint-2:rgba(61, 90, 122, 0.09);   /* historical subtotal fill */
     --green:      #17663f;
     --green-tint: #e4efe7;
     --red:        #a4322a;
@@ -46,8 +50,8 @@ body {
 .shell { max-width: 960px; margin: 0 auto; padding: 0 28px; }
 .shell.wide { max-width: 1280px; }
 
-:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-::selection { background: var(--blue); color: #fff; }
+:focus-visible { outline: 2px solid var(--blue-ink); outline-offset: 2px; }
+::selection { background: var(--blue); color: var(--on-blue); }
 
 /* ── Site header ── */
 .site-head {
@@ -72,7 +76,7 @@ body {
     color: var(--ink); text-decoration: none; letter-spacing: -0.2px;
     white-space: nowrap;
 }
-.brand .dot { color: var(--blue); }
+.brand .dot { color: var(--blue-ink); }
 
 .head-links { display: flex; align-items: center; gap: 26px; }
 .head-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
@@ -83,8 +87,8 @@ body {
 .rail-step { color: var(--muted); text-decoration: none; }
 a.rail-step:hover { color: var(--ink); }
 .rail-step.here {
-    color: var(--blue); font-weight: 600;
-    border-bottom: 2px solid var(--blue); padding-bottom: 1px;
+    color: var(--blue-ink); font-weight: 600;
+    border-bottom: 2px solid var(--blue-ink); padding-bottom: 1px;
 }
 .rail-step.off { color: #c9c2b4; pointer-events: none; }
 .rail-sep { width: 18px; height: 1px; background: var(--line); flex: none; }
@@ -92,7 +96,7 @@ a.rail-step:hover { color: var(--ink); }
 /* ── Buttons ── */
 .btn {
     display: inline-block;
-    background: var(--blue); color: #fff;
+    background: var(--blue-ink); color: #fff;
     border: none; cursor: pointer;
     font-family: inherit; font-size: 15px; font-weight: 500;
     padding: 12px 26px; border-radius: 2px;
@@ -121,7 +125,7 @@ a.rail-step:hover { color: var(--ink); }
     border: 1px solid #dcbcb7;
     padding: 16px 20px; border-radius: 3px; font-size: 14.5px;
 }
-.error-box a { color: var(--blue); }
+.error-box a { color: var(--blue-ink); }
 
 /* ── Footer ── */
 .site-foot {

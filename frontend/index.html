@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Retail Analyst — DCF valuation, shown in full</title>
-    <link rel="stylesheet" href="theme.css?v=3">
+    <link rel="stylesheet" href="theme.css?v=4">
     <style>
         /* ── Hero ── */
         .hero { padding: 76px 0 72px; }
@@ -40,12 +40,12 @@
             padding: 0 22px; font-size: 14.5px; font-weight: 500; cursor: pointer;
             transition: background 0.15s; white-space: nowrap; font-family: inherit;
         }
-        .ticker-form button:hover { background: var(--blue); }
+        .ticker-form button:hover { background: var(--blue-ink); }
         .ticker-hint { margin-top: 14px; font-size: 13.5px; color: var(--muted); }
         .ticker-note { margin-top: 6px; font-size: 13px; font-style: italic; color: var(--faint); }
         .ticker-hint.bad { color: var(--red); font-style: normal; }
         .ticker-form input.bad { border-color: var(--red); background: var(--red-tint); }
-        .ast { color: var(--blue); font-weight: 600; font-style: normal; }
+        .ast { color: var(--blue-ink); font-weight: 600; font-style: normal; }
 
         /* ── Specimen (real model excerpt) ── */
         .specimen {
@@ -78,7 +78,7 @@
         }
         .specimen td:not(:first-child):not(.proj),
         .specimen th:not(:first-child):not(.proj) { background: var(--blue-tint); }
-        .specimen th.proj { color: var(--blue); }
+        .specimen th.proj { color: var(--blue-ink); }
         .specimen tr.sum td { font-weight: 600; border-top: 1px solid var(--ink); }
         .specimen tr:last-child td { border-bottom: none; }
         .spec-foot {
@@ -102,7 +102,7 @@
         .method-row:last-child { border-bottom: 1px solid var(--line); }
         .method-row dt {
             font-family: Georgia, serif; font-size: 19px; font-weight: 700;
-            color: var(--blue); line-height: 1.35;
+            color: var(--blue-ink); line-height: 1.35;
         }
         .method-row dd { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 600px; }
 
@@ -120,14 +120,14 @@
         .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .person .nm { font-family: Georgia, serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
         .person .ln { font-size: 13.5px; line-height: 1.5; }
-        .person .ln.school { color: var(--blue); font-weight: 600; }
+        .person .ln.school { color: var(--blue-ink); font-weight: 600; }
         .person .ln.dim { color: var(--muted); }
         .person .links { margin-top: 12px; }
         .person .links a {
             display: inline-flex; align-items: center; gap: 6px;
             color: var(--muted); text-decoration: none; font-size: 13px;
         }
-        .person .links a:hover { color: var(--blue); }
+        .person .links a:hover { color: var(--blue-ink); }
         .person .links svg { width: 15px; height: 15px; }
 
         @media (max-width: 900px) {
