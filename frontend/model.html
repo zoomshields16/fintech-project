@@ -75,7 +75,11 @@
         th + th { border-left: 1px solid rgba(255,255,255,0.15); }
         td + td { border-left: 1px solid #f2eee5; }
 
-        tr.section-gap td    { padding: 4px 0; border: none; background: var(--paper); }
+        /* The blank band between categories. `hidden` for the same reason as the
+           percent rows — with border-collapse, `none` loses to the table's own
+           frame, so these rows were showing a line at each end and reading as a
+           thin empty row inside the table instead of a break in it. */
+        tr.section-gap td    { padding: 8px 0; border: hidden; background: var(--paper); }
         tr.subtotal td       { font-weight: 600; border-top: 1px solid #d8d2c4; }
         tr.check-row td      { font-weight: 600; border-top: 2px solid var(--navy); color: var(--navy); }
         tr.section-header td {
@@ -99,7 +103,13 @@
         tr.pct-row td {
             padding: 3px 10px 6px; font-size: 11px; color: var(--faint);
             letter-spacing: 0.02em; font-weight: 600;
-            background: var(--paper); border: none;
+            background: var(--paper);
+            /* `hidden`, not `none`. With border-collapse the table draws one shared
+               border per edge, and `none` is the LOWEST priority in that contest —
+               so the table's own outer frame still painted a line at each end of the
+               row. `hidden` is the highest priority and suppresses the segment
+               outright, which is what actually lifts the row off the table. */
+            border: hidden;
         }
         /* Repeated with a longer selector purely to out-rank the historical-column
            fill further down, which is (0,3,2) and would otherwise win. */
@@ -511,6 +521,7 @@
             ${gap()}
             ${row('Income Tax Expense',                           'income_tax',        isAll, fmt)}
             ${pctChangeRow('income_tax', isAll)}
+            ${gap()}
             ${row('Net Income',                                   'net_income',        isAll, fmt, true)}
             ${pctChangeRow('net_income', isAll)}
             ${gap()}
