@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Retail Analyst — Model</title>
-    <link rel="stylesheet" href="theme.css?v=4">
+    <link rel="stylesheet" href="theme.css?v=5">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -51,17 +51,14 @@
             table-layout: fixed;
         }
         thead th { position: sticky; top: 60px; z-index: 5; }
-        /* Year headers sit optically over their figures rather than geometrically in
-           the middle of the column. The figures are right-aligned, so the block of
-           numbers has its visual centre right of the column's centre: pure centring
-           reads as too far left, pure right-alignment as too far right. This nudges a
-           centred header back toward the numbers. One value, tuned here. */
-        table { --year-nudge: 14px; }
+        /* Both the year and the figures under it are centred, so they line up on the
+           same axis with no optical correction needed — the earlier --year-nudge
+           existed only to pull a centred header back over right-aligned figures. */
         th {
             background: var(--blue); color: var(--on-blue);
-            padding: 8px 10px 8px calc(10px + var(--year-nudge));
+            padding: 8px 10px;
             text-align: center;
-            font-weight: 500; white-space: nowrap; overflow: hidden;
+            font-weight: 700; white-space: nowrap; overflow: hidden;
             font-family: ui-monospace, 'SF Mono', Menlo, monospace;
             font-variant-numeric: tabular-nums;
             /* Closes the hairline seams between adjacent header cells. With
@@ -74,11 +71,10 @@
         }
         th:first-child {
             text-align: left; width: 250px; white-space: normal;
-            padding-left: 10px;   /* the nudge is for the year columns only */
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         td {
-            padding: 6px 10px; text-align: right; white-space: nowrap; overflow: hidden;
+            padding: 6px 10px; text-align: center; white-space: nowrap; overflow: hidden;
             font-family: ui-monospace, 'SF Mono', Menlo, monospace;
             font-variant-numeric: tabular-nums;
         }
