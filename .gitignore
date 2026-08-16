@@ -42,8 +42,15 @@ reference/
 # (the earlier note here said to upload to the host directly — that was written for
 # a different host and was never true of this one).
 #
-# Keep the masters (carson.png, zoom.jpeg) local and ignored; commit only the
-# 500px JPEGs, which are ~66 KB and ~86 KB against 4.1 MB and 2.8 MB.
+# Keep the masters local and ignored; commit only the 500px JPEGs, which are
+# ~66 KB and ~86 KB against 4.1 MB and 2.8 MB.
+#
+# The masters now live in reference/headshots/, NOT here. wrangler uploads whatever
+# sits in frontend/ and does not read this file, so keeping them alongside the
+# shipped JPEGs meant every deploy handed Cloudflare two camera originals with their
+# EXIF intact. A .assetsignore did not filter them (verified against wrangler
+# 4.123 — the file count was unchanged), so the only reliable fix is to keep them
+# out of the directory that gets published.
 frontend/assets/*.jpg
 frontend/assets/*.jpeg
 frontend/assets/*.png
