@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=8">
+    <link rel="stylesheet" href="theme.css?v=9">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -66,7 +66,9 @@
             display: grid; grid-template-columns: minmax(0, 1fr) 268px;
             gap: 26px; align-items: start;
         }
-        .dcf-params { position: sticky; top: 76px; }
+        /* Not sticky: the rail sits level with the top of the outputs and stays put,
+           rather than tracking the scroll and drifting against the schedules. */
+        .dcf-params { align-self: start; }
         .dcf-params .card { margin-bottom: 0; padding: 20px 20px 22px; }
         /* One field per row in a 268px rail — the three-across grid belonged to a
            full-width card. */
@@ -236,23 +238,35 @@
         .ir-note { margin-top: 10px; font-size: 12px; color: var(--muted); }
         .ir-note strong { color: var(--blue-ink); }
 
-        /* --- Sensitivity tables --- */
-        .sens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px; }
+        /* --- Sensitivity tables ---
+           One per row, not two across. Each is a 5x5 matrix of whole figures in
+           Carson's style — enterprise and equity values run to twelve digits — and
+           at half the width of an already-narrowed column they could not fit, so
+           every one of them grew a horizontal scrollbar. Full width gives each
+           column about 145px against a widest cell of roughly 100px, so all 25
+           cells are in view at once and nothing scrolls sideways. */
+        .sens-grid { display: grid; grid-template-columns: 1fr; gap: 26px; }
         .sens-title {
             font-size: 12px; font-weight: 700; color: var(--blue-ink);
             margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;
         }
-        .sens-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        /* Fixed layout so the six columns divide the width evenly instead of the
+           widest figure dictating the table's size — that is what pushed these past
+           their container. Centred to match the statement tables. */
+        .sens-table {
+            width: 100%; border-collapse: collapse; font-size: 11.5px;
+            table-layout: fixed;
+        }
         .sens-table th {
-            background: var(--blue); color: var(--on-blue); padding: 5px 7px;
-            text-align: right; font-weight: 500;
+            background: var(--blue); color: var(--on-blue); padding: 6px 7px;
+            text-align: center; font-weight: 700;
         }
-        .sens-table th:first-child { text-align: center; min-width: 56px; }
+        .sens-table th:first-child { text-align: center; }
         .sens-table td {
-            padding: 4px 7px; border: 1px solid var(--line) !important;
-            text-align: right; white-space: nowrap;
+            padding: 5px 7px; border: 1px solid var(--line) !important;
+            text-align: center; white-space: nowrap;
         }
-        .sens-table td.row-label { background: var(--blue); color: var(--on-blue); font-weight: 600; text-align: right; }
+        .sens-table td.row-label { background: var(--blue); color: var(--on-blue); font-weight: 700; text-align: center; }
         .sens-table .highlight { background: var(--green-tint) !important; color: var(--green); font-weight: 700; }
         .sens-table .base-col  { background: var(--blue-tint); }
 
