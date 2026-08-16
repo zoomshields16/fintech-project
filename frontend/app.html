@@ -62,6 +62,28 @@
         }
         .card .sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
 
+        /* ── Case switcher ──
+           Carson runs one switch for all four Group 1 drivers (Drivers!C7), so this
+           is a single control on the card, not one per row. */
+        .card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 10px 18px;
+        }
+        .case-tabs {
+            display: inline-flex; border: 1px solid var(--line); border-radius: 3px;
+            overflow: hidden; background: var(--paper-2);
+        }
+        .case-tab {
+            appearance: none; border: none; cursor: pointer;
+            padding: 6px 15px; font-size: 12.5px; font-weight: 500;
+            background: transparent; color: var(--muted);
+            font-family: inherit; letter-spacing: 0.02em;
+        }
+        .case-tab + .case-tab { border-left: 1px solid var(--line); }
+        .case-tab:hover  { color: var(--ink); }
+        .case-tab.is-on  { background: var(--navy); color: #fff; font-weight: 600; }
+        .case-tab:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+
         /* ── Group 1 grid ── */
         .g1-grid {
             display: grid;
@@ -209,8 +231,15 @@
 
         <!-- Group 1 -->
         <section class="card">
-            <h2>Projection drivers<span class="tag">required</span></h2>
-            <p class="sub">Pre-filled from the most recent fiscal year. Adjust each projected year as needed — all figures are % of revenue except growth.</p>
+            <div class="card-head">
+                <h2>Projection drivers<span class="tag">required</span></h2>
+                <div class="case-tabs" role="tablist" aria-label="Case">
+                    <button type="button" class="case-tab" role="tab" data-case="best">Best</button>
+                    <button type="button" class="case-tab is-on" role="tab" data-case="base" aria-selected="true">Base</button>
+                    <button type="button" class="case-tab" role="tab" data-case="worst">Worst</button>
+                </div>
+            </div>
+            <p class="sub">Pre-filled from the most recent fiscal year — all figures are % of revenue except growth. Each case holds its own set of these four rows; the additional drivers below are shared across all three.</p>
             <div class="g1-grid">
                 <div class="g1-header-row" style="display:contents">
                     <div></div>
@@ -333,6 +362,50 @@
     // projection response. Model logic stays in Python so it is testable and
     // covered by the reconcile checks — never reimplemented here.
 
+    // ── Cases ────────────────────────────────────────────────────────────────
+    // Carson switches all four Group 1 drivers together off one cell (Drivers!C7,
+    // INDEXing C11:C13 and the parallel blocks), so a case is a full set of these
+    // four rows and there is one switch for the card. Group 2 sits outside the
+    // switch in his model and is shared here too.
+    const CASES    = ['best', 'base', 'worst'];
+    const G1_KEYS  = ['rev', 'cogs', 'sga', 'capex'];
+    let   caseNow  = 'base';
+    // caseVals[case][key] = five strings, exactly as typed.
+    let   caseVals = {};
+
+    // How far best and worst start from base, in percentage POINTS, signed so that a
+    // positive number is the direction that helps earnings. Carson types his cases in
+    // by hand and by judgment — there is no formula in the workbook to copy — so this
+    // is only a starting spread to be typed over, and it is one constant to change.
+    const CASE_SPREAD = { rev: 3.0, cogs: -1.5, sga: -1.0, capex: -0.5 };
+
+    function readCaseFromInputs() {
+        const vals = {};
+        G1_KEYS.forEach(k => {
+            vals[k] = Array.from({ length: 5 }, (_, i) =>
+                document.getElementById(`d-${k}-${i}`).value);
+        });
+        return vals;
+    }
+
+    function writeCaseToInputs(vals) {
+        G1_KEYS.forEach(k => {
+            for (let i = 0; i < 5; i++) document.getElementById(`d-${k}-${i}`).value = vals[k][i];
+        });
+    }
+
+    function switchCase(name) {
+        if (name === caseNow) return;
+        caseVals[caseNow] = readCaseFromInputs();   // keep whatever was typed
+        caseNow = name;
+        writeCaseToInputs(caseVals[caseNow]);
+        document.querySelectorAll('.case-tab').forEach(t => {
+            const on = t.dataset.case === name;
+            t.classList.toggle('is-on', on);
+            t.setAttribute('aria-selected', on);
+        });
+    }
+
     // ── Populate driver inputs from fetched data ──────────────────────────────
     function prefillDrivers(data) {
         const lastIS = data.income_statement[0];
@@ -343,12 +416,30 @@
         const sga   = +(lastIS.sga   / rev * 100).toFixed(1);
         const capex = +(Math.abs(lastCF.capex || 0) / rev * 100).toFixed(1);
 
-        for (let i = 0; i < 5; i++) {
-            document.getElementById(`d-rev-${i}`).value   = '5.0';
-            document.getElementById(`d-cogs-${i}`).value  = cogs;
-            document.getElementById(`d-sga-${i}`).value   = sga;
-            document.getElementById(`d-capex-${i}`).value = capex;
-        }
+        // Base is the historical read; best and worst spread off it. Cost ratios are
+        // floored at zero — a negative COGS % is not a pessimistic assumption, it is
+        // a nonsensical one — while growth is left free to go negative, because a
+        // shrinking year is a legitimate worst case.
+        const baseRow = { rev: 5.0, cogs, sga, capex };
+        const shifted = sign => Object.fromEntries(G1_KEYS.map(k => {
+            const v = baseRow[k] + sign * CASE_SPREAD[k];
+            return [k, (k === 'rev' ? v : Math.max(0, v)).toFixed(1)];
+        }));
+        const fill = row => Object.fromEntries(
+            G1_KEYS.map(k => [k, Array(5).fill(String(row[k]))]));
+
+        caseVals = {
+            best:  fill(shifted(1)),
+            base:  fill(Object.fromEntries(G1_KEYS.map(k => [k, baseRow[k].toFixed(1)]))),
+            worst: fill(shifted(-1)),
+        };
+        caseNow = 'base';
+        writeCaseToInputs(caseVals.base);
+        document.querySelectorAll('.case-tab').forEach(t => {
+            const on = t.dataset.case === 'base';
+            t.classList.toggle('is-on', on);
+            t.setAttribute('aria-selected', on);
+        });
 
         const s   = data.suggested_drivers || {};
         const pct = v => v != null ? (v * 100).toFixed(1) + '%' : '—';
@@ -363,6 +454,22 @@
                 inp.placeholder = val(autoVal);
             }
         });
+    }
+
+    // Coming back from the model page must not throw away cases that were typed by
+    // hand, so the last run's three sets are restored over the fresh prefill. A shape
+    // that does not match (an older cached entry, a hand-edited key) is ignored rather
+    // than half-applied, which would leave the grid mixing two runs' assumptions.
+    function restoreCases() {
+        let saved;
+        try { saved = JSON.parse(localStorage.getItem('model_drivers')); } catch { return; }
+        const wellFormed = saved && CASES.every(c =>
+            saved[c] && G1_KEYS.every(k => Array.isArray(saved[c][k]) && saved[c][k].length === 5));
+        if (!wellFormed) return;
+
+        caseVals = saved;
+        caseNow  = 'base';
+        writeCaseToInputs(caseVals.base);
     }
 
     // ── Toggle Group 2 auto ↔ manual ─────────────────────────────────────────
@@ -413,6 +520,7 @@
         document.getElementById('co-price').innerHTML   = `Current price <b>$${data.stock_price}</b>`;
 
         prefillDrivers(data);
+        restoreCases();
         ['rnd','da','tax','sbc','buyback'].forEach(k => {
             document.getElementById(`g2-${k}-on`).checked = false;
             for (let i = 0; i < 5; i++) {
@@ -525,29 +633,36 @@
     async function runProjection() {
         if (!histData) return;
 
-        const g1Keys = ['rev','cogs','sga','capex'];
-        for (const k of g1Keys) {
-            for (let i = 0; i < 5; i++) {
-                const v = document.getElementById(`d-${k}-${i}`).value.trim();
-                if (v === '' || isNaN(parseFloat(v))) {
-                    alert(`Please fill in all projection driver fields (missing ${k.toUpperCase()} year ${i + 1}).`);
+        // A blank cell in a case that is not on screen would otherwise only surface
+        // as an error after the run, so every case is checked, and the offending
+        // one is brought into view.
+        caseVals[caseNow] = readCaseFromInputs();
+        for (const name of CASES) {
+            for (const k of G1_KEYS) {
+                const bad = caseVals[name][k].findIndex(v => v.trim() === '' || isNaN(parseFloat(v)));
+                if (bad !== -1) {
+                    switchCase(name);
+                    alert(`Please fill in all projection driver fields — ${name} case, ` +
+                          `${k.toUpperCase()} year ${bad + 1}.`);
                     return;
                 }
             }
         }
 
-        function getRow(prefix) {
-            return Array.from({ length: 5 }, (_, i) =>
-                parseFloat(document.getElementById(`d-${prefix}-${i}`).value) / 100
-            );
-        }
+        const pct   = row => row.map(v => parseFloat(v) / 100);
+        const group1 = name => ({
+            revenue_growth: pct(caseVals[name].rev),
+            cogs_pct:       pct(caseVals[name].cogs),
+            sga_pct:        pct(caseVals[name].sga),
+            capex_pct:      pct(caseVals[name].capex),
+        });
+        const cases = Object.fromEntries(CASES.map(name => [name, group1(name)]));
 
         const s = histData.suggested_drivers || {};
+        // `drivers` carries the shared Group 2 set; its Group 1 half is the base case,
+        // which is also what the backend mirrors onto the top level of the response.
         const drivers = {
-            revenue_growth: getRow('rev'),
-            cogs_pct:       getRow('cogs'),
-            sga_pct:        getRow('sga'),
-            capex_pct:      getRow('capex'),
+            ...group1('base'),
             rnd_pct:        getG2Row('rnd',     s.rnd_pct),
             da_pct:         getG2Row('da',      s.da_pct),
             tax_rate:       getG2Row('tax',     s.tax_rate),
@@ -572,16 +687,21 @@
             const resp = await fetch(`${API}/api/run-projection`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ticker: histData.ticker, drivers }),
+                body: JSON.stringify({ ticker: histData.ticker, drivers, cases }),
             });
             const projData = await resp.json();
             if (projData.error) { backToWork('Error: ' + projData.error); return; }
 
             localStorage.setItem('model_proj', JSON.stringify(projData));
+            localStorage.setItem('model_drivers', JSON.stringify(caseVals));
+            // The model page owns which case is on screen from here on, and rewrites
+            // dcf_input when it changes — so the DCF always values the case shown.
+            localStorage.setItem('model_case', 'base');
             localStorage.setItem('dcf_input', JSON.stringify({
                 ticker:       histData.ticker,
                 company_name: histData.company_name,
                 stock_price:  histData.stock_price,
+                case:         'base',
                 ufcf:         projData.ufcf,
                 proj_years:   projData.income_statement.map(y => y.date.slice(0, 4)),
             }));
@@ -597,11 +717,12 @@
     // ── Init ──────────────────────────────────────────────────────────────────
     window.addEventListener('load', () => {
         document.getElementById('run-btn').addEventListener('click', runProjection);
+        document.querySelectorAll('.case-tab').forEach(tab =>
+            tab.addEventListener('click', () => switchCase(tab.dataset.case)));
 
         document.getElementById('change-ticker').addEventListener('click', () => {
-            localStorage.removeItem('model_hist');
-            localStorage.removeItem('model_proj');
-            localStorage.removeItem('dcf_input');
+            ['model_hist', 'model_proj', 'model_drivers', 'model_case', 'dcf_input']
+                .forEach(k => localStorage.removeItem(k));
         });
 
         // Ticker arrives via URL from the homepage → fetch straight away

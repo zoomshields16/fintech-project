@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 from fmp_client import extract_profile
 from data_source import get_financials_cached, live_price, UnsupportedTicker
 from income_statement import pull_detail_accounts, compute_formula_lines, reconcile
@@ -298,9 +298,31 @@ class Drivers(BaseModel):
     buyback_pct: Optional[List[float]] = None
 
 
+class CaseDrivers(BaseModel):
+    """Group 1 only — the four drivers Carson's case switch chooses between."""
+    revenue_growth: List[float]
+    cogs_pct: List[float]
+    sga_pct: List[float]
+    capex_pct: List[float]
+
+
+# Carson runs one global switch (Drivers!C7) that INDEXes each Group 1 driver block:
+# 1 = best, 2 = base, 3 = worst — Drivers!C11:C13 for revenue growth and the parallel
+# blocks at 19:21 (COGS), 27:29 (SG&A), 35:37 (CapEx). Model!G11:G14 read the switched
+# row. Group 2 is deliberately NOT in here: R&D, D&A, tax, SBC and buybacks come off
+# their own Automatic/Manual block (Drivers!F53, F60, F67, F74, F80), which the case
+# switch does not touch, so one set of them is shared across all three cases.
+CASE_NAMES = ("best", "base", "worst")
+DEFAULT_CASE = "base"
+
+
 class ProjectionRequest(BaseModel):
     ticker: str
     drivers: Drivers
+    # Optional. Given cases, each one's Group 1 drivers are run against the shared
+    # Group 2 drivers above and every case comes back in a single response. Absent,
+    # the endpoint behaves exactly as it did before: one projection from `drivers`.
+    cases: Optional[Dict[str, CaseDrivers]] = None
 
 
 @app.post("/api/run-projection")
@@ -317,6 +339,12 @@ def run_projection(request: ProjectionRequest):
         "sbc_pct":        request.drivers.sbc_pct,
         "buyback_pct":    request.drivers.buyback_pct,
     }
+
+    if request.cases:
+        unknown = sorted(set(request.cases) - set(CASE_NAMES))
+        if unknown:
+            return {"error": f"Unknown case(s): {', '.join(unknown)}. "
+                             f"Expected any of {', '.join(CASE_NAMES)}."}
 
     try:
         data, _ = get_financials_cached(ticker)
@@ -366,19 +394,36 @@ def run_projection(request: ProjectionRequest):
                   for r in bs_records[:WC_HISTORY_YEARS]]
     wc_days = working_capital_days(is_history, bs_history)
 
-    proj_is = project_income_statement(last_is, drivers, base_year)
-    proj_wc = project_working_capital(proj_is, wc_days)
-    proj_cf = project_cash_flow(proj_is, last_cf, drivers,
-                                projected_wc=proj_wc, last_bs_actuals=last_bs)
-    proj_bs = project_balance_sheet(proj_is, proj_cf, last_bs, projected_wc=proj_wc)
+    def project(driver_set):
+        """One full three-statement forecast. Everything above this point — the fetch,
+        the mapping, the working-capital days — is case-independent, so running three
+        cases costs three passes of arithmetic and no extra API calls."""
+        proj_is = project_income_statement(last_is, driver_set, base_year)
+        proj_wc = project_working_capital(proj_is, wc_days)
+        proj_cf = project_cash_flow(proj_is, last_cf, driver_set,
+                                    projected_wc=proj_wc, last_bs_actuals=last_bs)
+        proj_bs = project_balance_sheet(proj_is, proj_cf, last_bs, projected_wc=proj_wc)
+        return {
+            "income_statement": proj_is,
+            "cash_flow":        proj_cf,
+            "balance_sheet":    proj_bs,
+            "ufcf":             compute_ufcf(proj_is, proj_cf, proj_bs, last_bs),
+        }
 
-    return {
-        "ticker":           ticker,
-        "income_statement": proj_is,
-        "cash_flow":        proj_cf,
-        "balance_sheet":    proj_bs,
-        "ufcf":             compute_ufcf(proj_is, proj_cf, proj_bs, last_bs),
-    }
+    result = {"ticker": ticker}
+
+    if not request.cases:
+        result.update(project(drivers))
+        return result
+
+    # Each case swaps in its own Group 1 drivers over the shared Group 2 set.
+    result["cases"] = {name: project({**drivers, **case.model_dump()})
+                       for name, case in request.cases.items()}
+    # The top-level statement keys mirror one case, so anything that read this
+    # response before cases existed still finds what it expects.
+    selected = result["cases"].get(DEFAULT_CASE) or next(iter(result["cases"].values()))
+    result.update(selected)
+    return result
 
 
 class DCFRequest(BaseModel):

@@ -22,6 +22,24 @@
         }
         .masthead .price { font-size: 14px; color: var(--muted); }
         .masthead .price b { color: var(--ink); font-weight: 600; }
+        .masthead .meta { display: flex; align-items: center; gap: 18px; }
+
+        /* ── Case switcher ── matches the one on the assumptions page ── */
+        .case-tabs {
+            display: inline-flex; border: 1px solid var(--line); border-radius: 3px;
+            overflow: hidden; background: var(--paper-2);
+        }
+        .case-tab {
+            appearance: none; border: none; cursor: pointer;
+            padding: 6px 15px; font-size: 12.5px; font-weight: 500;
+            background: transparent; color: var(--muted);
+            font-family: inherit; letter-spacing: 0.02em;
+        }
+        .case-tab + .case-tab { border-left: 1px solid var(--line); }
+        .case-tab:hover { color: var(--ink); }
+        .case-tab.is-on { background: var(--navy); color: #fff; font-weight: 600; }
+        .case-tab:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+
 
         /* ── Tables ──
            table-layout: fixed + one shared first-column width keeps the year
@@ -71,6 +89,15 @@
             font-weight: 600; padding: 5px 12px; font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
+        /* Carson's percent-change rows. Deliberately quiet — they annotate the
+           subtotal above them, so they must not read as another line item. The
+           column banding is left alone so the historical/projected split stays
+           unbroken down the whole table. */
+        tr.pct-row td {
+            padding: 1px 10px 5px; font-size: 11px; color: var(--faint);
+            letter-spacing: 0.02em;
+        }
+
         tr.reconcile-row td {
             font-size: 11px; color: var(--faint);
             padding: 4px 12px; background: #fbfaf6;
@@ -124,18 +151,36 @@
         .pass { color: var(--green); }
         .fail { color: var(--red); font-weight: 600; }
 
-        /* ── Statement headings ── */
+        /* ── Statement headings ──
+           Three levels, so where one statement ends and the next begins is obvious
+           at a glance rather than something you work out by reading the row labels:
+             .statement-label  a top-level statement — full rule, generous air
+             .divider          the break into the supporting schedules
+             .sched-label      one schedule inside that group — indented, no rule */
         .statement-label {
             font-family: Georgia, serif;
-            font-size: 20px; font-weight: 700; color: var(--ink);
+            font-size: 23px; font-weight: 700; color: var(--ink);
             letter-spacing: -0.3px;
-            margin: 30px 0 10px;
+            border-top: 2px solid var(--navy);
+            padding-top: 22px;
+            margin: 78px 0 14px;
+        }
+        /* The first statement follows the masthead rule, so it needs neither a
+           second rule nor the full gap. */
+        .statement-label:first-of-type {
+            border-top: none; padding-top: 0; margin-top: 8px;
         }
         .statement-label.divider {
             font-size: 15px; font-style: italic; font-weight: 400;
             color: var(--muted);
-            border-top: 2px solid var(--line);
-            padding-top: 26px; margin-top: 44px;
+            border-top: 1px solid var(--line);
+            padding-top: 26px; margin-top: 86px; margin-bottom: 0;
+        }
+        .sched-label {
+            font-family: Georgia, serif;
+            font-size: 17px; font-weight: 700; color: var(--navy);
+            letter-spacing: -0.2px;
+            margin: 46px 0 10px;
         }
 
         .error-box { margin-top: 26px; }
@@ -215,6 +260,23 @@
         const cells = allYears.map(y => `<td${tdCls(y)}>${formatter(y[key])}</td>`).join('');
         return `<tr${cls}><td>${label}</td>${cells}</tr>`;
     }
+    // Carson hangs an unlabeled percent-change row directly beneath specific subtotals
+    // — Model!27, 34, 38, 44, 48 and 51 on the income statement, 70, 75, 82 and 87 on
+    // the cash flow — each one (this year − prior year) / prior year, formatted 0%.
+    // The label column stays empty and the first column shown is blank, because the
+    // earliest year on screen has no prior year to measure against (his C column is
+    // empty for the same reason). The balance sheet carries none of these at all.
+    function pctChangeRow(key, allYears) {
+        const cells = allYears.map((y, i) => {
+            const prev = i > 0 ? allYears[i - 1][key] : null;
+            const curr = y[key];
+            // A zero or missing prior year has no meaningful percentage against it.
+            const pct  = (prev != null && prev !== 0 && curr != null) ? (curr - prev) / prev : null;
+            return `<td${tdCls(y)}>${pct == null ? '' : (pct * 100).toFixed(0) + '%'}</td>`;
+        }).join('');
+        return `<tr class="pct-row"><td></td>${cells}</tr>`;
+    }
+
     function zeroRow(label, allYears) {
         const cells = allYears.map(y => `<td${tdCls(y)}>$-</td>`).join('');
         return `<tr><td>${label}</td>${cells}</tr>`;
@@ -360,15 +422,65 @@
         return { wcYears, ppeYears, ufcfYears, ratioYears };
     }
 
+    // ── Cases ──
+    // The projection response carries one entry per case when the assumptions page
+    // sent them; an older cached response is a single projection with no `cases` key,
+    // and still renders — as one case, with no switcher.
+    const CASES       = ['best', 'base', 'worst'];
+    const CASE_LABELS = { best: 'Best', base: 'Base', worst: 'Worst' };
+    let   histData = null, projData = null, caseNow = 'base';
+
+    function caseNames() {
+        if (!projData || !projData.cases) return [];
+        return CASES.filter(c => projData.cases[c]);
+    }
+    function caseData(name) {
+        if (!projData) return null;
+        return projData.cases ? projData.cases[name] : projData;
+    }
+
+    // The DCF values whatever is on screen, so switching the case here rewrites the
+    // hand-off. Leaving it pointing at the previous case is the failure that matters:
+    // the DCF page would show a valuation the model page is no longer displaying.
+    function syncDcfInput() {
+        const sel = caseData(caseNow);
+        if (!sel) return;
+        let input;
+        try { input = JSON.parse(localStorage.getItem('dcf_input')); } catch { return; }
+        if (!input) return;
+        input.case = caseNow;
+        input.ufcf = sel.ufcf;
+        input.proj_years = sel.income_statement.map(y => y.date.slice(0, 4));
+        localStorage.setItem('dcf_input', JSON.stringify(input));
+        localStorage.setItem('model_case', caseNow);
+    }
+
+    function switchCase(name) {
+        if (name === caseNow || !caseData(name)) return;
+        caseNow = name;
+        syncDcfInput();
+        render();
+        window.scrollTo({ top: 0 });
+    }
+
+    function caseTabs(names) {
+        const tabs = names.map(name =>
+            `<button type="button" class="case-tab${name === caseNow ? ' is-on' : ''}"
+                     role="tab" aria-selected="${name === caseNow}"
+                     data-case="${name}">${CASE_LABELS[name]}</button>`).join('');
+        return `<div class="case-tabs" role="tablist" aria-label="Case">${tabs}</div>`;
+    }
+
     // ── Main render ──
-    function render(histData, projData) {
+    function render() {
         const isHist = [...histData.income_statement].slice(0, 5).reverse();
         const cfHist = [...histData.cash_flow].slice(0, 5).reverse();
         const bsHist = [...histData.balance_sheet].slice(0, 5).reverse();
 
-        const isAll = projData ? combineYears(isHist, projData.income_statement) : isHist;
-        const cfAll = projData ? combineYears(cfHist, projData.cash_flow)        : cfHist;
-        const bsAll = projData ? combineYears(bsHist, projData.balance_sheet)    : bsHist;
+        const proj  = caseData(caseNow);
+        const isAll = proj ? combineYears(isHist, proj.income_statement) : isHist;
+        const cfAll = proj ? combineYears(cfHist, proj.cash_flow)        : cfHist;
+        const bsAll = proj ? combineYears(bsHist, proj.balance_sheet)    : bsHist;
 
         gapCols = isAll.length + 1;   // label column + one column per year
 
@@ -377,6 +489,7 @@
             ${row('Revenue',                                       'revenue',           isAll, fmt)}
             ${row('Cost of Goods Sold',                           'cogs',              isAll, fmt)}
             ${row('Gross Profit',                                  'gross_profit',      isAll, fmt, true)}
+            ${pctChangeRow('gross_profit', isAll)}
             ${gap()}
             ${row('Selling, General and Administrative',          'sga',               isAll, fmt)}
             ${row('Research and Development',                     'rnd',               isAll, fmt)}
@@ -384,14 +497,18 @@
             ${row('Total Operating Expenses',                     'total_opex',        isAll, fmt, true)}
             ${gap()}
             ${row('Operating Income (EBIT)',                      'operating_income',  isAll, fmt, true)}
+            ${pctChangeRow('operating_income', isAll)}
             ${gap()}
             ${row('Interest Income',                              'interest_income',   isAll, fmt)}
             ${row('Interest Expense',                             'interest_expense',  isAll, fmt)}
             ${row('Other Income (Expense)',                       'other_income',      isAll, fmt)}
             ${row('Pretax Income',                                'pretax_income',     isAll, fmt, true)}
+            ${pctChangeRow('pretax_income', isAll)}
             ${gap()}
             ${row('Income Tax Expense',                           'income_tax',        isAll, fmt)}
+            ${pctChangeRow('income_tax', isAll)}
             ${row('Net Income',                                   'net_income',        isAll, fmt, true)}
+            ${pctChangeRow('net_income', isAll)}
             ${gap()}
             ${row('Earnings Per Share',                           'eps',               isAll, fmtEps)}
             ${row('Diluted Earnings Per Share',                   'eps_diluted',       isAll, fmtEps)}
@@ -412,21 +529,25 @@
             ${row('Change in Other Working Capital',                   'other_wc',              cfAll, fmt)}
             ${zeroRow('Change in Unearned Revenue',                     cfAll)}
             ${row('Net Cash from Operating Activities',                'operating_cf',          cfAll, fmt, true)}
+            ${pctChangeRow('operating_cf', cfAll)}
             ${gap()}
             ${sectionHeader('INVESTING ACTIVITIES', cfAll)}
             ${row('Capital Expenditures',                              'capex',                 cfAll, fmt)}
             ${row('Net Cash from Investing Activities',                'investing_cf',          cfAll, fmt, true)}
+            ${pctChangeRow('investing_cf', cfAll)}
             ${gap()}
             ${sectionHeader('FINANCING ACTIVITIES', cfAll)}
             ${row('Share Buy Back',                                    'stock_repurchased',     cfAll, fmt)}
             ${row('Dividends',                                         'dividends_paid',        cfAll, fmt)}
             ${row('Net Cash from Financing Activities',                'financing_cf',          cfAll, fmt, true)}
+            ${pctChangeRow('financing_cf', cfAll)}
             ${gap()}
             ${row('Net Change in Cash',                                'net_change_cash',       cfAll, fmt)}
             ${row('Cash at Beginning of Period',                       'cash_beginning',        cfAll, fmt)}
             ${row('Cash at End of Period',                             'cash_end',              cfAll, fmt)}
             ${gap()}
             ${row('Free Cash Flow',                                    'free_cash_flow',        cfAll, fmt, true)}
+            ${pctChangeRow('free_cash_flow', cfAll)}
         `;
 
         // ── Balance Sheet ──
@@ -547,10 +668,15 @@
         `;
 
 
+        const names = caseNames();
+
         document.getElementById('content').innerHTML = `
             <div class="masthead">
                 <span class="name">${histData.company_name} (${histData.ticker})</span>
-                <span class="price mono">Current price <b>$${histData.stock_price}</b></span>
+                <div class="meta">
+                    <span class="price mono">Current price <b>$${histData.stock_price}</b></span>
+                    ${names.length > 1 ? caseTabs(names) : ''}
+                </div>
             </div>
 
             <p class="statement-label">Income Statement</p>
@@ -564,18 +690,23 @@
 
             <p class="statement-label divider">Supporting schedules</p>
 
-            <p class="statement-label">1 · Working Capital Driver</p>
+            <p class="sched-label">1 · Working Capital Driver</p>
             ${buildScheduleTable('Working Capital Driver', wcYears, wcBody)}
 
-            <p class="statement-label">2 · Property, Plant and Equipment</p>
+            <p class="sched-label">2 · Property, Plant and Equipment</p>
             ${buildScheduleTable('Property, Plant and Equipment', ppeYears, ppeBody)}
 
-            <p class="statement-label">3 · Depreciation Driver</p>
+            <p class="sched-label">3 · Depreciation Driver</p>
             ${buildScheduleTable('Depreciation Driver', depYears, depBody, gapCols - 1)}
 
-            <p class="statement-label">4 · UFCF Build-Up</p>
+            <p class="sched-label">4 · UFCF Build-Up</p>
             ${buildScheduleTable('UFCF', ufcfYears, ufcfBody)}
         `;
+
+        // The tabs live inside the markup that was just replaced, so they are wired
+        // on every render rather than once at load.
+        document.querySelectorAll('.case-tab').forEach(tab =>
+            tab.addEventListener('click', () => switchCase(tab.dataset.case)));
 
         // Enable the DCF step once a projection exists
         if (projData) {
@@ -600,9 +731,14 @@
         }
 
         try {
-            const histData = JSON.parse(rawHist);
-            const projData = rawProj ? JSON.parse(rawProj) : null;
-            render(histData, projData);
+            histData = JSON.parse(rawHist);
+            projData = rawProj ? JSON.parse(rawProj) : null;
+
+            // Come back to this page and it reopens on the case you left it on.
+            const saved = localStorage.getItem('model_case');
+            caseNow = (saved && caseData(saved)) ? saved : 'base';
+
+            render();
         } catch (e) {
             document.getElementById('content').innerHTML =
                 `<div class="error-box">Error loading data: ${e.message}</div>`;

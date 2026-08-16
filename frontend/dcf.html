@@ -45,9 +45,16 @@
 
         .card-title {
             font-family: Georgia, serif;
-            font-size: 18px; font-weight: 700; color: var(--ink);
-            margin: 0 0 14px 0; letter-spacing: -0.2px;
+            font-size: 19px; font-weight: 700; color: var(--ink);
+            margin: 0 0 18px 0; padding-bottom: 12px; letter-spacing: -0.2px;
+            border-bottom: 1px solid var(--line);
         }
+
+        /* This page is four dense schedules stacked on one screen, and at 18px apart
+           they read as one continuous wall. The gap is what separates them, so it is
+           set here rather than left at the shared .card default. */
+        #dcf-results > .card { margin-bottom: 34px; }
+        #dcf-results > .card:last-child { margin-bottom: 0; }
 
         /* --- WACC inputs --- */
         .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 22px; }
@@ -63,7 +70,7 @@
         .run-dcf-btn { margin-top: 16px; }
 
         /* --- stat cards --- */
-        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 34px; }
         .stat-card {
             background: var(--card); border: 1px solid var(--line);
             border-radius: 3px; padding: 14px 16px; text-align: center;
@@ -663,9 +670,15 @@
         document.getElementById('load-ticker').textContent = inputData.ticker;
         document.getElementById('loading').hidden = false;
 
+        // Which case these cash flows came from. Without it the valuation below is
+        // ambiguous — three cases produce three different numbers on this page and
+        // nothing else on it says which one is on screen.
+        const caseLabel = { best: 'Best', base: 'Base', worst: 'Worst' }[inputData.case];
         document.getElementById('company-header').innerHTML = `
             <span class="name">${inputData.company_name} (${inputData.ticker})</span>
-            <span class="price mono">Current price <b>$${inputData.stock_price}</b></span>
+            <span class="price mono">
+                ${caseLabel ? `<b>${caseLabel} case</b> &nbsp;·&nbsp; ` : ''}Current price <b>$${inputData.stock_price}</b>
+            </span>
         `;
 
         document.getElementById('run-dcf-btn').addEventListener('click', runDcf);

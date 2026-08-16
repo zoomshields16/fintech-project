@@ -99,7 +99,10 @@ a.rail-step:hover { color: var(--ink); }
     border: 1px solid var(--line);
     border-radius: 3px;
     padding: 24px 28px;
-    margin-bottom: 18px;
+    /* Wide enough that two stacked cards read as two sections rather than one
+       continuous panel — the pages that stack several of these were the ones that
+       felt like a wall of numbers. */
+    margin-bottom: 30px;
 }
 
 /* ── Error panel ── */
