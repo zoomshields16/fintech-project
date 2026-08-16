@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=12">
+    <link rel="stylesheet" href="theme.css?v=13">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -144,6 +144,58 @@
         .case-tab.is-on { background: var(--blue); color: var(--on-blue); font-weight: 600; }
         .case-tab:focus-visible { outline: 2px solid var(--blue-ink); outline-offset: -2px; }
 
+        /* --- The verdict ---
+           The one number the whole page exists to produce, stated before any of the
+           working. The accent bar is the verdict colour, so the answer is legible
+           from across the room before a single figure is read. */
+        .verdict {
+            display: grid; grid-template-columns: minmax(0, 1fr) auto;
+            gap: 24px 40px; align-items: center;
+            background: var(--card); border: 1px solid var(--line);
+            border-left: 5px solid var(--faint);
+            border-radius: 3px; padding: 26px 30px; margin-bottom: 34px;
+        }
+        .verdict.is-under { border-left-color: var(--green); }
+        .verdict.is-over  { border-left-color: var(--red); }
+
+        .verdict-eyebrow {
+            font-size: 10.5px; font-weight: 700; color: var(--faint);
+            text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+        }
+        .verdict-word {
+            font-size: 34px; font-weight: 800; letter-spacing: -0.6px;
+            line-height: 1.1; color: var(--ink);
+        }
+        .verdict.is-under .verdict-word { color: var(--green); }
+        .verdict.is-over  .verdict-word { color: var(--red); }
+        .verdict-pct {
+            font-size: 34px; font-weight: 800; letter-spacing: -0.6px;
+            font-variant-numeric: tabular-nums; margin-left: 14px;
+        }
+        .verdict-headline { display: flex; align-items: baseline; flex-wrap: wrap; }
+        .verdict-note { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+
+        /* Market against model, side by side — the comparison the verdict is drawn
+           from, shown rather than left to be worked out. */
+        .verdict-figures {
+            display: flex; gap: 34px; flex-wrap: wrap;
+            padding-left: 34px; border-left: 1px solid var(--line);
+        }
+        .verdict-fig .k {
+            display: block; font-size: 10.5px; color: var(--faint);
+            text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;
+        }
+        .verdict-fig .v {
+            display: block; margin-top: 5px;
+            font-size: 21px; font-weight: 700; color: var(--ink);
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 860px) {
+            .verdict { grid-template-columns: 1fr; }
+            .verdict-figures { padding-left: 0; border-left: none; }
+        }
+
         /* --- stat cards --- */
         /* Six across on one row — they are the headline read, and stacked 3x2 they
            looked like two unrelated groups. */
@@ -268,7 +320,7 @@
         .sens-table .base-col  { background: var(--blue-tint); }
 
         .loading { color: var(--muted); padding: 10px 0; }
-        #dcf-results, #dcf-sens { display: none; }
+        #dcf-results, #dcf-sens, #verdict { display: none; }
         .neg { color: var(--red); }
         .pos { color: var(--green); }
         #no-data { margin-top: 26px; }
@@ -322,6 +374,9 @@
 
 <div id="main-content" style="display:none">
     <div class="masthead" id="company-header"></div>
+
+    <!-- The answer, before any of the working. Everything below this builds to it. -->
+    <section id="verdict" class="verdict"></section>
 
     <!-- Outputs left, parameters right. Results come FIRST in the source so the
          page reads outputs-then-controls for a screen reader and on narrow
@@ -693,42 +748,73 @@
         lastResult = r;
         const premium = r.premium_discount;
 
-        // The verdict, not the direction: a positive premium means the DCF values the
+        // The verdict, not the direction: a positive premium means the model values the
         // company above where it trades, so it reads undervalued. Judged on the figure
-        // AS DISPLAYED — rounded to one decimal — so a premium of 0.02% cannot show
-        // "0.0%" under an "Undervalued" heading.
-        const shown   = premium != null ? Number((premium * 100).toFixed(1)) : null;
+        // AS DISPLAYED — two decimals, matching Carson's 0.00% on DCF!J9 — so a premium
+        // of 0.001% cannot show "0.00%" under an "Undervalued" heading.
+        const shown   = premium != null ? Number((premium * 100).toFixed(2)) : null;
         const verdict = shown == null ? { label: 'Valuation', cls: '', sign: '' }
                       : shown > 0     ? { label: 'Undervalued',    cls: 'undervalued', sign: '+' }
                       : shown < 0     ? { label: 'Overvalued',     cls: 'overvalued',  sign: ''  }
                       :                 { label: 'Equally Valued', cls: '',            sign: ''  };
 
+        // ── The headline, stated before any of the working ──
+        // Carson's DCF sheet opens on exactly this block (DCF!F9:J9): Market price,
+        // Enterprise Price, and "Over or under valued". His labels and his formats —
+        // "Enterprise Price" is his term for the per-share value the model implies
+        // (DCF!G10 -> N24, the centre of the Equity Value Per Share grid), and the
+        // premium is that over the market price, DCF!N37 = N24/D12-1.
+        const implied = r.equity_value_per_share;
+        const gap     = implied != null ? implied - r.stock_price : null;
+        const vEl     = document.getElementById('verdict');
+        vEl.className = 'verdict' + (verdict.cls === 'undervalued' ? ' is-under'
+                                   : verdict.cls === 'overvalued'  ? ' is-over' : '');
+        vEl.innerHTML = `
+            <div>
+                <p class="verdict-eyebrow">Over or under valued · ${CASE_LABELS[caseNow] || 'Base'} case</p>
+                <div class="verdict-headline">
+                    <span class="verdict-word">${verdict.label}</span>
+                    ${shown != null ? `<span class="verdict-pct ${verdict.cls}">${verdict.sign}${shown.toFixed(2)}%</span>` : ''}
+                </div>
+                <p class="verdict-note">
+                    ${implied == null ? 'The model produced no per-share value for this case.'
+                      : `This model prices ${inputData.ticker} at <b>${fmtPs(implied)}</b> a share against
+                         <b>${fmtPs(r.stock_price)}</b> in the market — a difference of
+                         <b>${fmtPs(Math.abs(gap))}</b> a share.`}
+                </p>
+            </div>
+            <div class="verdict-figures">
+                <div class="verdict-fig"><span class="k">Market price</span><span class="v">${fmtPs(r.stock_price)}</span></div>
+                <div class="verdict-fig"><span class="k">Enterprise Price</span><span class="v">${fmtPs(implied)}</span></div>
+            </div>
+        `;
+
+        // The supporting figures — deliberately NOT market price, enterprise price or
+        // the premium, which are the headline above. These are how it was arrived at.
         document.getElementById('stat-cards').innerHTML = `
             <div class="stat-card">
                 <div class="label">WACC</div>
                 <div class="value">${pct(r.wacc_inputs.wacc)}</div>
             </div>
             <div class="stat-card">
-                <div class="label">Enterprise Value</div>
-                <div class="value">${fmtB(r.enterprise_value)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Equity Value / Share</div>
-                <div class="value">${fmtPs(r.equity_value_per_share)}</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Current Price</div>
-                <div class="value">$${r.stock_price}</div>
+                <div class="label">Terminal Growth</div>
+                <div class="value">${pct(r.terminal_growth_rate)}</div>
             </div>
             <div class="stat-card">
                 <div class="label">PV of Discrete CFs</div>
                 <div class="value">${fmtB(r.pv_discrete)}</div>
             </div>
             <div class="stat-card">
-                <div class="label">${verdict.label}</div>
-                <div class="value ${verdict.cls}">
-                    ${shown != null ? verdict.sign + shown.toFixed(1) + '%' : '—'}
-                </div>
+                <div class="label">PV of Terminal</div>
+                <div class="value">${fmtB(r.pv_terminal)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Enterprise Value</div>
+                <div class="value">${fmtB(r.enterprise_value)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Less: Net Debt</div>
+                <div class="value">${fmtB(r.net_debt)}</div>
             </div>
         `;
 
@@ -751,6 +837,7 @@
         // Sensitivity is its own full-width block now, so it has to be revealed too.
         document.getElementById('dcf-results').style.display = 'block';
         document.getElementById('dcf-sens').style.display    = 'block';
+        document.getElementById('verdict').style.display     = 'grid';
     }
 
     // ─── Run DCF ──────────────────────────────────────────────────────────────
