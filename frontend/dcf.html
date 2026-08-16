@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=24">
+    <link rel="stylesheet" href="theme.css?v=25">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -259,9 +259,50 @@
         }
         .sched-divider { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 
-        /* --- DCF schedule summary --- */
+        /* --- DCF schedule ---
+           Laid out to Carson's sheet (DCF!43:72): the assumptions beside the forecast
+           grid, then Enterprise Value against the price check, then the equity bridge
+           against the per-share build. Same blocks, same order, same labels. */
         .dcf-summary-row {
             display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;
+        }
+        .sch-top {
+            display: grid; grid-template-columns: 260px minmax(0, 1fr);
+            gap: 28px; align-items: start; margin-bottom: 26px;
+        }
+        .sch-h {
+            font-size: 11px; font-weight: 700; color: var(--ink);
+            text-transform: uppercase; letter-spacing: 0.07em;
+            margin: 0 0 6px; padding-bottom: 5px;
+            border-bottom: 1px solid var(--ink);
+        }
+        /* Every block on this schedule shares one plain look: no fills, no internal
+           rules, a single line under the heading and above the total. */
+        .sch table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .sch th, .sch td {
+            border: none !important; box-shadow: none;
+            background: transparent !important; color: var(--ink);
+            padding: 4px 8px; text-align: right; font-weight: 400;
+            white-space: nowrap; font-variant-numeric: tabular-nums;
+        }
+        .sch td:first-child, .sch th:first-child { text-align: left; padding-left: 0; }
+        .sch td:last-child, .sch th:last-child   { padding-right: 0; }
+        .sch thead th { border-bottom: 1px solid var(--line) !important; font-weight: 700; }
+        .sch tr.total td { border-top: 1px solid var(--ink) !important; font-weight: 700; }
+        .sch tr.rule  td { border-bottom: 1px solid var(--line) !important; }
+        .sch .muted   { color: var(--muted); }
+        /* The column of forecast years, and the terminal column set apart from them. */
+        .sch .term { border-left: 1px solid var(--line) !important; }
+        .sch caption {
+            caption-side: top; text-align: left;
+            font-size: 11px; font-weight: 700; color: var(--ink);
+            text-transform: uppercase; letter-spacing: 0.07em;
+            padding-bottom: 5px; margin-bottom: 6px;
+            border-bottom: 1px solid var(--ink);
+        }
+        .sch-units { font-size: 11px; color: var(--faint); margin: 0 0 14px; }
+        @media (max-width: 900px) {
+            .sch-top { grid-template-columns: 1fr; }
         }
 
         /* --- Interest Rate schedule --- */
@@ -633,77 +674,132 @@
     }
 
     // ─── Schedule 2: Discounted Cash Flows Schedule ──────────────────────────
+    // Carson's schedule format: whole figures, comma separated, negatives in brackets
+    // — DCF!E63's _(#,##0_);(#,##0). His sheet is in thousands, ours in millions, and
+    // the block says which.
+    function fmtSch(v) {
+        if (v == null) return '–';
+        const m = Math.round(v / 1e6);
+        const s = Math.abs(m).toLocaleString();
+        return m < 0 ? `(${s})` : s;
+    }
+
+    // Built to Carson's DCF!43:72. Reading down: the assumptions beside the forecast
+    // grid and the cash-flow profiles, then Enterprise Value with each part's weight
+    // against the price check, then the equity bridge against the per-share build.
     function buildDcfSchedule(data, r) {
         const years = data.proj_years;
         const ufcf  = data.ufcf;
         const wacc  = r.wacc_inputs.wacc;
+        const g     = r.terminal_growth_rate;
         const n     = years.length;
 
-        const headers    = years.map(y => `<th>${y}E</th>`).join('');
-        const ufcfCells  = ufcf.map(v => `<td>${fmtM(v)}</td>`).join('');
-        const tvCells    = years.map((_, i) =>
-            i === n - 1 ? `<td>${fmtM(r.terminal_value)}</td>` : `<td>—</td>`
-        ).join('');
-        const totalCells = years.map((_, i) => {
-            const total = i === n - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
-            return `<td>${fmtM(total)}</td>`;
-        }).join('');
-        const dfCells = years.map((_, i) =>
-            `<td>${(1 / Math.pow(1 + wacc, i + 1)).toFixed(4)}</td>`
-        ).join('');
-        const pvCells = years.map((_, i) => {
-            const cf = i === n - 1 ? ufcf[i] + r.terminal_value : ufcf[i];
-            return `<td>${fmtM(cf / Math.pow(1 + wacc, i + 1))}</td>`;
-        }).join('');
+        const cells = (vals, cls = '') =>
+            vals.map(v => `<td class="${cls}">${v}</td>`).join('');
 
-        const totalEv   = r.enterprise_value;
-        const pvDiscPct = totalEv ? r.pv_discrete / totalEv : 0;
-        const pvTermPct = totalEv ? r.pv_terminal / totalEv : 0;
+        // DCF!O47 — how many years of the terminal cash flow the terminal value is
+        // worth, (1 + WACC) / (WACC − g). Undefined if growth reaches the discount rate.
+        const impliedYears = (wacc > g) ? ((1 + wacc) / (wacc - g)).toFixed(1) : '–';
+
+        // Terminal value lands in the final column only; the earlier years show a dash,
+        // exactly as DCF!I57:L57 do.
+        const tvRow    = years.map((_, i) => i === n - 1 ? fmtSch(r.terminal_value) : '–');
+        const totalRow = years.map((_, i) =>
+            fmtSch(i === n - 1 ? ufcf[i] + r.terminal_value : ufcf[i]));
+
+        const ev        = r.enterprise_value;
+        const weight    = v => (ev ? pct(v / ev) : '–');
 
         // Unsigned, like every other percentage on the site — the colour is the sign.
         const prPct   = r.premium_discount != null
             ? Number((r.premium_discount * 100).toFixed(1)) : null;
-        const prValue = prPct == null ? '—'
+        const prValue = prPct == null ? '–'
             : `<span class="${prPct > 0 ? 'pos' : prPct < 0 ? 'neg' : ''}">${Math.abs(prPct).toFixed(1)}%</span>`;
 
         return `
-        <div class="table-wrap" style="margin-bottom:20px">
+        <div class="sch">
+        <p class="sch-units">Figures in $ millions unless stated.</p>
+
+        <div class="sch-top">
             <table>
-                <thead><tr><th>($M)</th>${headers}</tr></thead>
+                <caption>Assumptions</caption>
                 <tbody>
-                    <tr><td>Unlevered Free Cash Flow</td>${ufcfCells}</tr>
-                    <tr class="tv-row"><td>+ Terminal Value</td>${tvCells}</tr>
-                    <tr class="total-row"><td>Total Cash Flow</td>${totalCells}</tr>
-                    <tr><td>Discount Factor (at ${pct(wacc, 3)})</td>${dfCells}</tr>
-                    <tr class="subtotal"><td>PV of Cash Flow</td>${pvCells}</tr>
+                    <tr><td>First Year Forecast</td><td>${years[0]}</td></tr>
+                    <tr><td>Terminal Growth Rate</td><td>${pct(g)}</td></tr>
+                    <tr class="total"><td>WACC</td><td>${pct(wacc)}</td></tr>
+                </tbody>
+            </table>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th colspan="${n}">Discrete Forecast (Fiscal Year End)</th>
+                        <th class="term">Term value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="rule">
+                        <td></td>${cells(years)}
+                        <td class="term">Implied years</td>
+                    </tr>
+                    <tr class="rule">
+                        <td></td>${cells(years.map(y => `<span class="muted">12/31/${y}</span>`))}
+                        <td class="term">${impliedYears}</td>
+                    </tr>
+                    <tr><td colspan="${n + 2}" style="padding:6px 0"></td></tr>
+                    <tr>
+                        <td>Unlevered free cash flow</td>${cells(ufcf.map(fmtSch))}
+                        <td class="term">${fmtSch(r.terminal_cf)}</td>
+                    </tr>
+                    <tr><td colspan="${n + 2}" style="padding:6px 0"></td></tr>
+                    <tr><td colspan="${n + 2}" class="sch-h" style="padding:0 0 5px">Cash Flow Profiles</td></tr>
+                    <tr><td>Discrete Forecast</td>${cells(ufcf.map(fmtSch))}<td class="term"></td></tr>
+                    <tr><td>Terminal Value</td>${cells(tvRow)}<td class="term"></td></tr>
+                    <tr class="total"><td>Total Cash Flow</td>${cells(totalRow)}<td class="term"></td></tr>
                 </tbody>
             </table>
         </div>
+
         <div class="dcf-summary-row">
-            <div>
-                <table>
-                    <thead><tr><th>PV Summary</th><th>Amount</th><th>Weight</th></tr></thead>
-                    <tbody>
-                        <tr><td>PV of Discrete Cash Flows</td><td>${fmtB(r.pv_discrete)}</td><td>${pct(pvDiscPct)}</td></tr>
-                        <tr><td>PV of Terminal Value</td><td>${fmtB(r.pv_terminal)}</td><td>${pct(pvTermPct)}</td></tr>
-                        <tr class="subtotal"><td><strong>Enterprise Value</strong></td><td><strong>${fmtB(totalEv)}</strong></td><td><strong>100%</strong></td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div>
-                <table>
-                    <thead><tr><th>Equity Bridge</th><th>Value</th></tr></thead>
-                    <tbody>
-                        <tr><td>Enterprise Value</td><td>${fmtB(r.enterprise_value)}</td></tr>
-                        <tr><td>(−) Net Debt</td><td>${fmtM(r.net_debt)}</td></tr>
-                        <tr class="subtotal"><td>Equity Value</td><td>${fmtB(r.equity_value)}</td></tr>
-                        <tr><td>÷ Shares Outstanding</td><td>${r.shares_outstanding ? (r.shares_outstanding / 1e6).toFixed(0) + 'M' : '—'}</td></tr>
-                        <tr class="subtotal"><td><strong>Equity Value Per Share</strong></td><td><strong>${fmtPs(r.equity_value_per_share)}</strong></td></tr>
-                        <tr><td>Current Stock Price</td><td>${r.stock_price ? '$' + r.stock_price : '—'}</td></tr>
-                        <tr><td><strong>Premium / (Discount)</strong></td><td><strong>${prValue}</strong></td></tr>
-                    </tbody>
-                </table>
-            </div>
+            <table>
+                <caption>Enterprise Value</caption>
+                <thead><tr><th></th><th></th><th>Weight</th></tr></thead>
+                <tbody>
+                    <tr><td>PV of Discrete</td><td>${fmtSch(r.pv_discrete)}</td><td>${weight(r.pv_discrete)}</td></tr>
+                    <tr><td>PV of Terminal</td><td>${fmtSch(r.pv_terminal)}</td><td>${weight(r.pv_terminal)}</td></tr>
+                    <tr class="total"><td>Enterprise Value</td><td>${fmtSch(ev)}</td><td>${ev ? '100%' : '–'}</td></tr>
+                </tbody>
+            </table>
+            <table>
+                <caption>Against the market</caption>
+                <tbody>
+                    <tr><td>Equity value per share</td><td>${fmtPs(r.equity_value_per_share)}</td></tr>
+                    <tr><td>Current price</td><td>${fmtPs(r.stock_price)}</td></tr>
+                    <tr class="total"><td>Premium</td><td>${prValue}</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="dcf-summary-row">
+            <table>
+                <caption>Equity Value</caption>
+                <tbody>
+                    <tr><td>Enterprise Value</td><td>${fmtSch(ev)}</td></tr>
+                    <tr><td>Net debt</td><td>${fmtSch(r.net_debt)}</td></tr>
+                    <tr class="total"><td>Equity Value</td><td>${fmtSch(r.equity_value)}</td></tr>
+                </tbody>
+            </table>
+            <table>
+                <caption>Equity Value per share</caption>
+                <tbody>
+                    <tr><td>Equity Value</td><td>${fmtSch(r.equity_value)}</td></tr>
+                    <tr><td>Shares Outstanding</td><td>${
+                        r.shares_outstanding ? Math.round(r.shares_outstanding / 1e6).toLocaleString() : '–'}</td></tr>
+                    <tr class="total"><td>Equity Value per share</td><td>${fmtPs(r.equity_value_per_share)}</td></tr>
+                </tbody>
+            </table>
+        </div>
         </div>`;
     }
 
