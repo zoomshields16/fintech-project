@@ -93,15 +93,17 @@
            subtotal above them, so they must not read as another line item. The
            column banding is left alone so the historical/projected split stays
            unbroken down the whole table. */
+        /* These sit on the page background with no cell borders, so they float clear
+           of the table rather than reading as another row in it — the same treatment
+           section-gap already gets. */
         tr.pct-row td {
-            padding: 1px 10px 5px; font-size: 11px; color: var(--faint);
+            padding: 3px 10px 6px; font-size: 11px; color: var(--faint);
             letter-spacing: 0.02em; font-weight: 600;
+            background: var(--paper); border: none;
         }
-        /* No column banding behind these. The historical-column fill made the
-           percentage read as part of the table body instead of a note on the row
-           above it. The selector is long only to out-rank that fill rule further
-           down without reaching for !important. */
-        table:not(.sched) tr.pct-row td:not(:first-child) { background: transparent; }
+        /* Repeated with a longer selector purely to out-rank the historical-column
+           fill further down, which is (0,3,2) and would otherwise win. */
+        table:not(.sched) tr.pct-row td:not(:first-child) { background: var(--paper); }
         tr.pct-row td.up   { color: var(--green); }
         tr.pct-row td.down { color: var(--red); }
 
