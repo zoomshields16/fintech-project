@@ -8,13 +8,15 @@
     --muted:      #6f6b63;
     --faint:      #a39c8d;
     --line:       #e3ddd1;
-    /* Apple's system blue. Replaced a dark navy that read as dated. Every blue on
-       the site comes from these five, so the accent moves in one place. */
-    --blue:       #007aff;
-    --blue-d:     #0062cc;   /* pressed / hover */
-    --blue-mid:   #4da2ff;
-    --blue-tint:  #edf4ff;   /* historical-column fill */
-    --blue-tint-2:#dfebfd;   /* historical subtotal fill */
+    /* apple.com's button blue — the medium one, a step deeper than the vivid iOS
+       system blue (#007aff), which was too saturated across a full-width header band
+       and too light to read as text. Replaced a dark navy that looked dated. Every
+       blue on the site comes from these five, so the accent moves in one place. */
+    --blue:       #0071e3;
+    --blue-d:     #0058b0;   /* pressed / hover */
+    --blue-mid:   #4d9bec;
+    --blue-tint:  #eaf2fd;   /* historical-column fill */
+    --blue-tint-2:#dbe9fa;   /* historical subtotal fill */
     --green:      #17663f;
     --green-tint: #e4efe7;
     --red:        #a4322a;
