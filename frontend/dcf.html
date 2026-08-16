@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=18">
+    <link rel="stylesheet" href="theme.css?v=19">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -288,32 +288,46 @@
             width: 100%; border-collapse: collapse; font-size: 11.5px;
             table-layout: fixed;
         }
-        /* Monochrome throughout. These grids are a field of 25 numbers whose whole
-           point is comparison, and colour there implies a judgement the table is not
-           making — the axes are just WACC and growth. Structure is carried by fill,
-           weight and rule instead: grey bands for the axes, bold for the case the
-           parameters actually produced. */
+        /* No internal grid. Only the outer box and the two rules that separate the
+           axes from the figures — 25 cells boxed individually read as a spreadsheet
+           screenshot rather than a table.
+
+           Weight, not colour, marks the live case: the base WACC row and the base
+           growth column are bold, and everything else is plain. That is the whole
+           marking system, so the axis labels are unbold by default too — otherwise
+           every label competes with the one pair that matters. */
+        .sens-table { border: 1px solid var(--ink); }
+        .sens-table th,
+        .sens-table td { border: none !important; }
+
         .sens-table th {
-            background: var(--paper-2); color: var(--ink); padding: 6px 7px;
-            text-align: center; font-weight: 700;
-            border: 1px solid var(--line);
+            background: transparent; color: var(--ink); padding: 6px 7px;
+            text-align: center; font-weight: 400;
+            border-bottom: 1px solid var(--ink) !important;   /* axis rule */
         }
-        .sens-table th:first-child { text-align: center; }
         .sens-table td {
-            padding: 5px 7px; border: 1px solid var(--line) !important;
-            text-align: center; white-space: nowrap; color: var(--ink);
+            padding: 5px 7px; text-align: center;
+            white-space: nowrap; color: var(--ink); font-weight: 400;
         }
         .sens-table td.row-label {
-            background: var(--paper-2); color: var(--ink);
-            font-weight: 700; text-align: center;
+            background: transparent; color: var(--ink);
+            font-weight: 400; text-align: center;
+            border-right: 1px solid var(--ink) !important;    /* axis rule */
         }
-        /* The live case — base WACC against base growth. Ruled rather than filled,
-           so it is findable without being coloured. */
-        .sens-table .highlight {
-            background: transparent !important; color: var(--ink);
-            font-weight: 800; box-shadow: inset 0 0 0 2px var(--ink);
+        .sens-table th:first-child {
+            text-align: center; font-weight: 700;
+            border-right: 1px solid var(--ink) !important;
         }
-        .sens-table .base-col { background: transparent; }
+
+        /* The live case: base WACC across, base growth down, and the cell where they
+           meet. Bold only — matches how the model page marks its own middle. */
+        .sens-table .base-row,
+        .sens-table .base-col  { font-weight: 700; }
+        .sens-table .highlight { font-weight: 800; }
+
+        /* Direction, on the premium grid alone. */
+        .sens-table .up   { color: var(--green); }
+        .sens-table .down { color: var(--red); }
 
         .loading { color: var(--muted); padding: 10px 0; }
         #dcf-results, #dcf-sens, #verdict { display: none; }
@@ -536,7 +550,15 @@
     // Sensitivity formatters matching Carson's integer style
     function fmtEvCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
     function fmtPsCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
-    function fmtPrCell(v)  { return v != null ? (v * 100).toFixed(2) + '%' : '—'; }
+    // Premium/discount cells carry direction, so they take the model page's colours:
+    // green above the market price, red below. Coloured off the ROUNDED figure, so a
+    // cell reading 0.00% is never green. Nothing else in these grids is coloured.
+    function fmtPrCell(v)  {
+        if (v == null) return '—';
+        const whole = Number((v * 100).toFixed(2));
+        const cls   = whole > 0 ? 'up' : whole < 0 ? 'down' : '';
+        return `<span class="${cls}">${whole.toFixed(2)}%</span>`;
+    }
 
     // ─── Schedule 1: WACC Schedule ───────────────────────────────────────────
     function buildWaccSchedule(r) {
@@ -717,17 +739,20 @@
             return `<th class="${isBaseCol ? 'base-col' : ''}">${(g * 100).toFixed(1)}%</th>`;
         }).join('');
 
+        // Bold is the only marker of the live case now, so the base ROW needs its own
+        // class — previously only the base column and the single centre cell had one,
+        // and the row could not be picked out.
         const bodyRows = matrix.map((row, ri) => {
             const w = wacc_steps[ri];
             const isBaseRow = Math.abs(w - base_wacc) < 0.0001;
             const cells = row.map((v, ci) => {
-                const isBaseCol  = Math.abs(tgr_steps[ci] - base_tgr) < 0.0001;
-                const isBaseCell = isBaseRow && isBaseCol;
-                const cls = isBaseCell ? 'highlight' : (isBaseCol ? 'base-col' : '');
+                const isBaseCol = Math.abs(tgr_steps[ci] - base_tgr) < 0.0001;
+                const cls = [isBaseRow && 'base-row', isBaseCol && 'base-col',
+                             isBaseRow && isBaseCol && 'highlight'].filter(Boolean).join(' ');
                 return `<td class="${cls}">${fmt_fn(v)}</td>`;
             }).join('');
             const wLabel = (w * 100).toFixed(2).replace(/\.?0+$/, '') + '%';
-            return `<tr><td class="row-label${isBaseRow ? ' highlight' : ''}">${wLabel}</td>${cells}</tr>`;
+            return `<tr><td class="row-label${isBaseRow ? ' base-row' : ''}">${wLabel}</td>${cells}</tr>`;
         }).join('');
 
         return `<table class="sens-table">
