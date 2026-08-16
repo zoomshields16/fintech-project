@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=10">
+    <link rel="stylesheet" href="theme.css?v=11">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -59,35 +59,11 @@
         #dcf-results > .card { margin-bottom: 34px; }
         #dcf-results > .card:last-child { margin-bottom: 0; }
 
-        /* Two columns for the DCF proper — the six parameters on the left, the
-           valuation and its schedules on the right — then the sensitivity analysis
-           spanning the full page beneath both. Sensitivity gets the whole width
-           because its matrices are the widest thing on the page; boxed into a
-           column they were what forced the horizontal scrollbars. */
-        .dcf-layout {
-            display: grid; grid-template-columns: 292px minmax(0, 1fr);
-            gap: 26px 26px; align-items: start;
-        }
-        .dcf-params  { grid-column: 1; align-self: start; }
-        #dcf-results { grid-column: 2; min-width: 0; }
-        #dcf-sens    { grid-column: 1 / -1; margin-top: 8px; }
-        .dcf-params .card { margin-bottom: 0; padding: 20px 20px 22px; }
-        /* One field per row in a 268px rail — the three-across grid belonged to a
-           full-width card. */
-        .dcf-params .wacc-grid { grid-template-columns: 1fr; gap: 14px; }
-        .dcf-params .num { width: 100%; }
-        .dcf-params .wacc-field input[type=number] { width: 100%; }
-        .dcf-params .run-dcf-btn { width: 100%; text-align: center; }
-
-        @media (max-width: 1040px) {
-            /* Below this the parameter column is too narrow for its labels; stack
-               everything, parameters still first. */
-            .dcf-layout { grid-template-columns: 1fr; }
-            .dcf-params, #dcf-results, #dcf-sens { grid-column: 1; }
-            .dcf-params { margin-bottom: 30px; }
-            .dcf-params .wacc-grid { grid-template-columns: repeat(3, 1fr); }
-            .dcf-params .run-dcf-btn { width: auto; }
-        }
+        /* One full-width column, the same measure as the model page. Reading down:
+           the parameters across the top, then the six headline numbers, then every
+           schedule in turn. Nothing is boxed into a narrow column, which is what
+           was squeezing the wide tables. */
+        .dcf-layout { display: block; }
 
         /* --- WACC inputs ---
            Every value here is two or three digits, so a full-width box across a
@@ -95,8 +71,16 @@
            its content instead, and the stepper is drawn rather than native: the
            browser's own spin buttons are a few pixels tall and cannot be resized
            reliably, which is what made them so hard to hit. */
-        .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 22px; }
-        .wacc-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+        /* All seven parameters on one row across the full width; auto-fit reflows
+           them rather than letting a label crush its input on a narrow screen. */
+        .wacc-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+            gap: 16px 20px;
+        }
+        .wacc-field label {
+            display: block; font-size: 12px; color: var(--muted);
+            margin-bottom: 5px; min-height: 2.6em;   /* keeps the inputs on one line */
+        }
 
         .num {
             display: inline-flex; align-items: stretch;
@@ -159,7 +143,12 @@
         .case-tab:focus-visible { outline: 2px solid var(--blue-ink); outline-offset: -2px; }
 
         /* --- stat cards --- */
-        .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 34px; }
+        /* Six across on one row — they are the headline read, and stacked 3x2 they
+           looked like two unrelated groups. */
+        .stat-cards {
+            display: grid; grid-template-columns: repeat(6, 1fr);
+            gap: 12px; margin-bottom: 34px;
+        }
         .stat-card {
             background: var(--card); border: 1px solid var(--line);
             border-radius: 3px; padding: 14px 16px; text-align: center;
@@ -282,8 +271,14 @@
         .pos { color: var(--green); }
         #no-data { margin-top: 26px; }
 
+        /* Six stat cards need roughly 150px each before the figures start colliding
+           with their labels; below that they go three across, then two. .wacc-grid
+           reflows on its own via auto-fit. */
+        @media (max-width: 1000px) {
+            .stat-cards { grid-template-columns: repeat(3, 1fr); }
+        }
         @media (max-width: 860px) {
-            .stat-cards, .wacc-grid, .schedule-three-col { grid-template-columns: 1fr 1fr; }
+            .stat-cards, .schedule-three-col { grid-template-columns: 1fr 1fr; }
             .sens-grid, .dcf-summary-row, .ir-two-col { grid-template-columns: 1fr; }
         }
     </style>
@@ -389,7 +384,9 @@
                     </div>
                 </div>
                 <div class="wacc-field">
-                    <label>WACC Override (leave blank to auto-compute)</label>
+                    <!-- The "leave blank" hint lives in the placeholder, so the label
+                         stays short enough to sit in a one-of-seven column. -->
+                    <label>WACC Override</label>
                     <div class="num">
                         <input type="number" id="in-wacc" step="0.01" placeholder="blank = auto">
                         <div class="spin">
