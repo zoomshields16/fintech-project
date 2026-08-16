@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=17">
+    <link rel="stylesheet" href="theme.css?v=18">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -278,7 +278,7 @@
            cells are in view at once and nothing scrolls sideways. */
         .sens-grid { display: grid; grid-template-columns: 1fr; gap: 26px; }
         .sens-title {
-            font-size: 12px; font-weight: 700; color: var(--blue-ink);
+            font-size: 12px; font-weight: 700; color: var(--ink);
             margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.05em;
         }
         /* Fixed layout so the six columns divide the width evenly instead of the
@@ -288,18 +288,32 @@
             width: 100%; border-collapse: collapse; font-size: 11.5px;
             table-layout: fixed;
         }
+        /* Monochrome throughout. These grids are a field of 25 numbers whose whole
+           point is comparison, and colour there implies a judgement the table is not
+           making — the axes are just WACC and growth. Structure is carried by fill,
+           weight and rule instead: grey bands for the axes, bold for the case the
+           parameters actually produced. */
         .sens-table th {
-            background: var(--blue); color: var(--on-blue); padding: 6px 7px;
+            background: var(--paper-2); color: var(--ink); padding: 6px 7px;
             text-align: center; font-weight: 700;
+            border: 1px solid var(--line);
         }
         .sens-table th:first-child { text-align: center; }
         .sens-table td {
             padding: 5px 7px; border: 1px solid var(--line) !important;
-            text-align: center; white-space: nowrap;
+            text-align: center; white-space: nowrap; color: var(--ink);
         }
-        .sens-table td.row-label { background: var(--blue); color: var(--on-blue); font-weight: 700; text-align: center; }
-        .sens-table .highlight { background: var(--green-tint) !important; color: var(--green); font-weight: 700; }
-        .sens-table .base-col  { background: var(--blue-tint); }
+        .sens-table td.row-label {
+            background: var(--paper-2); color: var(--ink);
+            font-weight: 700; text-align: center;
+        }
+        /* The live case — base WACC against base growth. Ruled rather than filled,
+           so it is findable without being coloured. */
+        .sens-table .highlight {
+            background: transparent !important; color: var(--ink);
+            font-weight: 800; box-shadow: inset 0 0 0 2px var(--ink);
+        }
+        .sens-table .base-col { background: transparent; }
 
         .loading { color: var(--muted); padding: 10px 0; }
         #dcf-results, #dcf-sens, #verdict { display: none; }
@@ -442,28 +456,7 @@
             </div>
         </aside>
 
-        <div id="dcf-results">
-            <!-- Schedule 1: WACC Schedule -->
-            <div class="card">
-                <p class="card-title">WACC schedule</p>
-                <div id="wacc-schedule"></div>
-            </div>
-
-            <!-- Schedule 2: Discounted Cash Flows Schedule -->
-            <div class="card">
-                <p class="card-title">Discounted cash flows schedule</p>
-                <div id="dcf-schedule"></div>
-            </div>
-
-            <!-- Schedule 3: Interest Rate Schedule -->
-            <div class="card">
-                <p class="card-title">Interest rate schedule</p>
-                <div id="ir-schedule"></div>
-            </div>
-        </div>
-
-
-        <!-- Full width beneath both columns -->
+        <!-- Directly under the parameters: the grid of what-ifs those inputs drive -->
         <div id="dcf-sens">
                 <div class="card">
                     <p class="card-title">Sensitivity analysis</p>
@@ -487,6 +480,26 @@
                     </div>
                 </div>
         </div>
+
+        <div id="dcf-results">
+            <!-- Schedule 1: WACC Schedule -->
+            <div class="card">
+                <p class="card-title">WACC schedule</p>
+                <div id="wacc-schedule"></div>
+            </div>
+
+            <!-- Schedule 2: Discounted Cash Flows Schedule -->
+            <div class="card">
+                <p class="card-title">Discounted cash flows schedule</p>
+                <div id="dcf-schedule"></div>
+            </div>
+
+            <!-- Schedule 3: Interest Rate Schedule -->
+            <div class="card">
+                <p class="card-title">Interest rate schedule</p>
+                <div id="ir-schedule"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -500,21 +513,24 @@
     function pct(v, decimals = 2) {
         return v != null ? (v * 100).toFixed(decimals) + '%' : '—';
     }
+    // Negatives are parentheses and nothing else, as on the model page. The red is
+    // kept only where colour carries direction rather than repeating the brackets —
+    // the premium row and the verdict.
     function fmtB(v) {
         if (v == null) return '—';
         const b = v / 1e9;
         const s = '$' + Math.abs(b).toFixed(2) + 'B';
-        return v < 0 ? `<span class="neg">(${s})</span>` : s;
+        return v < 0 ? `(${s})` : s;
     }
     function fmtM(v) {
         if (v == null) return '—';
         const m = v / 1e6;
         const s = '$' + Math.abs(m).toFixed(0) + 'M';
-        return v < 0 ? `<span class="neg">(${s})</span>` : s;
+        return v < 0 ? `(${s})` : s;
     }
     function fmtPs(v) {
         if (v == null) return '—';
-        return v < 0 ? `<span class="neg">($${Math.abs(v).toFixed(2)})</span>` : '$' + v.toFixed(2);
+        return v < 0 ? `($${Math.abs(v).toFixed(2)})` : '$' + v.toFixed(2);
     }
 
     // Sensitivity formatters matching Carson's integer style
