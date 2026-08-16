@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=22">
+    <link rel="stylesheet" href="theme.css?v=23">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -288,14 +288,9 @@
             width: 100%; border-collapse: collapse; font-size: 11.5px;
             table-layout: fixed;
         }
-        /* No internal grid. The box encloses the FIGURES only — it is drawn on the
-           body's edge cells rather than on the table, so the row of growth rates sits
-           above the frame with nothing but the rule beneath it. Boxing the header too
-           put a vertical stroke at each end of that row.
-
-           Weight, not colour, marks the live case, and only on three cells — so the
-           axis labels are unbold by default, otherwise every label competes with the
-           one pair that matters. */
+        /* No internal grid, and the frame encloses the 25 FIGURES only. Both axes —
+           the growth rates along the top and the WACCs down the left — sit outside
+           it, so neither is boxed. */
         .sens-table { border: none; }
         .sens-table th,
         .sens-table td { border: none !important; }
@@ -303,15 +298,17 @@
         .sens-table th {
             background: transparent; color: var(--ink); padding: 6px 7px;
             text-align: center; font-weight: 400;
-            border-bottom: 1px solid var(--ink) !important;   /* the frame's top edge */
             /* The generic th paints 1px of blue either side to close the sub-pixel
                seams in the schedule tables' solid header band. There is no band here,
                so that shadow was drawing blue strokes between the growth rates. */
             box-shadow: none;
         }
-        .sens-table tbody td:first-child   { border-left:   1px solid var(--ink) !important; }
-        .sens-table tbody td:last-child    { border-right:  1px solid var(--ink) !important; }
-        .sens-table tbody tr:last-child td { border-bottom: 1px solid var(--ink) !important; }
+        .sens-table thead th:not(:first-child) { border-bottom: 1px solid var(--ink) !important; }
+        .sens-table tbody td:nth-child(2)      { border-left:   1px solid var(--ink) !important; }
+        .sens-table tbody td:last-child        { border-right:  1px solid var(--ink) !important; }
+        .sens-table tbody tr:last-child td:not(:first-child) {
+            border-bottom: 1px solid var(--ink) !important;
+        }
         .sens-table td {
             padding: 5px 7px; text-align: center;
             white-space: nowrap; color: var(--ink); font-weight: 400;
@@ -319,15 +316,16 @@
         .sens-table td.row-label {
             background: transparent; color: var(--ink);
             font-weight: 400; text-align: center;
-            border-right: 1px solid var(--ink) !important;    /* axis rule */
         }
-        /* No vertical rule in the header row — the axis rule starts below it. */
         .sens-table th:first-child { text-align: center; font-weight: 700; }
 
-        /* Three cells carry bold, not a row and a column: the figure the parameters
-           actually produced, and the two axis labels that locate it. Bolding the
-           whole row and column drew a cross through the grid, which reads as four
-           highlighted arms rather than one number. */
+        /* Steel blue marks the live case: the figure the parameters produced, and its
+           label on each axis. Three cells, not a row and a column — filling the whole
+           row and column drew a cross, which reads as four highlighted arms rather
+           than one number. */
+        .sens-table th.base-col,
+        .sens-table td.row-label.base-row,
+        .sens-table .highlight { background: var(--blue); color: var(--on-blue); }
         .sens-table th.base-col           { font-weight: 700; }  /* the growth rate */
         .sens-table td.row-label.base-row { font-weight: 700; }  /* the WACC */
         .sens-table .highlight            { font-weight: 800; }  /* where they meet */
@@ -335,6 +333,11 @@
         /* Direction, on the premium grid alone. */
         .sens-table .up   { color: var(--green); }
         .sens-table .down { color: var(--red); }
+        /* On the steel fill the standard green and red land at 3.9:1. Darkened for
+           the one cell that sits on it, so the highlighted figure reads as clearly
+           as the rest of its column. */
+        .sens-table .highlight .up   { color: #0d4a2c; }
+        .sens-table .highlight .down { color: #75201a; }
 
         .loading { color: var(--muted); padding: 10px 0; }
         #dcf-results, #dcf-sens, #verdict { display: none; }
@@ -554,17 +557,25 @@
         return v < 0 ? `($${Math.abs(v).toFixed(2)})` : '$' + v.toFixed(2);
     }
 
-    // Sensitivity formatters matching Carson's integer style
-    function fmtEvCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
-    function fmtPsCell(v)  { return v != null ? Math.round(v).toLocaleString() : '—'; }
+    // Sensitivity formatters — Carson's whole-figure style, with negatives in
+    // parentheses like every other table on the site. These three were the last
+    // place a leading minus sign was still being used.
+    function fmtEvCell(v) {
+        if (v == null) return '—';
+        const s = Math.round(Math.abs(v)).toLocaleString();
+        return v < 0 ? `(${s})` : s;
+    }
+    function fmtPsCell(v) { return fmtEvCell(v); }
+
     // Premium/discount cells carry direction, so they take the model page's colours:
     // green above the market price, red below. Coloured off the ROUNDED figure, so a
     // cell reading 0.00% is never green. Nothing else in these grids is coloured.
-    function fmtPrCell(v)  {
+    function fmtPrCell(v) {
         if (v == null) return '—';
         const whole = Number((v * 100).toFixed(2));
         const cls   = whole > 0 ? 'up' : whole < 0 ? 'down' : '';
-        return `<span class="${cls}">${whole.toFixed(2)}%</span>`;
+        const text  = Math.abs(whole).toFixed(2) + '%';
+        return `<span class="${cls}">${whole < 0 ? `(${text})` : text}</span>`;
     }
 
     // ─── Schedule 1: WACC Schedule ───────────────────────────────────────────
