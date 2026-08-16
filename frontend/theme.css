@@ -8,11 +8,13 @@
     --muted:      #6f6b63;
     --faint:      #a39c8d;
     --line:       #e3ddd1;
-    --navy:       #1e3a5f;
-    --navy-d:     #152a45;
-    --navy-mid:   #31517b;   /* projected-column table header */
-    --navy-tint:  #eef1f4;   /* projected-column fill */
-    --navy-tint-2:#e6ebf1;   /* projected subtotal fill */
+    /* Apple's system blue. Replaced a dark navy that read as dated. Every blue on
+       the site comes from these five, so the accent moves in one place. */
+    --blue:       #007aff;
+    --blue-d:     #0062cc;   /* pressed / hover */
+    --blue-mid:   #4da2ff;
+    --blue-tint:  #edf4ff;   /* historical-column fill */
+    --blue-tint-2:#dfebfd;   /* historical subtotal fill */
     --green:      #17663f;
     --green-tint: #e4efe7;
     --red:        #a4322a;
@@ -36,8 +38,8 @@ body {
 .shell { max-width: 960px; margin: 0 auto; padding: 0 28px; }
 .shell.wide { max-width: 1280px; }
 
-:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
-::selection { background: var(--navy); color: #fff; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+::selection { background: var(--blue); color: #fff; }
 
 /* ── Site header ── */
 .site-head {
@@ -62,7 +64,7 @@ body {
     color: var(--ink); text-decoration: none; letter-spacing: -0.2px;
     white-space: nowrap;
 }
-.brand .dot { color: var(--navy); }
+.brand .dot { color: var(--blue); }
 
 .head-links { display: flex; align-items: center; gap: 26px; }
 .head-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
@@ -73,8 +75,8 @@ body {
 .rail-step { color: var(--muted); text-decoration: none; }
 a.rail-step:hover { color: var(--ink); }
 .rail-step.here {
-    color: var(--navy); font-weight: 600;
-    border-bottom: 2px solid var(--navy); padding-bottom: 1px;
+    color: var(--blue); font-weight: 600;
+    border-bottom: 2px solid var(--blue); padding-bottom: 1px;
 }
 .rail-step.off { color: #c9c2b4; pointer-events: none; }
 .rail-sep { width: 18px; height: 1px; background: var(--line); flex: none; }
@@ -82,14 +84,14 @@ a.rail-step:hover { color: var(--ink); }
 /* ── Buttons ── */
 .btn {
     display: inline-block;
-    background: var(--navy); color: #fff;
+    background: var(--blue); color: #fff;
     border: none; cursor: pointer;
     font-family: inherit; font-size: 15px; font-weight: 500;
     padding: 12px 26px; border-radius: 2px;
     text-decoration: none;
     transition: background 0.15s;
 }
-.btn:hover { background: var(--navy-d); }
+.btn:hover { background: var(--blue-d); }
 .btn:disabled { opacity: 0.55; cursor: default; }
 .btn.small { font-size: 13.5px; padding: 8px 18px; }
 
@@ -111,7 +113,7 @@ a.rail-step:hover { color: var(--ink); }
     border: 1px solid #dcbcb7;
     padding: 16px 20px; border-radius: 3px; font-size: 14.5px;
 }
-.error-box a { color: var(--navy); }
+.error-box a { color: var(--blue); }
 
 /* ── Footer ── */
 .site-foot {

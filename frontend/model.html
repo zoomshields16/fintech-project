@@ -37,8 +37,8 @@
         }
         .case-tab + .case-tab { border-left: 1px solid var(--line); }
         .case-tab:hover { color: var(--ink); }
-        .case-tab.is-on { background: var(--navy); color: #fff; font-weight: 600; }
-        .case-tab:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+        .case-tab.is-on { background: var(--blue); color: #fff; font-weight: 600; }
+        .case-tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 
 
         /* ── Tables ──
@@ -58,7 +58,7 @@
            centred header back toward the numbers. One value, tuned here. */
         table { --year-nudge: 14px; }
         th {
-            background: var(--navy); color: #fff;
+            background: var(--blue); color: #fff;
             padding: 8px 10px 8px calc(10px + var(--year-nudge));
             text-align: center;
             font-weight: 500; white-space: nowrap; overflow: hidden;
@@ -70,7 +70,7 @@
                read as rules between the years. Painting 1px of navy either side makes
                neighbouring cells overlap. Done with a shadow, not a border, because
                collapsed borders and sticky headers do not survive each other. */
-            box-shadow: 1px 0 0 0 var(--navy), -1px 0 0 0 var(--navy);
+            box-shadow: 1px 0 0 0 var(--blue), -1px 0 0 0 var(--blue);
         }
         th:first-child {
             text-align: left; width: 250px; white-space: normal;
@@ -95,16 +95,21 @@
            frame, so these rows were showing a line at each end and reading as a
            thin empty row inside the table instead of a break in it. */
         tr.section-gap td    { padding: 8px 0; border: hidden; background: var(--paper); }
-        tr.subtotal td       { font-weight: 600; border-top: 1px solid #d8d2c4; }
-        tr.check-row td      { font-weight: 600; border-top: 2px solid var(--navy); color: var(--navy); }
+        /* Subtotals are marked by the rule above them, not by weight — the accounting
+           convention, and it keeps the figures reading as one column rather than a
+           column with half its rows shouting. Losing the bold means the rule has to
+           carry the distinction on its own, hence the darker line. */
+        tr.subtotal td       { border-top: 1px solid #b9b1a0; }
+        tr.check-row td      { font-weight: 600; border-top: 2px solid var(--blue); color: var(--blue); }
         tr.section-header td {
-            background: var(--paper-2); color: var(--navy);
+            background: var(--paper-2); color: var(--blue);
             font-weight: 700; padding: 6px 12px;
             font-size: 12px; letter-spacing: 0.04em;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         tr.sub-header td {
-            background: #f7f5ef; color: #3a5578;
+            /* Was a hardcoded slate that belonged to the old navy palette. */
+            background: #f7f5ef; color: var(--blue-d);
             font-weight: 600; padding: 5px 12px; font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
@@ -171,9 +176,9 @@
 
         /* Historical (actual) columns carry the light tint; projected stay plain.
            Supporting schedules (.sched) get no tint at all. */
-        table:not(.sched) td:not(:first-child):not(.proj) { background: var(--navy-tint); }
-        table:not(.sched) tr.subtotal  td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
-        table:not(.sched) tr.check-row td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
+        table:not(.sched) td:not(:first-child):not(.proj) { background: var(--blue-tint); }
+        table:not(.sched) tr.subtotal  td:not(:first-child):not(.proj) { background: var(--blue-tint-2); }
+        table:not(.sched) tr.check-row td:not(:first-child):not(.proj) { background: var(--blue-tint-2); }
 
         .neg  { color: var(--red); }
 
@@ -187,7 +192,7 @@
             font-family: Georgia, serif;
             font-size: 23px; font-weight: 700; color: var(--ink);
             letter-spacing: -0.3px;
-            border-top: 2px solid var(--navy);
+            border-top: 2px solid var(--blue);
             padding-top: 22px;
             margin: 78px 0 14px;
         }
@@ -204,7 +209,7 @@
         }
         .sched-label {
             font-family: Georgia, serif;
-            font-size: 17px; font-weight: 700; color: var(--navy);
+            font-size: 17px; font-weight: 700; color: var(--blue);
             letter-spacing: -0.2px;
             margin: 46px 0 10px;
         }

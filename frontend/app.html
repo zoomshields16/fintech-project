@@ -21,7 +21,7 @@
             background: var(--line); overflow: hidden; border-radius: 1px;
         }
         .load-bar span {
-            display: block; width: 40%; height: 100%; background: var(--navy);
+            display: block; width: 40%; height: 100%; background: var(--blue);
             animation: sweep 1.1s ease-in-out infinite alternate;
         }
         @keyframes sweep {
@@ -48,7 +48,7 @@
         .masthead .price { font-size: 14px; color: var(--muted); }
         .masthead .price b { color: var(--ink); font-weight: 600; }
         .change-ticker { font-size: 13.5px; color: var(--muted); }
-        .change-ticker:hover { color: var(--navy); }
+        .change-ticker:hover { color: var(--blue); }
 
         /* ── Driver cards ── */
         .card h2 {
@@ -81,8 +81,8 @@
         }
         .case-tab + .case-tab { border-left: 1px solid var(--line); }
         .case-tab:hover  { color: var(--ink); }
-        .case-tab.is-on  { background: var(--navy); color: #fff; font-weight: 600; }
-        .case-tab:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+        .case-tab.is-on  { background: var(--blue); color: #fff; font-weight: 600; }
+        .case-tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 
         /* ── Group 1 grid ── */
         .g1-grid {
@@ -104,7 +104,7 @@
             font-family: ui-monospace, 'SF Mono', Menlo, monospace;
             font-variant-numeric: tabular-nums;
         }
-        .d-in:focus { outline: none; border-color: var(--navy); }
+        .d-in:focus { outline: none; border-color: var(--blue); }
 
         /* ── Group 2 rows ── */
         .g2-block { padding: 13px 0; border-top: 1px solid #f0ece3; }
@@ -122,7 +122,7 @@
             font-family: ui-monospace, 'SF Mono', Menlo, monospace;
             font-variant-numeric: tabular-nums;
         }
-        .g2-val.active { background: var(--navy-tint); color: var(--navy); font-weight: 600; }
+        .g2-val.active { background: var(--blue-tint); color: var(--blue); font-weight: 600; }
         /* iOS-style auto/manual switch */
         .switch {
             font-size: 11.5px; color: var(--muted); cursor: pointer;
@@ -140,9 +140,9 @@
             background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.25);
             transition: transform 0.18s;
         }
-        .switch input:checked + .knob { background: var(--navy); }
+        .switch input:checked + .knob { background: var(--blue); }
         .switch input:checked + .knob::after { transform: translateX(14px); }
-        .switch input:focus-visible + .knob { outline: 2px solid var(--navy); outline-offset: 2px; }
+        .switch input:focus-visible + .knob { outline: 2px solid var(--blue); outline-offset: 2px; }
         .g2-in {
             width: 100%; padding: 5px 7px; font-size: 12px;
             border: 1px solid var(--line); border-radius: 2px;
@@ -154,7 +154,7 @@
         /* Override cells stay fully blank until the row is switched to Manual */
         .g2-in:disabled::placeholder { color: transparent; }
         .g2-in::placeholder { color: #c2bbad; }
-        .g2-in:not(:disabled):focus { outline: none; border-color: var(--navy); }
+        .g2-in:not(:disabled):focus { outline: none; border-color: var(--blue); }
 
         /* ── Header status (projection errors) ── */
         .head-right .status {
@@ -176,7 +176,7 @@
         }
         .rn-list li { margin-bottom: 2px; }
         .rn-foot { margin-top: 10px; font-size: 12.5px; color: #8a7340; }
-        .rn-foot a { color: var(--navy); text-decoration: none; margin-left: 6px; font-weight: 500; }
+        .rn-foot a { color: var(--blue); text-decoration: none; margin-left: 6px; font-weight: 500; }
         .rn-foot a:hover { text-decoration: underline; }
 
         @media (max-width: 760px) {
