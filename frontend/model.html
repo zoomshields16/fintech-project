@@ -98,12 +98,6 @@
             letter-spacing: 0.02em;
         }
 
-        tr.reconcile-row td {
-            font-size: 11px; color: var(--faint);
-            padding: 4px 12px; background: #fbfaf6;
-            border-top: 1px solid #f2eee5; white-space: normal;
-        }
-
         /* ── Supporting schedules: Excel-style formatting ──
            Sub-section labels are plain bold text (no fill), driver inputs are
            boxed, and totals get the accounting top-rule + double underline. */
@@ -148,8 +142,6 @@
         table:not(.sched) tr.check-row td:not(:first-child):not(.proj) { background: var(--navy-tint-2); }
 
         .neg  { color: var(--red); }
-        .pass { color: var(--green); }
-        .fail { color: var(--red); font-weight: 600; }
 
         /* ── Statement headings ──
            Three levels, so where one statement ends and the next begins is obvious
@@ -231,12 +223,6 @@
         return val != null ? (val * 100).toFixed(1) + '%' : '—';
     }
 
-    function reconcileSummary(rec) {
-        const mis = Object.entries(rec).filter(([, v]) => v !== 'MATCH');
-        if (!mis.length) return '<span class="pass">✓ checks pass</span>';
-        return mis.map(([k]) => `<span class="fail">✗ ${k}</span>`).join(' ');
-    }
-
     // NOTE: with table-layout: fixed, a colspan larger than the real column
     // count expands the grid and crushes the year columns — so gap() must
     // span exactly the number of columns on the page (set once per render).
@@ -301,18 +287,15 @@
             const label = y.date.slice(0, 4) + (y.projected ? 'E' : '');
             return `<th${cls}>${label}</th>`;
         }).join('');
-        const recCells = allYears.map(y => {
-            const content = y.projected ? '' : reconcileSummary(y.reconcile || {});
-            return `<td${tdCls(y)}>${content}</td>`;
-        }).join('');
+        // No per-year reconciliation row here. Every statement still carries its
+        // `reconcile` block in the API response and the checks still run on every
+        // fetch — status.html is where they are read, across all 101 companies at
+        // once, which is a far better view of them than one row per table.
         return `
             <div class="table-wrap">
                 <table>
                     <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
-                    <tbody>
-                        ${bodyHtml}
-                        <tr class="reconcile-row"><td>Reconciliation</td>${recCells}</tr>
-                    </tbody>
+                    <tbody>${bodyHtml}</tbody>
                 </table>
             </div>`;
     }
