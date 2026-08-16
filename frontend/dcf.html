@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=14">
+    <link rel="stylesheet" href="theme.css?v=15">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -159,6 +159,9 @@
             font-size: 10.5px; font-weight: 700; color: var(--faint);
             text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
         }
+        /* Which case is being valued carries more weight than the label beside it —
+           the same figure means three different things across best, base and worst. */
+        .verdict-case { font-weight: 800; color: var(--blue-ink); }
         .verdict-word {
             font-size: 34px; font-weight: 800; letter-spacing: -0.6px;
             line-height: 1.1; color: var(--ink);
@@ -772,7 +775,8 @@
                                    : verdict.cls === 'overvalued'  ? ' is-over' : '');
         vEl.innerHTML = `
             <div>
-                <p class="verdict-eyebrow">Over or under valued · ${CASE_LABELS[caseNow] || 'Base'} case</p>
+                <p class="verdict-eyebrow">Over or under valued ·
+                    <span class="verdict-case">${CASE_LABELS[caseNow] || 'Base'} case</span></p>
                 <div class="verdict-headline">
                     <span class="verdict-word">${verdict.label}</span>
                     ${shown != null ? `<span class="verdict-pct ${verdict.cls}">${verdict.sign}${shown.toFixed(2)}%</span>` : ''}
