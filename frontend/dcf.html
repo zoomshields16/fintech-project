@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=7">
+    <link rel="stylesheet" href="theme.css?v=8">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -59,18 +59,99 @@
         #dcf-results > .card { margin-bottom: 34px; }
         #dcf-results > .card:last-child { margin-bottom: 0; }
 
-        /* --- WACC inputs --- */
-        .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 22px; }
-        .wacc-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-        .wacc-field input {
-            width: 100%; padding: 8px 10px; font-size: 14px;
-            border: 1px solid var(--line); border-radius: 2px;
-            background: #fff; color: var(--ink); text-align: right;
-            font-family: var(--font);
-            font-variant-numeric: tabular-nums;
+        /* Outputs in a wide left column, parameters in a narrow rail on the right.
+           The rail sticks, so the inputs stay reachable while reading a schedule
+           further down instead of forcing a scroll back to the top to re-run. */
+        .dcf-layout {
+            display: grid; grid-template-columns: minmax(0, 1fr) 268px;
+            gap: 26px; align-items: start;
         }
-        .wacc-field input:focus { outline: none; border-color: var(--blue-ink); }
-        .run-dcf-btn { margin-top: 16px; }
+        .dcf-params { position: sticky; top: 76px; }
+        .dcf-params .card { margin-bottom: 0; padding: 20px 20px 22px; }
+        /* One field per row in a 268px rail — the three-across grid belonged to a
+           full-width card. */
+        .dcf-params .wacc-grid { grid-template-columns: 1fr; gap: 14px; }
+        .dcf-params .num { width: 100%; }
+        .dcf-params .wacc-field input[type=number] { width: 100%; }
+        .dcf-params .run-dcf-btn { width: 100%; text-align: center; }
+
+        @media (max-width: 1040px) {
+            /* Below this the rail is too narrow to hold its labels; stack instead,
+               parameters first so they are not stranded under four schedules. */
+            .dcf-layout { grid-template-columns: 1fr; }
+            .dcf-params { position: static; order: -1; margin-bottom: 30px; }
+            .dcf-params .wacc-grid { grid-template-columns: repeat(3, 1fr); }
+            .dcf-params .run-dcf-btn { width: auto; }
+        }
+
+        /* --- WACC inputs ---
+           Every value here is two or three digits, so a full-width box across a
+           third of a 1280px page was almost entirely empty. The input is sized to
+           its content instead, and the stepper is drawn rather than native: the
+           browser's own spin buttons are a few pixels tall and cannot be resized
+           reliably, which is what made them so hard to hit. */
+        .wacc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 22px; }
+        .wacc-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+
+        .num {
+            display: inline-flex; align-items: stretch;
+            border: 1px solid var(--line); border-radius: 3px;
+            background: #fff; overflow: hidden;
+        }
+        .num:focus-within { border-color: var(--blue-ink); }
+        .wacc-field input[type=number] {
+            width: 96px; border: none; background: transparent;
+            padding: 9px 10px; font-size: 14px; text-align: right; color: var(--ink);
+            font-family: var(--font); font-variant-numeric: tabular-nums;
+            -moz-appearance: textfield;
+        }
+        .wacc-field input[type=number]:focus { outline: none; }
+        /* The native arrows are replaced, not merely restyled. */
+        .wacc-field input[type=number]::-webkit-outer-spin-button,
+        .wacc-field input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+        .num .spin {
+            display: flex; flex-direction: column; flex: none;
+            border-left: 1px solid var(--line);
+        }
+        .num .spin button {
+            appearance: none; border: none; cursor: pointer; padding: 0;
+            width: 28px; flex: 1;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--paper-2); color: var(--blue-ink);
+            transition: background 0.12s;
+        }
+        .num .spin button:hover  { background: var(--blue); color: var(--on-blue); }
+        .num .spin button:active { background: var(--blue-ink); color: #fff; }
+        .num .spin .up { border-bottom: 1px solid var(--line); }
+        /* Triangles drawn with borders — crisp at any size, and they inherit
+           currentColor so they invert with the button on hover. */
+        .num .spin button::before {
+            content: ''; width: 0; height: 0;
+            border-left: 5px solid transparent; border-right: 5px solid transparent;
+        }
+        .num .spin .up::before   { border-bottom: 6px solid currentColor; }
+        .num .spin .down::before { border-top: 6px solid currentColor; }
+
+        .run-dcf-btn { margin-top: 20px; }
+
+        /* --- Case switcher — same control as the model page --- */
+        .masthead .meta { display: flex; align-items: center; gap: 18px; }
+        .case-tabs {
+            display: inline-flex; border: 1px solid var(--line); border-radius: 3px;
+            overflow: hidden; background: var(--paper-2);
+        }
+        .case-tab {
+            appearance: none; border: none; cursor: pointer;
+            padding: 6px 15px; font-size: 12.5px; font-weight: 500;
+            background: transparent; color: var(--muted);
+            font-family: var(--font); letter-spacing: 0.02em;
+        }
+        .case-tab + .case-tab { border-left: 1px solid var(--line); }
+        .case-tab:hover { color: var(--ink); }
+        .case-tab.is-on { background: var(--blue); color: var(--on-blue); font-weight: 600; }
+        .case-tab:focus-visible { outline: 2px solid var(--blue-ink); outline-offset: -2px; }
 
         /* --- stat cards --- */
         .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 34px; }
@@ -219,86 +300,134 @@
 <div id="main-content" style="display:none">
     <div class="masthead" id="company-header"></div>
 
-    <!-- DCF Parameters -->
-    <div class="card">
-        <p class="card-title">DCF parameters</p>
-        <div class="wacc-grid">
-            <div class="wacc-field">
-                <label>Risk-Free Rate (10Y Treasury)</label>
-                <input type="number" id="in-rf" step="0.01" placeholder="e.g. 4.38">
-            </div>
-            <div class="wacc-field">
-                <label>Beta (Levered)</label>
-                <input type="number" id="in-beta" step="0.01" placeholder="e.g. 1.20">
-            </div>
-            <div class="wacc-field">
-                <label>Market Risk Premium</label>
-                <input type="number" id="in-mrp" step="0.01" placeholder="e.g. 4.75">
-            </div>
-            <div class="wacc-field">
-                <label>Pre-Tax Cost of Debt</label>
-                <input type="number" id="in-cod" step="0.01" placeholder="e.g. 4.00">
-            </div>
-            <div class="wacc-field">
-                <label>Effective Tax Rate</label>
-                <input type="number" id="in-tax" step="0.01" placeholder="e.g. 21.00">
-            </div>
-            <div class="wacc-field">
-                <label>Terminal Growth Rate</label>
-                <input type="number" id="in-tgr" step="0.1" value="2.5">
-            </div>
-            <div class="wacc-field">
-                <label>WACC Override (leave blank to auto-compute)</label>
-                <input type="number" id="in-wacc" step="0.01" placeholder="blank = auto">
-            </div>
-        </div>
-        <button class="btn run-dcf-btn" id="run-dcf-btn">Run DCF</button>
-    </div>
+    <!-- Outputs left, parameters right. Results come FIRST in the source so the
+         page reads outputs-then-controls for a screen reader and on narrow
+         viewports, where the two columns collapse into one. -->
+    <div class="dcf-layout">
+        <div id="dcf-results">
+            <!-- Summary stat cards -->
+            <div class="stat-cards" id="stat-cards"></div>
 
-    <div id="dcf-results">
-        <!-- Summary stat cards -->
-        <div class="stat-cards" id="stat-cards"></div>
-
-        <!-- Sensitivity Analysis -->
-        <div class="card">
-            <p class="card-title">Sensitivity analysis</p>
-            <div class="sens-grid">
-                <div>
-                    <p class="sens-title">Enterprise Value</p>
-                    <div class="table-wrap" id="sens-ev"></div>
-                </div>
-                <div>
-                    <p class="sens-title">Equity Value Per Share</p>
-                    <div class="table-wrap" id="sens-ps"></div>
-                </div>
-                <div>
-                    <p class="sens-title">Equity Value</p>
-                    <div class="table-wrap" id="sens-eq"></div>
-                </div>
-                <div>
-                    <p class="sens-title">Premium (Discount) To Stock Price</p>
-                    <div class="table-wrap" id="sens-pr"></div>
+            <!-- Sensitivity Analysis -->
+            <div class="card">
+                <p class="card-title">Sensitivity analysis</p>
+                <div class="sens-grid">
+                    <div>
+                        <p class="sens-title">Enterprise Value</p>
+                        <div class="table-wrap" id="sens-ev"></div>
+                    </div>
+                    <div>
+                        <p class="sens-title">Equity Value Per Share</p>
+                        <div class="table-wrap" id="sens-ps"></div>
+                    </div>
+                    <div>
+                        <p class="sens-title">Equity Value</p>
+                        <div class="table-wrap" id="sens-eq"></div>
+                    </div>
+                    <div>
+                        <p class="sens-title">Premium (Discount) To Stock Price</p>
+                        <div class="table-wrap" id="sens-pr"></div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Schedule 1: WACC Schedule -->
+            <div class="card">
+                <p class="card-title">WACC schedule</p>
+                <div id="wacc-schedule"></div>
+            </div>
+
+            <!-- Schedule 2: Discounted Cash Flows Schedule -->
+            <div class="card">
+                <p class="card-title">Discounted cash flows schedule</p>
+                <div id="dcf-schedule"></div>
+            </div>
+
+            <!-- Schedule 3: Interest Rate Schedule -->
+            <div class="card">
+                <p class="card-title">Interest rate schedule</p>
+                <div id="ir-schedule"></div>
+            </div>
         </div>
 
-        <!-- Schedule 1: WACC Schedule -->
-        <div class="card">
-            <p class="card-title">WACC schedule</p>
-            <div id="wacc-schedule"></div>
-        </div>
-
-        <!-- Schedule 2: Discounted Cash Flows Schedule -->
-        <div class="card">
-            <p class="card-title">Discounted cash flows schedule</p>
-            <div id="dcf-schedule"></div>
-        </div>
-
-        <!-- Schedule 3: Interest Rate Schedule -->
-        <div class="card">
-            <p class="card-title">Interest rate schedule</p>
-            <div id="ir-schedule"></div>
-        </div>
+        <aside class="dcf-params">
+            <div class="card">
+                <p class="card-title">DCF parameters</p>
+            <div class="wacc-grid">
+                <div class="wacc-field">
+                    <label>Risk-Free Rate (10Y Treasury)</label>
+                    <div class="num">
+                        <input type="number" id="in-rf" step="0.01" placeholder="e.g. 4.38">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wacc-field">
+                    <label>Beta (Levered)</label>
+                    <div class="num">
+                        <input type="number" id="in-beta" step="0.01" placeholder="e.g. 1.20">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wacc-field">
+                    <label>Market Risk Premium</label>
+                    <div class="num">
+                        <input type="number" id="in-mrp" step="0.01" placeholder="e.g. 4.75">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wacc-field">
+                    <label>Pre-Tax Cost of Debt</label>
+                    <div class="num">
+                        <input type="number" id="in-cod" step="0.01" placeholder="e.g. 4.00">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wacc-field">
+                    <label>Effective Tax Rate</label>
+                    <div class="num">
+                        <input type="number" id="in-tax" step="0.01" placeholder="e.g. 21.00">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wacc-field">
+                    <label>Terminal Growth Rate</label>
+                    <div class="num">
+                        <input type="number" id="in-tgr" step="0.1" value="2.5">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="wacc-field">
+                    <label>WACC Override (leave blank to auto-compute)</label>
+                    <div class="num">
+                        <input type="number" id="in-wacc" step="0.01" placeholder="blank = auto">
+                        <div class="spin">
+                            <button type="button" class="up"   tabindex="-1" aria-label="Increase"></button>
+                            <button type="button" class="down" tabindex="-1" aria-label="Decrease"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <button class="btn run-dcf-btn" id="run-dcf-btn">Run DCF</button>
+            </div>
+        </aside>
     </div>
 </div>
 
@@ -657,6 +786,83 @@
         }
     }
 
+    // ─── Cases ────────────────────────────────────────────────────────────────
+    // The selected case lives in localStorage under `model_case`, which is the one
+    // place all three pages read and write. Switch it here and the model page opens
+    // on the same case; switch it there and this page values that one. `model_proj`
+    // already holds every case's full projection, so switching costs no API call —
+    // only the cash flows handed to the DCF change.
+    const CASES = ['best', 'base', 'worst'];
+    const CASE_LABELS = { best: 'Best', base: 'Base', worst: 'Worst' };
+    let projData = null, caseNow = null;
+
+    function loadCases() {
+        try { projData = JSON.parse(localStorage.getItem('model_proj')); } catch { projData = null; }
+        const saved = localStorage.getItem('model_case');
+        // Fall back to whatever the hand-off recorded, then to base.
+        caseNow = availableCases().includes(saved) ? saved : (inputData.case || 'base');
+    }
+
+    function availableCases() {
+        return (projData && projData.cases) ? CASES.filter(c => projData.cases[c]) : [];
+    }
+
+    function switchCase(name) {
+        const c = projData && projData.cases && projData.cases[name];
+        if (!c || name === caseNow) return;
+        caseNow = name;
+        inputData.case       = name;
+        inputData.ufcf       = c.ufcf;
+        inputData.proj_years = c.income_statement.map(y => y.date.slice(0, 4));
+        localStorage.setItem('model_case', name);
+        localStorage.setItem('dcf_input', JSON.stringify(inputData));
+        renderHeader();
+        runDcf();
+    }
+
+    // Which case these cash flows came from. Without it the valuation is ambiguous —
+    // three cases produce three different numbers on this page.
+    function renderHeader() {
+        const names = availableCases();
+        const tabs = names.length > 1
+            ? `<div class="case-tabs" role="tablist" aria-label="Case">` +
+              names.map(n => `<button type="button" class="case-tab${n === caseNow ? ' is-on' : ''}"
+                        role="tab" aria-selected="${n === caseNow}"
+                        data-case="${n}">${CASE_LABELS[n]}</button>`).join('') + `</div>`
+            : '';
+        const label = CASE_LABELS[caseNow];
+        document.getElementById('company-header').innerHTML = `
+            <span class="name">${inputData.company_name} (${inputData.ticker})</span>
+            <div class="meta">
+                <span class="price mono">
+                    ${!tabs && label ? `<b>${label} case</b> &nbsp;·&nbsp; ` : ''}Current price <b>$${inputData.stock_price}</b>
+                </span>
+                ${tabs}
+            </div>
+        `;
+        // Rewired every render, since the markup above replaces the buttons.
+        document.querySelectorAll('.case-tab').forEach(tab =>
+            tab.addEventListener('click', () => switchCase(tab.dataset.case)));
+    }
+
+    // ─── Custom steppers ──────────────────────────────────────────────────────
+    // The native spin buttons are replaced by the .spin markup, so the arrows have
+    // to drive the input themselves. stepUp/stepDown honour each field's own `step`.
+    function wireSteppers() {
+        document.querySelectorAll('.num').forEach(box => {
+            const input = box.querySelector('input[type=number]');
+            box.querySelectorAll('.spin button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // An empty field has nothing to step from; start at the computed
+                    // default the first run filled in, or zero.
+                    if (input.value === '') input.value = input.placeholder.match(/[\d.]+/)?.[0] ?? '0';
+                    else btn.classList.contains('up') ? input.stepUp() : input.stepDown();
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            });
+        });
+    }
+
     // ─── Init ─────────────────────────────────────────────────────────────────
     window.addEventListener('load', () => {
         const raw = localStorage.getItem('dcf_input');
@@ -676,16 +882,9 @@
         document.getElementById('load-ticker').textContent = inputData.ticker;
         document.getElementById('loading').hidden = false;
 
-        // Which case these cash flows came from. Without it the valuation below is
-        // ambiguous — three cases produce three different numbers on this page and
-        // nothing else on it says which one is on screen.
-        const caseLabel = { best: 'Best', base: 'Base', worst: 'Worst' }[inputData.case];
-        document.getElementById('company-header').innerHTML = `
-            <span class="name">${inputData.company_name} (${inputData.ticker})</span>
-            <span class="price mono">
-                ${caseLabel ? `<b>${caseLabel} case</b> &nbsp;·&nbsp; ` : ''}Current price <b>$${inputData.stock_price}</b>
-            </span>
-        `;
+        loadCases();
+        renderHeader();
+        wireSteppers();
 
         document.getElementById('run-dcf-btn').addEventListener('click', runDcf);
         runDcf();

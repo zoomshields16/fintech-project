@@ -474,7 +474,13 @@ def run_dcf_endpoint(request: DCFRequest):
     rf_raw = treas_raw.get("year10") or treas_raw.get("tenYear") or 0
     risk_free_rate = rf_raw / 100 if rf_raw > 1 else rf_raw  # normalize if stored as 4.38 vs 0.0438
 
-    mrp = mrp_match.get("totalEquityRiskPremium") or 0.0475  # default 4.75% if FMP returns None
+    # Market risk premium: FMP returns this as a percentage (4.46 meaning 4.46%), the
+    # same as the treasury rate above, and it needs the same normalization. Without it
+    # beta * mrp came out ~100x too large — GOOG priced at a 547% WACC, a terminal value
+    # discounted to nothing and a NEGATIVE equity value on every auto-computed run. The
+    # 0.0475 fallback is the tell: this has always been meant to be a fraction.
+    mrp_raw = mrp_match.get("totalEquityRiskPremium")
+    mrp = (mrp_raw / 100 if mrp_raw > 1 else mrp_raw) if mrp_raw else 0.0475
 
     # Approximate pre-tax cost of debt: interest_expense / total_debt
     pre_tax_cost_debt = 0.04  # default 4%

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=7">
+    <link rel="stylesheet" href="theme.css?v=8">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -401,6 +401,7 @@
         if (name === caseNow) return;
         caseVals[caseNow] = readCaseFromInputs();   // keep whatever was typed
         caseNow = name;
+        localStorage.setItem('model_case', name);   // the model and DCF pages follow
         writeCaseToInputs(caseVals[caseNow]);
         document.querySelectorAll('.case-tab').forEach(t => {
             const on = t.dataset.case === name;
@@ -471,8 +472,16 @@
         if (!wellFormed) return;
 
         caseVals = saved;
-        caseNow  = 'base';
-        writeCaseToInputs(caseVals.base);
+        // Open on whichever case the model and DCF pages are showing, so the three
+        // stay in step rather than each page having its own idea of the selection.
+        const selected = localStorage.getItem('model_case');
+        caseNow = CASES.includes(selected) ? selected : 'base';
+        writeCaseToInputs(caseVals[caseNow]);
+        document.querySelectorAll('.case-tab').forEach(t => {
+            const on = t.dataset.case === caseNow;
+            t.classList.toggle('is-on', on);
+            t.setAttribute('aria-selected', on);
+        });
     }
 
     // ── Toggle Group 2 auto ↔ manual ─────────────────────────────────────────
@@ -697,16 +706,19 @@
 
             localStorage.setItem('model_proj', JSON.stringify(projData));
             localStorage.setItem('model_drivers', JSON.stringify(caseVals));
-            // The model page owns which case is on screen from here on, and rewrites
-            // dcf_input when it changes — so the DCF always values the case shown.
-            localStorage.setItem('model_case', 'base');
+            // Carry the case that was on screen through to the model and DCF pages —
+            // running from the Worst tab and landing on Base would look like the run
+            // ignored the tab. All three pages read this one key.
+            const shown = (projData.cases && projData.cases[caseNow]) ? caseNow : 'base';
+            const sel   = projData.cases ? projData.cases[shown] : projData;
+            localStorage.setItem('model_case', shown);
             localStorage.setItem('dcf_input', JSON.stringify({
                 ticker:       histData.ticker,
                 company_name: histData.company_name,
                 stock_price:  histData.stock_price,
-                case:         'base',
-                ufcf:         projData.ufcf,
-                proj_years:   projData.income_statement.map(y => y.date.slice(0, 4)),
+                case:         shown,
+                ufcf:         sel.ufcf,
+                proj_years:   sel.income_statement.map(y => y.date.slice(0, 4)),
             }));
 
             window.location.href = 'model.html';
