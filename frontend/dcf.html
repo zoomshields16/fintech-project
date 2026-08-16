@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=19">
+    <link rel="stylesheet" href="theme.css?v=20">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -314,16 +314,16 @@
             font-weight: 400; text-align: center;
             border-right: 1px solid var(--ink) !important;    /* axis rule */
         }
-        .sens-table th:first-child {
-            text-align: center; font-weight: 700;
-            border-right: 1px solid var(--ink) !important;
-        }
+        /* No vertical rule in the header row — the axis rule starts below it. */
+        .sens-table th:first-child { text-align: center; font-weight: 700; }
 
-        /* The live case: base WACC across, base growth down, and the cell where they
-           meet. Bold only — matches how the model page marks its own middle. */
-        .sens-table .base-row,
-        .sens-table .base-col  { font-weight: 700; }
-        .sens-table .highlight { font-weight: 800; }
+        /* Three cells carry bold, not a row and a column: the figure the parameters
+           actually produced, and the two axis labels that locate it. Bolding the
+           whole row and column drew a cross through the grid, which reads as four
+           highlighted arms rather than one number. */
+        .sens-table th.base-col           { font-weight: 700; }  /* the growth rate */
+        .sens-table td.row-label.base-row { font-weight: 700; }  /* the WACC */
+        .sens-table .highlight            { font-weight: 800; }  /* where they meet */
 
         /* Direction, on the premium grid alone. */
         .sens-table .up   { color: var(--green); }
