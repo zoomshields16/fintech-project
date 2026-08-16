@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=11">
+    <link rel="stylesheet" href="theme.css?v=12">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -71,11 +71,14 @@
            its content instead, and the stepper is drawn rather than native: the
            browser's own spin buttons are a few pixels tall and cannot be resized
            reliably, which is what made them so hard to hit. */
-        /* All seven parameters on one row across the full width; auto-fit reflows
-           them rather than letting a label crush its input on a narrow screen. */
+        /* Four across, so the seven parameters fall 4 + 3. justify-content: start
+           packs the columns left instead of spreading them across the full measure,
+           which is what keeps the second row's three sitting directly under the
+           first row's first three. */
         .wacc-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
-            gap: 16px 20px;
+            display: grid; grid-template-columns: repeat(4, minmax(150px, 215px));
+            justify-content: start;
+            gap: 18px 22px;
         }
         .wacc-field label {
             display: block; font-size: 12px; color: var(--muted);
@@ -123,7 +126,6 @@
         .num .spin .up::before   { border-bottom: 6px solid currentColor; }
         .num .spin .down::before { border-top: 6px solid currentColor; }
 
-        .run-dcf-btn { margin-top: 20px; }
 
         /* --- Case switcher — same control as the model page --- */
         .masthead .meta { display: flex; align-items: center; gap: 18px; }
@@ -280,6 +282,8 @@
         @media (max-width: 860px) {
             .stat-cards, .schedule-three-col { grid-template-columns: 1fr 1fr; }
             .sens-grid, .dcf-summary-row, .ir-two-col { grid-template-columns: 1fr; }
+            /* Four fixed columns need ~926px; below that they go two across. */
+            .wacc-grid { grid-template-columns: repeat(2, minmax(150px, 215px)); }
         }
     </style>
 </head>
@@ -295,7 +299,11 @@
             <span class="rail-sep"></span>
             <span class="rail-step here">DCF</span>
         </nav>
-        <div class="head-right"></div>
+        <div class="head-right">
+            <!-- Same slot the assumptions page puts "Run projection" in, so the
+                 action sits in the same place at every step of the workflow. -->
+            <button class="btn small" id="run-dcf-btn" hidden>Run DCF →</button>
+        </div>
     </div>
 </header>
 
@@ -396,7 +404,6 @@
                     </div>
                 </div>
             </div>
-                <button class="btn run-dcf-btn" id="run-dcf-btn">Run DCF</button>
             </div>
         </aside>
 
@@ -802,9 +809,12 @@
             alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Run DCF';
+            btn.textContent = 'Run DCF →';
             document.getElementById('loading').hidden = true;
             document.getElementById('main-content').style.display = 'block';
+            // The button lives in the site header now, so it is hidden until there
+            // is something to run against rather than sitting over the load screen.
+            btn.hidden = false;
         }
     }
 
