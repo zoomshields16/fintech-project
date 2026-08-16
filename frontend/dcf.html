@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=21">
+    <link rel="stylesheet" href="theme.css?v=22">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -304,6 +304,10 @@
             background: transparent; color: var(--ink); padding: 6px 7px;
             text-align: center; font-weight: 400;
             border-bottom: 1px solid var(--ink) !important;   /* the frame's top edge */
+            /* The generic th paints 1px of blue either side to close the sub-pixel
+               seams in the schedule tables' solid header band. There is no band here,
+               so that shadow was drawing blue strokes between the growth rates. */
+            box-shadow: none;
         }
         .sens-table tbody td:first-child   { border-left:   1px solid var(--ink) !important; }
         .sens-table tbody td:last-child    { border-right:  1px solid var(--ink) !important; }
