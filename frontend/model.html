@@ -95,8 +95,15 @@
            unbroken down the whole table. */
         tr.pct-row td {
             padding: 1px 10px 5px; font-size: 11px; color: var(--faint);
-            letter-spacing: 0.02em;
+            letter-spacing: 0.02em; font-weight: 600;
         }
+        /* No column banding behind these. The historical-column fill made the
+           percentage read as part of the table body instead of a note on the row
+           above it. The selector is long only to out-rank that fill rule further
+           down without reaching for !important. */
+        table:not(.sched) tr.pct-row td:not(:first-child) { background: transparent; }
+        tr.pct-row td.up   { color: var(--green); }
+        tr.pct-row td.down { color: var(--red); }
 
         /* ── Supporting schedules: Excel-style formatting ──
            Sub-section labels are plain bold text (no fill), driver inputs are
@@ -258,7 +265,19 @@
             const curr = y[key];
             // A zero or missing prior year has no meaningful percentage against it.
             const pct  = (prev != null && prev !== 0 && curr != null) ? (curr - prev) / prev : null;
-            return `<td${tdCls(y)}>${pct == null ? '' : (pct * 100).toFixed(0) + '%'}</td>`;
+            if (pct == null) return `<td${tdCls(y)}></td>`;
+
+            // Rounded before the sign is read, so a change that displays as 0% is not
+            // coloured as a move. String(-0) is "0" in JS, so a small negative prints
+            // "0%" rather than "-0%".
+            const whole   = Math.round(pct * 100);
+            const classes = [];
+            if (y.projected)   classes.push('proj');
+            if (y.isSeparator) classes.push('proj-sep');
+            if (whole > 0)     classes.push('up');
+            else if (whole < 0) classes.push('down');
+            const cls = classes.length ? ` class="${classes.join(' ')}"` : '';
+            return `<td${cls}>${whole}%</td>`;
         }).join('');
         return `<tr class="pct-row"><td></td>${cells}</tr>`;
     }
