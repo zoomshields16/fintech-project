@@ -276,12 +276,12 @@
             display: grid; grid-template-columns: 260px minmax(0, 1fr);
             gap: 28px; align-items: start; margin-bottom: 26px;
         }
-        .sch-h {
-            font-size: 11px; font-weight: 700; color: var(--ink);
-            text-transform: uppercase; letter-spacing: 0.07em;
-            margin: 0 0 6px; padding-bottom: 5px;
-            border-bottom: 1px solid var(--ink);
-        }
+        /* The forecast years and the row being discounted, full width above the rest.
+           Each year shares a centre axis with the figure beneath it, and the row
+           label sits close to the box rather than out at the page edge. */
+        .sch table.fc-grid { margin-bottom: 30px; }
+        .sch table.fc-grid td { text-align: center; }
+        .sch table.fc-grid td.lbl { text-align: right; padding-right: 12px; }
         /* Every block on this schedule shares one plain look: no fills, no internal
            rules, a single line under the heading and above the total. */
         .sch table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -293,9 +293,30 @@
         }
         .sch td:first-child, .sch th:first-child { text-align: left; padding-left: 0; }
         .sch td:last-child, .sch th:last-child   { padding-right: 0; }
-        .sch thead th { border-bottom: 1px solid var(--line) !important; font-weight: 700; }
+        /* Heading sits top-left over the grid, unruled — the years below it carry no
+           lines of their own; the UFCF box is the only frame in this block. */
         .sch tr.total td { border-top: 1px solid var(--ink) !important; font-weight: 700; }
-        .sch tr.rule  td { border-bottom: 1px solid var(--line) !important; }
+        /* Carson's DCF!43:72 idiom, web-side: one box per block, never per figure —
+           no Excel cell grid inside. The year row carries no box at all.
+           The base cell rule carries !important, so these must too. */
+        .sch table.boxed tbody { border: 1px solid var(--line); }
+        .sch table.boxed td:first-child { padding-left: 8px; }
+        .sch table.boxed td:last-child  { padding-right: 8px; }
+        .sch table.boxed caption { border-bottom: none; margin-bottom: 4px; padding-right: 8px; }
+        /* A column label rides on the heading line rather than taking a row of its
+           own — otherwise this block's box sits lower than its neighbour's. */
+        .sch caption > span { float: right; }
+        /* The row everything downstream discounts — its own box, label outside it. */
+        .sch tr.ufcf-row td.lbl { font-weight: 700; }
+        .sch tr.ufcf-row td.v {
+            background: var(--blue) !important; color: var(--on-blue); font-weight: 700;
+            padding-right: 8px !important;
+            border-top: 1px solid var(--blue-ink) !important;
+            border-bottom: 1px solid var(--blue-ink) !important;
+        }
+        .sch tr.ufcf-row td.v:nth-child(2) { border-left: 1px solid var(--blue-ink) !important; }
+        .sch tr.ufcf-row td.v:last-child   { border-right: 1px solid var(--blue-ink) !important; }
+        .sch tr.ufcf-row td.term { border-left-color: var(--blue-ink) !important; }
         .sch .muted   { color: var(--muted); }
         /* The column of forecast years, and the terminal column set apart from them. */
         .sch .term { border-left: 1px solid var(--line) !important; }
@@ -703,10 +724,6 @@
         const cells = (vals, cls = '') =>
             vals.map(v => `<td class="${cls}">${v}</td>`).join('');
 
-        // DCF!O47 — how many years of the terminal cash flow the terminal value is
-        // worth, (1 + WACC) / (WACC − g). Undefined if growth reaches the discount rate.
-        const impliedYears = (wacc > g) ? ((1 + wacc) / (wacc - g)).toFixed(1) : '–';
-
         // Terminal value lands in the final column only; the earlier years show a dash,
         // exactly as DCF!I57:L57 do.
         const tvRow    = years.map((_, i) => i === n - 1 ? fmtSch(r.terminal_value) : '–');
@@ -726,58 +743,49 @@
         <div class="sch">
         <p class="sch-units">Figures in $ millions unless stated.</p>
 
+        <table class="fc-grid">
+            <tbody>
+                <tr>
+                    <td></td>${cells(years)}
+                    <td class="term">Terminal value</td>
+                </tr>
+                <tr><td colspan="${n + 2}" style="padding:9px 0"></td></tr>
+                <tr class="ufcf-row">
+                    <td class="lbl">Unlevered free cash flow</td>${cells(ufcf.map(fmtSch), 'v')}
+                    <td class="v term">${fmtSch(r.terminal_cf)}</td>
+                </tr>
+            </tbody>
+        </table>
+
         <div class="sch-top">
-            <table>
+            <table class="boxed">
                 <caption>Assumptions</caption>
                 <tbody>
-                    <tr><td>First Year Forecast</td><td>${years[0]}</td></tr>
+                    <tr><td>WACC</td><td>${pct(wacc)}</td></tr>
                     <tr><td>Terminal Growth Rate</td><td>${pct(g)}</td></tr>
-                    <tr class="total"><td>WACC</td><td>${pct(wacc)}</td></tr>
                 </tbody>
             </table>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th colspan="${n}">Discrete Forecast (Fiscal Year End)</th>
-                        <th class="term">Term value</th>
-                    </tr>
-                </thead>
+            <table class="boxed">
+                <caption>Cash Flow Profiles</caption>
                 <tbody>
-                    <tr class="rule">
-                        <td></td>${cells(years)}
-                        <td class="term">Implied years</td>
-                    </tr>
-                    <tr class="rule">
-                        <td></td>${cells(years.map(y => `<span class="muted">12/31/${y}</span>`))}
-                        <td class="term">${impliedYears}</td>
-                    </tr>
-                    <tr><td colspan="${n + 2}" style="padding:6px 0"></td></tr>
-                    <tr>
-                        <td>Unlevered free cash flow</td>${cells(ufcf.map(fmtSch))}
-                        <td class="term">${fmtSch(r.terminal_cf)}</td>
-                    </tr>
-                    <tr><td colspan="${n + 2}" style="padding:6px 0"></td></tr>
-                    <tr><td colspan="${n + 2}" class="sch-h" style="padding:0 0 5px">Cash Flow Profiles</td></tr>
-                    <tr><td>Discrete Forecast</td>${cells(ufcf.map(fmtSch))}<td class="term"></td></tr>
-                    <tr><td>Terminal Value</td>${cells(tvRow)}<td class="term"></td></tr>
-                    <tr class="total"><td>Total Cash Flow</td>${cells(totalRow)}<td class="term"></td></tr>
+                    <tr><td>Discrete Forecast</td>${cells(ufcf.map(fmtSch))}</tr>
+                    <tr><td>Terminal Value</td>${cells(tvRow)}</tr>
+                    <tr class="total"><td>Total Cash Flow</td>${cells(totalRow)}</tr>
                 </tbody>
             </table>
         </div>
 
         <div class="dcf-summary-row">
-            <table>
-                <caption>Enterprise Value</caption>
-                <thead><tr><th></th><th></th><th>Weight</th></tr></thead>
+            <table class="boxed">
+                <caption>Enterprise Value<span>Weight</span></caption>
                 <tbody>
                     <tr><td>PV of Discrete</td><td>${fmtSch(r.pv_discrete)}</td><td>${weight(r.pv_discrete)}</td></tr>
                     <tr><td>PV of Terminal</td><td>${fmtSch(r.pv_terminal)}</td><td>${weight(r.pv_terminal)}</td></tr>
                     <tr class="total"><td>Enterprise Value</td><td>${fmtSch(ev)}</td><td>${ev ? '100%' : '–'}</td></tr>
                 </tbody>
             </table>
-            <table>
+            <table class="boxed">
                 <caption>Against the market</caption>
                 <tbody>
                     <tr><td>Equity value per share</td><td>${fmtPs(r.equity_value_per_share)}</td></tr>
@@ -788,7 +796,7 @@
         </div>
 
         <div class="dcf-summary-row">
-            <table>
+            <table class="boxed">
                 <caption>Equity Value</caption>
                 <tbody>
                     <tr><td>Enterprise Value</td><td>${fmtSch(ev)}</td></tr>
@@ -796,7 +804,7 @@
                     <tr class="total"><td>Equity Value</td><td>${fmtSch(r.equity_value)}</td></tr>
                 </tbody>
             </table>
-            <table>
+            <table class="boxed">
                 <caption>Equity Value per share</caption>
                 <tbody>
                     <tr><td>Equity Value</td><td>${fmtSch(r.equity_value)}</td></tr>
