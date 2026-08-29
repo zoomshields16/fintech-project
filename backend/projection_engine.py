@@ -43,7 +43,7 @@ def working_capital_days(is_history, bs_history, years=WC_HISTORY_YEARS):
     return {"ar_days": mean(ar_days), "inventory_days": mean(inv_days), "ap_days": mean(ap_days)}
 
 
-def project_working_capital(projected_is, wc_days):
+def project_working_capital(projected_is, wc_days, days_override=None):
     """Forecast AR / inventory / AP balances — Model!G173:G175.
 
     These are computed BEFORE the cash flow, because Carson derives the cash flow's
@@ -51,22 +51,116 @@ def project_working_capital(projected_is, wc_days):
     way around. Getting that direction backwards is what stopped the forecast years
     balancing: the cash flow moved cash for working capital every year while the
     balance sheet held the same accounts flat.
+
+    `days_override` lets a caller set the days per forecast year instead of taking the
+    historical average — {"ar_days": [...], "inventory_days": [...], "ap_days": [...]},
+    each a list of one value per year, and any entry left None falls back to the
+    average. This is not a bolt-on: Carson types over these cells himself, and
+    Model!G169:K169 is a literal 3 where he decided the history was not the guide.
+    Only the days are settable; the balances they drive stay derived, because that
+    relationship is the schedule.
     """
+    over = days_override or {}
+
+    def days_for(metric, i):
+        series = over.get(metric)
+        if series is not None and i < len(series) and series[i] is not None:
+            return series[i]
+        return wc_days[metric]
+
     return [
         {
-            "accounts_receivable": (wc_days["ar_days"] / DAYS_IN_PERIOD) * _s(yr.get("revenue")),
-            "inventory":           (wc_days["inventory_days"] / DAYS_IN_PERIOD) * _s(yr.get("cogs")),
-            "accounts_payable":    (wc_days["ap_days"] / DAYS_IN_PERIOD) * _s(yr.get("cogs")),
+            "accounts_receivable": (days_for("ar_days", i)        / DAYS_IN_PERIOD) * _s(yr.get("revenue")),
+            "inventory":           (days_for("inventory_days", i) / DAYS_IN_PERIOD) * _s(yr.get("cogs")),
+            "accounts_payable":    (days_for("ap_days", i)        / DAYS_IN_PERIOD) * _s(yr.get("cogs")),
         }
-        for yr in projected_is
+        for i, yr in enumerate(projected_is)
     ]
 
 
-def project_income_statement(last_actuals, drivers, base_year):
+# Carson's interest-bearing debt schedule — Model!B267:K291.
+#
+# The forecast does not hold interest expense flat at last year; it re-prices the
+# debt every year at the rate the company has actually been paying:
+#
+#     effective rate (per year) = -interest expense / total interest-bearing debt   Model!C279
+#     3 year average rate       = AVERAGE of the three most recent of those         Model!C281
+#     forecast interest expense = total interest-bearing debt * that average        Model!G291
+#
+# Two details are Carson's and are easy to get wrong:
+#   * the debt here is current portion of LTD + long-term debt and NOTHING ELSE
+#     (Model!C272). Capital leases are folded in only by the DCF's net-debt bridge
+#     (DCF!F121), never by the rate this schedule implies.
+#   * the average is over the three most recent years, not every year shown. His
+#     C281 is AVERAGE(D279:F279) across four displayed columns, so the oldest year
+#     is on the schedule to be read, not to be averaged.
+# See [Carson owns the finance logic].
+INTEREST_RATE_HISTORY_YEARS = 3
+
+
+def interest_bearing_debt(bs_year):
+    """Current portion of long-term debt + long-term debt — Model!C272."""
+    return _s(bs_year.get("current_ltd")) + _s(bs_year.get("long_term_debt"))
+
+
+def interest_debt_schedule(is_history, bs_history, display_years=5,
+                           average_years=INTEREST_RATE_HISTORY_YEARS):
+    """The historical half of Model!B267:F281, newest first in, oldest first out.
+
+    Returns the per-year rows the schedule displays plus the average rate the
+    forecast is priced at. A year carrying no interest-bearing debt gets a rate of
+    zero rather than an error, matching Carson's IFERROR(...,0), and that zero is
+    included in the average exactly as his AVERAGE would include it — a company
+    that has paid down its debt should forecast a low rate, not skip the year.
+    """
+    rows = []
+    for is_yr, bs_yr in list(zip(is_history, bs_history))[:display_years]:
+        debt = interest_bearing_debt(bs_yr)
+        # Our income statements carry interest expense as a positive cost that the
+        # pretax line subtracts; Carson's carries it negative and adds. Same figure,
+        # opposite sign, so the rate is a plain ratio here and his has the minus.
+        expense = _s(is_yr.get("interest_expense"))
+        rows.append({
+            "year":            (is_yr.get("date") or "")[:4],
+            "current_ltd":     _s(bs_yr.get("current_ltd")),
+            "long_term_debt":  _s(bs_yr.get("long_term_debt")),
+            "total_debt":      debt,
+            "interest_expense": expense,
+            "effective_rate":  (expense / debt) if debt else 0.0,
+        })
+
+    recent = [r["effective_rate"] for r in rows[:average_years]]
+    average_rate = sum(recent) / len(recent) if recent else 0.0
+
+    rows.reverse()          # oldest first, the way the schedule reads
+    return {"history": rows, "average_rate": average_rate,
+            "average_years": len(recent)}
+
+
+def project_interest_expense(last_bs_actuals, average_rate, periods=5):
+    """Model!G285:K291 — the debt is held flat at the last actual year (Model!G111
+    and G115 both point back at the prior column), so every forecast year is priced
+    on the same balance at the same rate. Positive, to our sign convention.
+    """
+    current_ltd = _s(last_bs_actuals.get("current_ltd"))
+    lt_debt     = _s(last_bs_actuals.get("long_term_debt"))
+    debt        = current_ltd + lt_debt
+    return [{"current_ltd": current_ltd, "long_term_debt": lt_debt,
+             "total_debt": debt, "rate": average_rate,
+             "interest_expense": debt * average_rate} for _ in range(periods)]
+
+
+def project_income_statement(last_actuals, drivers, base_year,
+                             interest_expense_schedule=None):
     """
     Group 1 drivers (per-year lists): revenue_growth, cogs_pct, sga_pct
     Group 2 drivers (single floats, optional): rnd_pct, tax_rate
     Falls back to last actual year values when Group 2 drivers are absent.
+
+    `interest_expense_schedule` is the output of project_interest_expense — one
+    entry per forecast year. Given it, interest expense is re-priced off the debt
+    schedule the way Model!G41 pulls G291; without it the line is held at last
+    actual, which is what every caller did before the schedule existed.
     """
     # Group 1
     revenue_growth = drivers["revenue_growth"]
@@ -98,7 +192,10 @@ def project_income_statement(last_actuals, drivers, base_year):
         rnd          = (revenue * rnd_pct[i]) if rnd_pct is not None else rnd_held
         total_opex   = sga + rnd + other_opex
         operating_income = gross_profit - total_opex
-        pretax_income    = operating_income + interest_income - interest_expense + other_income
+        # Model!G41 = G291: the forecast pays the rate its own debt schedule implies.
+        interest_cost = (interest_expense_schedule[i]["interest_expense"]
+                         if interest_expense_schedule else interest_expense)
+        pretax_income    = operating_income + interest_income - interest_cost + other_income
         effective_tax    = tax_rate_input[i] if tax_rate_input is not None else fallback_tax
         income_tax       = pretax_income * effective_tax
         net_income       = pretax_income - income_tax
@@ -115,7 +212,7 @@ def project_income_statement(last_actuals, drivers, base_year):
             "total_opex":       total_opex,
             "operating_income": operating_income,
             "interest_income":  interest_income,
-            "interest_expense": interest_expense,
+            "interest_expense": interest_cost,
             "other_income":     other_income,
             "pretax_income":    pretax_income,
             "income_tax":       income_tax,

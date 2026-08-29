@@ -26,6 +26,13 @@
     --blue-ink:   #3d5a7a;   /* text, rules, and fills that carry white — 6.7:1 */
     --blue-d:     #2c4460;   /* pressed / hover on --blue-ink */
     --blue-mid:   #8ba4c4;
+    /* The modelling convention: a figure that is hard-coded rather than computed is
+       blue. --blue-ink is the wrong tool for it — at chroma 61 it reads as grey-blue
+       beside black figures, which is fine for a rule or a heading and useless as a
+       signal in a column of numbers. This is the same hue (212 degrees, so it stays in
+       the family) taken to chroma 151, where the eye reads "blue" immediately. 5.7:1
+       on --card, and 3.0:1 against --ink so it separates from the figures around it. */
+    --blue-input: #2166b8;
     /* The column fills are semi-transparent rather than flat light blues, so they
        read as a wash over whatever is behind them instead of a painted block. At
        ~5% the historical/projected split is still legible but stops competing with

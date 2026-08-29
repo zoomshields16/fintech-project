@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=26">
+    <link rel="stylesheet" href="theme.css?v=27">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -107,42 +107,12 @@
            carry the distinction on its own, hence the darker line. */
         tr.subtotal td       { border-top: 1px solid #b9b1a0; }
         tr.check-row td      { font-weight: 600; border-top: 2px solid var(--blue-ink); color: var(--blue-ink); }
-        tr.section-header td {
-            background: var(--paper-2); color: var(--blue-ink);
-            font-weight: 700; padding: 6px 12px;
-            font-size: 12px; letter-spacing: 0.04em;
-            font-family: var(--font);
-        }
-        tr.sub-header td {
-            /* Was a hardcoded slate that belonged to the old navy palette. */
-            background: #f7f5ef; color: var(--blue-d);
-            font-weight: 600; padding: 5px 12px; font-size: 12px;
-            font-family: var(--font);
-        }
-        /* Carson's percent-change rows. Deliberately quiet — they annotate the
-           subtotal above them, so they must not read as another line item. The
-           column banding is left alone so the historical/projected split stays
-           unbroken down the whole table. */
-        /* These sit on the page background with no cell borders, so they float clear
-           of the table rather than reading as another row in it — the same treatment
-           section-gap already gets. */
-        tr.pct-row td {
-            padding: 3px 10px 6px; font-size: 11px; color: var(--faint);
-            letter-spacing: 0.02em; font-weight: 600;
-            background: var(--paper);
-            /* `hidden`, not `none`. With border-collapse the table draws one shared
-               border per edge, and `none` is the LOWEST priority in that contest —
-               so the table's own outer frame still painted a line at each end of the
-               row. `hidden` is the highest priority and suppresses the segment
-               outright, which is what actually lifts the row off the table. */
-            border: hidden;
-        }
-        /* Repeated with a longer selector purely to out-rank the historical-column
-           fill further down, which is (0,3,2) and would otherwise win. */
-        table:not(.sched) tr.pct-row td:not(:first-child) { background: var(--paper); }
-        tr.pct-row td.up   { color: var(--green); }
-        tr.pct-row td.down { color: var(--red); }
-
+        /* Modelling convention: a forecast figure the model never touches — held flat at
+           the last actual year — is blue, the way a hard-coded input is blue in a
+           spreadsheet. Anything black in a projected column is something the model
+           computed: a roll-forward, a driver, or a subtotal. Historical columns are all
+           actuals, so the colour would say nothing there and is not applied. */
+        tr.hardcoded td.proj { color: var(--blue-input); }
         /* ── Supporting schedules: Excel-style formatting ──
            Sub-section labels are plain bold text (no fill), driver inputs are
            boxed, and totals get the accounting top-rule + double underline. */
@@ -178,6 +148,52 @@
         .sched tr.sched-total td:not(:first-child) {
             border-top: 1.5px solid var(--ink);
             border-bottom: 3px double var(--ink);
+        }
+
+        /* One box around a GROUP of rows, not around each row in it. boxed-hist puts a
+           line above and below every row it touches, which is right for a lone driver
+           row but turns a stack of three into a grid of cells. These carry the sides
+           on every row of the group and the top and bottom only on its first and last
+           — the same idea as box-top/boxed/box-bottom, drawn over one half of the year
+           axis instead of all of it. */
+        .sched tr.grp-hist td:nth-child(2)          { border-left: 1.5px solid var(--ink); }
+        .sched tr.grp-hist td:not(.proj) + td.proj  { border-left: 1.5px solid var(--ink); }
+        .sched tr.grp-hist td:last-child:not(.proj) { border-right: 1.5px solid var(--ink); }
+        .sched tr.grp-hist-top    td:not(:first-child):not(.proj) { border-top: 1.5px solid var(--ink); }
+        .sched tr.grp-hist-bottom td:not(:first-child):not(.proj) { border-bottom: 1.5px solid var(--ink); }
+
+        .sched tr.grp-proj td:not(.proj) + td.proj { border-left: 1.5px solid var(--ink); }
+        .sched tr.grp-proj td:last-child.proj      { border-right: 1.5px solid var(--ink); }
+        .sched tr.grp-proj-top    td.proj { border-top: 1.5px solid var(--ink); }
+        .sched tr.grp-proj-bottom td.proj { border-bottom: 1.5px solid var(--ink); }
+
+        /* The accounting rule above a total that sits INSIDE a box — a hairline, so it
+           reads as a subtotal rather than as the edge of another box. */
+        .sched tr.rule-hist td:not(:first-child):not(.proj) { border-top: 1px solid var(--ink); }
+        .sched tr.rule-proj td.proj                          { border-top: 1px solid var(--ink); }
+
+        /* Overrides avg-row's rule + double underline, which reads as a total; Carson
+           draws this one as a box around the figure. */
+        .sched tr.avg-box td:nth-child(2) { border: 1.5px solid var(--ink); }
+        /* One unbroken ground across the whole schedule, with the boxes doing all the
+           separating. The page-wide section-gap band paints the darker paper colour to
+           split a long statement into parts; here the blocks are already boxed, so that
+           band reads as stripes behind them instead. Scoped, because every other table
+           on the page still wants the band.
+
+           `border: none`, NOT the `hidden` the base rule uses. Under border-collapse the
+           two are not interchangeable: `hidden` wins every conflict, so a gap row sitting
+           above a boxed block deletes that block's top edge, and the one below it deletes
+           the bottom — the box renders as two bare verticals. `none` loses every conflict
+           instead, which is what lets the neighbouring block draw its own edge. */
+        .sched.sched-plain tr.section-gap td { background: var(--card); border: none; }
+        /* The dotted rule Carson uses to split a schedule's actuals from its forecast.
+           Its own row, with a plain gap above it, so the only border it has to win
+           against is that gap's `none` — dotted loses to solid in collapse resolution,
+           so putting it against a boxed row would silently render it solid. */
+        .sched.sched-plain tr.split-row td {
+            border: none; border-top: 1px dotted var(--rule-soft, #b9b3a5);
+            padding: 0 0 11px;
         }
 
         /* Historical (actual) columns carry the light tint; projected stay plain.
@@ -263,12 +279,19 @@
     function fmtPct(val) {
         return val != null ? (val * 100).toFixed(1) + '%' : '—';
     }
+    // Interest rates get a second decimal — Carson's schedule reads 5.40% and 14.43%,
+    // and at one decimal two years that differ by 12bp print as the same number.
+    function fmtRate(val) {
+        return val != null ? (val * 100).toFixed(2) + '%' : '—';
+    }
 
     // NOTE: with table-layout: fixed, a colspan larger than the real column
     // count expands the grid and crushes the year columns — so gap() must
     // span exactly the number of columns on the page (set once per render).
     let gapCols = 11;
     function gap() { return `<tr class="section-gap"><td colspan="${gapCols}"></td></tr>`; }
+    // Dotted full-width rule — where a schedule stops reporting actuals and starts forecasting.
+    function splitRow() { return `<tr class="section-gap split-row"><td colspan="${gapCols}"></td></tr>`; }
 
     function tdCls(y) {
         if (!y.projected) return '';
@@ -328,11 +351,19 @@
             `<td${tdCls(y)}>${y.projected ? '' : formatter(y[key])}</td>`).join('');
         return `<tr${cls}><td>${label}</td>${cells}</tr>`;
     }
+    // Fills projected columns only; historical columns stay blank. The mirror of
+    // histRow, for the forecast half of a schedule that shows both (Model!G285:K291).
+    function projRow(label, key, allYears, formatter, rowCls) {
+        const cls   = rowCls ? ` class="${rowCls}"` : '';
+        const cells = allYears.map(y =>
+            `<td${tdCls(y)}>${y.projected ? formatter(y[key]) : ''}</td>`).join('');
+        return `<tr${cls}><td>${label}</td>${cells}</tr>`;
+    }
     // Single value shown in the first data column only (e.g. "average 3 years").
-    function avgRow(label, value, allYears, formatter) {
+    function avgRow(label, value, allYears, formatter, rowCls) {
         const cells = allYears.map((y, i) =>
             `<td${tdCls(y)}>${i === 0 ? formatter(value) : ''}</td>`).join('');
-        return `<tr class="avg-row"><td>${label}</td>${cells}</tr>`;
+        return `<tr class="avg-row${rowCls ? ' ' + rowCls : ''}"><td>${label}</td>${cells}</tr>`;
     }
 
     function buildTable(headerLabel, allYears, bodyHtml) {
@@ -357,7 +388,7 @@
     // fullYearCount lets a schedule show fewer year columns than the rest of the
     // page while keeping each column the same width — the table ends early and
     // leaves blank space to the right instead of stretching to fill the row.
-    function buildScheduleTable(headerLabel, allYears, bodyHtml, fullYearCount) {
+    function buildScheduleTable(headerLabel, allYears, bodyHtml, fullYearCount, tableCls) {
         const total = fullYearCount || allYears.length;
         const widthStyle = total !== allYears.length
             ? ` style="width: calc(250px + (100% - 250px) * ${allYears.length} / ${total});"`
@@ -369,7 +400,7 @@
         }).join('');
         return `
             <div class="table-wrap">
-                <table class="sched"${widthStyle}>
+                <table class="sched${tableCls ? ' ' + tableCls : ''}"${widthStyle}>
                     <thead><tr><th>${headerLabel}</th>${headerCells}</tr></thead>
                     <tbody>${bodyHtml}</tbody>
                 </table>
@@ -382,6 +413,34 @@
     }
 
     // ── Supporting Schedules ──
+    // Carson's interest-bearing debt schedule (Model!B267:K291). The figures come
+    // down from the API already computed — the rate this schedule implies is what
+    // prices the forecast's interest expense, so the page reads it rather than
+    // deriving a second opinion of its own. All this does is line the API's rows up
+    // with the year columns already on screen.
+    function interestYears(isAll) {
+        const sch = projData && projData.interest_schedule;
+        if (!sch) return null;
+        const byYear = r => [String(r.year), r];
+        const hist = Object.fromEntries(sch.history.map(byYear));
+        const fcst = Object.fromEntries(sch.forecast.map(byYear));
+        return isAll.map(y => {
+            const key = String(y.date).slice(0, 4);
+            const r   = (y.projected ? fcst[key] : hist[key]) || {};
+            return {
+                date: y.date, projected: y.projected, isSeparator: y.isSeparator,
+                current_ltd:    r.current_ltd,
+                long_term_debt: r.long_term_debt,
+                total_debt:     r.total_debt,
+                // Carson writes the cost as a negative; our statements carry it as a
+                // positive the pretax line subtracts. Same figure, his sign.
+                interest_expense: r.interest_expense != null ? -r.interest_expense : null,
+                effective_rate: r.effective_rate,
+                average_rate:   sch.average_rate,
+            };
+        });
+    }
+
     function computeSchedules(isAll, cfAll, bsAll) {
         const wcYears = isAll.map((isYr, i) => {
             const bs   = bsAll[i];
@@ -593,15 +652,15 @@
             ${row('Accounts Receivable',                    'accounts_receivable',    bsAll, fmt)}
             ${row('Inventory',                              'inventory',              bsAll, fmt)}
             ${zeroRow('Prepaid and Other Current Assets',   bsAll)}
-            ${row('Other Current Assets',                   'other_current',          bsAll, fmt)}
+            ${row('Other Current Assets',                   'other_current',          bsAll, fmt, 'hardcoded')}
             ${row('Total Current Assets',                   'total_current_assets',   bsAll, fmt, true)}
             ${gap()}
             ${subHeader('Non-Current Assets', bsAll)}
             ${row('Property, Plant and Equipment (net)',    'ppe_net',                bsAll, fmt)}
-            ${row('Goodwill',                               'goodwill',               bsAll, fmt)}
-            ${row('Intangible Assets',                      'intangible_assets',      bsAll, fmt)}
-            ${row('Long-Term Investments',                  'lt_investments',         bsAll, fmt)}
-            ${row('Other Non-Current Assets',               'other_noncurrent',       bsAll, fmt)}
+            ${row('Goodwill',                               'goodwill',               bsAll, fmt, 'hardcoded')}
+            ${row('Intangible Assets',                      'intangible_assets',      bsAll, fmt, 'hardcoded')}
+            ${row('Long-Term Investments',                  'lt_investments',         bsAll, fmt, 'hardcoded')}
+            ${row('Other Non-Current Assets',               'other_noncurrent',       bsAll, fmt, 'hardcoded')}
             ${row('Total Non-Current Assets',               'total_noncurrent_assets',bsAll, fmt, true)}
             ${gap()}
             ${row('Total Assets',                           'total_assets',           bsAll, fmt, true)}
@@ -609,25 +668,25 @@
             ${sectionHeader("LIABILITIES AND SHAREHOLDERS' EQUITY", bsAll)}
             ${subHeader('Current Liabilities', bsAll)}
             ${row('Accounts Payable',                       'accounts_payable',       bsAll, fmt)}
-            ${row('Accrued Expenses',                       'accrued_expenses',       bsAll, fmt)}
-            ${row('Current Portion of Long-Term Debt',      'current_ltd',            bsAll, fmt)}
-            ${row('Other Current Liabilities',              'other_current_liab',     bsAll, fmt)}
+            ${row('Accrued Expenses',                       'accrued_expenses',       bsAll, fmt, 'hardcoded')}
+            ${row('Current Portion of Long-Term Debt',      'current_ltd',            bsAll, fmt, 'hardcoded')}
+            ${row('Other Current Liabilities',              'other_current_liab',     bsAll, fmt, 'hardcoded')}
             ${row('Total Current Liabilities',              'total_current_liab',     bsAll, fmt, true)}
             ${gap()}
             ${subHeader('Non-Current Liabilities', bsAll)}
-            ${row('Long-Term Debt',                         'long_term_debt',         bsAll, fmt)}
-            ${row('Deferred Tax Liabilities',               'deferred_tax_liab',      bsAll, fmt)}
-            ${row('Other Long-Term Liabilities',            'other_lt_liab',          bsAll, fmt)}
+            ${row('Long-Term Debt',                         'long_term_debt',         bsAll, fmt, 'hardcoded')}
+            ${row('Deferred Tax Liabilities',               'deferred_tax_liab',      bsAll, fmt, 'hardcoded')}
+            ${row('Other Long-Term Liabilities',            'other_lt_liab',          bsAll, fmt, 'hardcoded')}
             ${row('Total Non-Current Liabilities',          'total_noncurrent_liab',  bsAll, fmt, true)}
             ${gap()}
             ${row('Total Liabilities',                      'total_liabilities',      bsAll, fmt, true)}
             ${gap()}
             ${subHeader("Shareholders' Equity", bsAll)}
-            ${row('Common Stock',                           'common_stock',           bsAll, fmt)}
-            ${row('Additional Paid-In Capital',             'apic',                   bsAll, fmt)}
+            ${row('Common Stock',                           'common_stock',           bsAll, fmt, 'hardcoded')}
+            ${row('Additional Paid-In Capital',             'apic',                   bsAll, fmt, 'hardcoded')}
             ${row('Retained Earnings',                      'retained_earnings',      bsAll, fmt)}
             ${row('Treasury Stock',                         'treasury_stock',         bsAll, fmt)}
-            ${row('Accumulated OCI',                        'aoci',                   bsAll, fmt)}
+            ${row('Accumulated OCI',                        'aoci',                   bsAll, fmt, 'hardcoded')}
             ${row('Other Equity',                           'other_equity',           bsAll, fmt)}
             ${row("Total Shareholders' Equity",             'total_equity',           bsAll, fmt, true)}
             ${gap()}
@@ -692,6 +751,35 @@
             ${avgRow('average 3 years', depAvg3, depYears, fmtPct)}
         `;
 
+        // ── 4 · Interest-Bearing Debt (Model!B267:K291) ──
+        // Carson's block order, top to bottom: the debt build, the debt against the
+        // interest it cost, the rate that implies, the three-year average of it, then
+        // the same build for the forecast priced at that average.
+        const intYears = interestYears(isAll);
+        const intAvg   = intYears ? intYears[0].average_rate : null;
+        const intBody  = intYears ? `
+            ${gap()}
+            ${histRow('Current Portion of Long-Term Debt', 'current_ltd',    intYears, fmt, 'grp-hist grp-hist-top')}
+            ${histRow('Long-Term Debt',                    'long_term_debt', intYears, fmt, 'grp-hist')}
+            ${histRow('Total Interest-Bearing Debt',       'total_debt',     intYears, fmt, 'grp-hist grp-hist-bottom rule-hist bold-vals')}
+            ${gap()}
+            ${histRow('Total Interest-Bearing Debt',       'total_debt',       intYears, fmt, 'grp-hist grp-hist-top')}
+            ${histRow('Interest Expense',                  'interest_expense', intYears, fmt, 'grp-hist grp-hist-bottom')}
+            ${gap()}
+            ${histRow('Effective Interest Rate (Interest ÷ Debt)', 'effective_rate', intYears, fmtRate, 'grp-hist grp-hist-top grp-hist-bottom')}
+            ${gap()}
+            ${avgRow('3 Year Average Rate', intAvg, intYears, fmtRate, 'avg-box bold-vals')}
+            ${gap()}
+            ${splitRow()}
+            ${projRow('Current Portion of Long-Term Debt', 'current_ltd',    intYears, fmt, 'grp-proj grp-proj-top')}
+            ${projRow('Long-Term Debt',                    'long_term_debt', intYears, fmt, 'grp-proj')}
+            ${projRow('Total Interest-Bearing Debt',       'total_debt',     intYears, fmt, 'grp-proj grp-proj-bottom rule-proj bold-vals')}
+            ${gap()}
+            ${projRow('Interest-Bearing Debt',             'total_debt',     intYears, fmt, 'grp-proj grp-proj-top')}
+            ${projRow('3 Year Average Rate',               'average_rate',   intYears, fmtRate, 'grp-proj bold-vals')}
+            ${projRow('Interest Expense (Debt × Rate)',    'interest_expense', intYears, fmt, 'grp-proj grp-proj-bottom rule-proj')}
+        ` : '';
+
         const ufcfBody = `
             ${gap()}
             ${row('EBIT × (1 − Tax Rate)',              'nopat',       ufcfYears, fmt, 'boxed box-top')}
@@ -735,7 +823,10 @@
             <p class="sched-label">3 · Depreciation Driver</p>
             ${buildScheduleTable('Depreciation Driver', depYears, depBody, gapCols - 1)}
 
-            <p class="sched-label">4 · UFCF Build-Up</p>
+            ${intBody ? `<p class="sched-label">4 · Interest-Bearing Debt</p>
+            ${buildScheduleTable('Interest-Bearing Debt', intYears, intBody, null, 'sched-plain')}` : ''}
+
+            <p class="sched-label">${intBody ? '5' : '4'} · UFCF Build-Up</p>
             ${buildScheduleTable('UFCF', ufcfYears, ufcfBody)}
         `;
 

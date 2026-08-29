@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=26">
+    <link rel="stylesheet" href="theme.css?v=27">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -352,6 +352,61 @@
                     <input class="g2-in" id="g2-buyback-4" disabled>
                 </div>
             </div>
+
+            <p class="sub" style="margin:18px 0 2px">Working capital. Auto is the
+               three-year average of what the company has actually held; these are days,
+               not percentages.</p>
+
+            <div class="g2-block">
+                <div class="g2-name">Accounts receivable days</div>
+                <div class="g2-grid" id="g2-ardays-auto">
+                    <div></div><div class="g2-sub">Auto</div>
+                    <div class="g2-val" id="g2-ardays-a0"></div><div class="g2-val" id="g2-ardays-a1"></div>
+                    <div class="g2-val" id="g2-ardays-a2"></div><div class="g2-val" id="g2-ardays-a3"></div>
+                    <div class="g2-val" id="g2-ardays-a4"></div>
+                </div>
+                <div class="g2-grid" id="g2-ardays-man">
+                    <label class="switch"><input type="checkbox" id="g2-ardays-on" onchange="toggleG2('ardays')"><span class="knob"></span>Manual</label>
+                    <div class="g2-sub">Override</div>
+                    <input class="g2-in" id="g2-ardays-0" disabled><input class="g2-in" id="g2-ardays-1" disabled>
+                    <input class="g2-in" id="g2-ardays-2" disabled><input class="g2-in" id="g2-ardays-3" disabled>
+                    <input class="g2-in" id="g2-ardays-4" disabled>
+                </div>
+            </div>
+
+            <div class="g2-block">
+                <div class="g2-name">Inventory days</div>
+                <div class="g2-grid" id="g2-invdays-auto">
+                    <div></div><div class="g2-sub">Auto</div>
+                    <div class="g2-val" id="g2-invdays-a0"></div><div class="g2-val" id="g2-invdays-a1"></div>
+                    <div class="g2-val" id="g2-invdays-a2"></div><div class="g2-val" id="g2-invdays-a3"></div>
+                    <div class="g2-val" id="g2-invdays-a4"></div>
+                </div>
+                <div class="g2-grid" id="g2-invdays-man">
+                    <label class="switch"><input type="checkbox" id="g2-invdays-on" onchange="toggleG2('invdays')"><span class="knob"></span>Manual</label>
+                    <div class="g2-sub">Override</div>
+                    <input class="g2-in" id="g2-invdays-0" disabled><input class="g2-in" id="g2-invdays-1" disabled>
+                    <input class="g2-in" id="g2-invdays-2" disabled><input class="g2-in" id="g2-invdays-3" disabled>
+                    <input class="g2-in" id="g2-invdays-4" disabled>
+                </div>
+            </div>
+
+            <div class="g2-block">
+                <div class="g2-name">Accounts payable days</div>
+                <div class="g2-grid" id="g2-apdays-auto">
+                    <div></div><div class="g2-sub">Auto</div>
+                    <div class="g2-val" id="g2-apdays-a0"></div><div class="g2-val" id="g2-apdays-a1"></div>
+                    <div class="g2-val" id="g2-apdays-a2"></div><div class="g2-val" id="g2-apdays-a3"></div>
+                    <div class="g2-val" id="g2-apdays-a4"></div>
+                </div>
+                <div class="g2-grid" id="g2-apdays-man">
+                    <label class="switch"><input type="checkbox" id="g2-apdays-on" onchange="toggleG2('apdays')"><span class="knob"></span>Manual</label>
+                    <div class="g2-sub">Override</div>
+                    <input class="g2-in" id="g2-apdays-0" disabled><input class="g2-in" id="g2-apdays-1" disabled>
+                    <input class="g2-in" id="g2-apdays-2" disabled><input class="g2-in" id="g2-apdays-3" disabled>
+                    <input class="g2-in" id="g2-apdays-4" disabled>
+                </div>
+            </div>
         </section>
 
     </div>
@@ -458,6 +513,20 @@
                 inp.placeholder = val(autoVal);
             }
         });
+
+        // Working-capital days are a count, not a rate — no percent sign and no /100,
+        // which is the whole reason they read and write through their own pair of
+        // helpers rather than the percentage path above.
+        const days = v => v != null ? Math.round(v) : '—';
+        [['ardays', s.ar_days], ['invdays', s.inventory_days],
+         ['apdays', s.ap_days]].forEach(([key, autoVal]) => {
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`g2-${key}-a${i}`).textContent = days(autoVal);
+                const inp = document.getElementById(`g2-${key}-${i}`);
+                inp.value = '';
+                inp.placeholder = autoVal != null ? Math.round(autoVal) : '';
+            }
+        });
     }
 
     // Coming back from the model page must not throw away cases that were typed by
@@ -495,6 +564,20 @@
             const el = document.getElementById(`g2-${key}-a${i}`);
             el.classList.toggle('active', !isManual);
         }
+    }
+
+    // getG2Row's twin for rows whose unit is already the unit — days, not percent.
+    // Same Auto/Manual semantics, same blank-cell fallback; only the /100 is gone.
+    function getG2Days(key, autoVal) {
+        const isManual = document.getElementById(`g2-${key}-on`).checked;
+        const flat = () => autoVal != null ? [autoVal, autoVal, autoVal, autoVal, autoVal] : null;
+        if (!isManual) return flat();
+        const vals = Array.from({ length: 5 }, (_, i) => {
+            const v = parseFloat(document.getElementById(`g2-${key}-${i}`).value);
+            return isNaN(v) || v < 0 ? null : v;
+        });
+        if (vals.every(v => v === null)) return flat();
+        return vals.map(v => v ?? autoVal ?? 0);
     }
 
     function getG2Row(key, autoVal) {
@@ -680,6 +763,9 @@
             tax_rate:       getG2Row('tax',     s.tax_rate),
             sbc_pct:        getG2Row('sbc',     s.sbc_pct),
             buyback_pct:    getG2Row('buyback', s.buyback_pct),
+            ar_days:        getG2Days('ardays',  s.ar_days),
+            inventory_days: getG2Days('invdays', s.inventory_days),
+            ap_days:        getG2Days('apdays',  s.ap_days),
         };
 
         const statusEl = document.getElementById('proj-status');

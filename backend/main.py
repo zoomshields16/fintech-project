@@ -14,8 +14,13 @@ from balance_sheet import (pull_bs_accounts, compute_bs_formula_lines, reconcile
                            compute_equity_rollforward)
 from projection_engine import (project_income_statement, project_cash_flow,
                                project_balance_sheet, project_working_capital,
-                               working_capital_days, WC_HISTORY_YEARS)
+                               working_capital_days, WC_HISTORY_YEARS,
+                               interest_debt_schedule, project_interest_expense)
 from dcf_engine import compute_wacc, compute_ufcf, run_dcf, sensitivity_tables
+
+# How many historical years the model page shows, and therefore how many the
+# supporting schedules are built across.
+SCHEDULE_HISTORY_YEARS = 5
 import pipeline_status
 from init_db import init_schema
 from universe import universe_symbols, EXCLUDED_TICKERS
@@ -272,6 +277,13 @@ def run_model(request: ModelRequest):
         "sbc_pct":     _avg_pct([y.get("stock_comp") for y in valid_cf], is_rev),
         "buyback_pct": _avg_pct([abs(y.get("stock_repurchased") or 0) for y in valid_cf], is_rev),
     }
+    # Working-capital days, so the Assumptions page can show what history implies before
+    # anyone types over it. Same three-year average the projection falls back to when no
+    # override is given, computed from the same helper, so Auto on that page and the
+    # engine's default can never drift apart. Newest first, matching the engine.
+    valid_bs = [y for y in bs_years if "error" not in y]
+    suggested_drivers.update(
+        working_capital_days(valid_is[:WC_HISTORY_YEARS], valid_bs[:WC_HISTORY_YEARS]))
 
     return {
         "ticker": ticker,
@@ -296,6 +308,13 @@ class Drivers(BaseModel):
     tax_rate:    Optional[List[float]] = None
     sbc_pct:     Optional[List[float]] = None
     buyback_pct: Optional[List[float]] = None
+    # Working-capital days, one value per forecast year. None = use the historical
+    # three-year average the engine computes. Group 2 rather than a case driver: days
+    # are a working-capital policy, not a scenario, so one set is shared across
+    # best/base/worst the way R&D and tax already are.
+    ar_days:        Optional[List[float]] = None
+    inventory_days: Optional[List[float]] = None
+    ap_days:        Optional[List[float]] = None
 
 
 class CaseDrivers(BaseModel):
@@ -338,6 +357,11 @@ def run_projection(request: ProjectionRequest):
         "tax_rate":       request.drivers.tax_rate,
         "sbc_pct":        request.drivers.sbc_pct,
         "buyback_pct":    request.drivers.buyback_pct,
+    }
+    wc_days_override = {
+        "ar_days":        request.drivers.ar_days,
+        "inventory_days": request.drivers.inventory_days,
+        "ap_days":        request.drivers.ap_days,
     }
 
     if request.cases:
@@ -388,18 +412,29 @@ def run_projection(request: ProjectionRequest):
     # derived from the change in these balances, the way Carson wires it, rather than
     # repeating the last actual year's movement forever. The days ratios are averaged
     # over recent history, so they need the mapped historical years, not just the last.
+    # The statements on the model page show five years, and the debt schedule is
+    # read against them, so history is mapped once at that depth and the
+    # working-capital days take the slice they need out of it.
     is_history = [pull_detail_accounts(r, is_records, ticker)
-                  for r in is_records[:WC_HISTORY_YEARS]]
+                  for r in is_records[:SCHEDULE_HISTORY_YEARS]]
     bs_history = [pull_bs_accounts(r, bs_records, ticker)
-                  for r in bs_records[:WC_HISTORY_YEARS]]
-    wc_days = working_capital_days(is_history, bs_history)
+                  for r in bs_records[:SCHEDULE_HISTORY_YEARS]]
+    wc_days = working_capital_days(is_history[:WC_HISTORY_YEARS],
+                                   bs_history[:WC_HISTORY_YEARS])
+
+    # Carson's interest-bearing debt schedule (Model!B267). It prices the forecast's
+    # interest expense, so it is built before the income statement, not after it.
+    debt_schedule  = interest_debt_schedule(is_history, bs_history,
+                                            display_years=SCHEDULE_HISTORY_YEARS)
+    interest_years = project_interest_expense(last_bs, debt_schedule["average_rate"])
 
     def project(driver_set):
         """One full three-statement forecast. Everything above this point — the fetch,
         the mapping, the working-capital days — is case-independent, so running three
         cases costs three passes of arithmetic and no extra API calls."""
-        proj_is = project_income_statement(last_is, driver_set, base_year)
-        proj_wc = project_working_capital(proj_is, wc_days)
+        proj_is = project_income_statement(last_is, driver_set, base_year,
+                                           interest_expense_schedule=interest_years)
+        proj_wc = project_working_capital(proj_is, wc_days, wc_days_override)
         proj_cf = project_cash_flow(proj_is, last_cf, driver_set,
                                     projected_wc=proj_wc, last_bs_actuals=last_bs)
         proj_bs = project_balance_sheet(proj_is, proj_cf, last_bs, projected_wc=proj_wc)
@@ -410,7 +445,18 @@ def run_projection(request: ProjectionRequest):
             "ufcf":             compute_ufcf(proj_is, proj_cf, proj_bs, last_bs),
         }
 
-    result = {"ticker": ticker}
+    result = {"ticker": ticker,
+              "wc_days_used": {
+                  m: [(wc_days_override[m][i] if wc_days_override[m] is not None
+                       and i < len(wc_days_override[m])
+                       and wc_days_override[m][i] is not None else wc_days[m])
+                      for i in range(5)]
+                  for m in ("ar_days", "inventory_days", "ap_days")},
+              "interest_schedule": {
+        **debt_schedule,
+        "forecast": [{**yr, "year": str(base_year + i + 1)}
+                     for i, yr in enumerate(interest_years)],
+    }}
 
     if not request.cases:
         result.update(project(drivers))
