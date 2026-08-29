@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css?v=26">
+    <link rel="stylesheet" href="theme.css?v=27">
     <style>
         /* main.shell needed to out-rank .shell's padding shorthand in theme.css */
         main.shell { padding-bottom: 140px; }
@@ -244,7 +244,6 @@
         tr.subtotal td { font-weight: 600; border-top: 1px solid #d8d2c4 !important; }
         tr.tv-row td   { background: var(--blue-tint); }
         tr.total-row td { font-weight: 700; background: var(--paper-2); color: var(--blue-ink); }
-        tr.wacc-final-row td { background: var(--blue); color: var(--on-blue); font-weight: 700; }
 
         /* --- WACC schedule 3-panel --- */
         .schedule-three-col {
@@ -264,6 +263,27 @@
             border-top: 1px solid var(--line) !important; padding-top: 8px;
         }
         .sched-divider { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
+
+        /* Carson's DCF!94:105 — the capital structure block and the WACC that comes
+           out of it, side by side rather than one full-width table. Both wear the
+           same panel dress as the three blocks above, so the schedule reads as one
+           set of boxes instead of panels-then-a-grid. The left block is wider only
+           because it carries two figure columns to the right block's one. */
+        .wacc-two-col {
+            display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+            gap: 32px; align-items: start;
+        }
+        /* Column captions for the block that has two figure columns; the panels
+           above need none, so this is scoped to the three-column variant. */
+        .panel-table.three-col td:nth-child(2) {
+            text-align: right; font-weight: 600; color: var(--blue-ink);
+        }
+        .panel-table tr.panel-head td,
+        .panel-table tr.panel-head td:last-child {
+            font-size: 10px; font-weight: 600; color: var(--faint);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 0 0 2px;
+        }
 
         /* --- DCF schedule ---
            Laid out to Carson's sheet (DCF!43:72): the assumptions beside the forecast
@@ -331,11 +351,6 @@
         @media (max-width: 900px) {
             .sch-top { grid-template-columns: 1fr; }
         }
-
-        /* --- Interest Rate schedule --- */
-        .ir-two-col { display: grid; grid-template-columns: 1fr 1.7fr; gap: 24px; }
-        .ir-note { margin-top: 10px; font-size: 12px; color: var(--muted); }
-        .ir-note strong { color: var(--blue-ink); }
 
         /* --- Sensitivity tables ---
            One per row, not two across. Each is a 5x5 matrix of whole figures in
@@ -422,7 +437,8 @@
         }
         @media (max-width: 860px) {
             .schedule-three-col { grid-template-columns: 1fr 1fr; }
-            .sens-grid, .dcf-summary-row, .ir-two-col { grid-template-columns: 1fr; }
+            .sens-grid, .dcf-summary-row,
+            .wacc-two-col { grid-template-columns: 1fr; }
             .wacc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
     </style>
@@ -589,12 +605,6 @@
                 <p class="card-title">WACC schedule</p>
                 <div id="wacc-schedule"></div>
             </div>
-
-            <!-- Schedule 3: Interest Rate Schedule -->
-            <div class="card">
-                <p class="card-title">Interest rate schedule</p>
-                <div id="ir-schedule"></div>
-            </div>
         </div>
     </div>
 </div>
@@ -683,21 +693,27 @@
             </div>
         </div>
         <hr class="sched-divider">
-        <table>
-            <thead>
-                <tr>
-                    <th>Capital Structure</th>
-                    <th>Amount</th>
-                    <th>Weight</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>Total Debt</td><td>${fmtM(wi.total_debt)}</td><td>${pct(wi.weight_debt)}</td></tr>
-                <tr><td>Market Capitalization</td><td>${fmtM(wi.market_cap)}</td><td>${pct(wi.weight_equity)}</td></tr>
-                <tr class="subtotal"><td>Total Capital</td><td>${fmtM(totalCap)}</td><td>100.00%</td></tr>
-                <tr class="wacc-final-row"><td>WACC</td><td></td><td>${pct(wi.wacc)}</td></tr>
-            </tbody>
-        </table>`;
+        <div class="wacc-two-col">
+            <div>
+                <div class="schedule-panel-title">Capital Structure</div>
+                <table class="panel-table three-col">
+                    <tr class="panel-head"><td></td><td>Amount</td><td>Weight</td></tr>
+                    <tr><td>Total Debt</td><td>${fmtB(wi.total_debt)}</td><td>${pct(wi.weight_debt)}</td></tr>
+                    <tr><td>Market Capitalization</td><td>${fmtB(wi.market_cap)}</td><td>${pct(wi.weight_equity)}</td></tr>
+                    <tr><td>Total Capital</td><td>${fmtB(totalCap)}</td><td>100.00%</td></tr>
+                </table>
+            </div>
+            <div>
+                <div class="schedule-panel-title">Current WACC</div>
+                <table class="panel-table">
+                    <tr><td>Cost of Equity</td><td>${pct(wi.cost_of_equity)}</td></tr>
+                    <tr><td>After-Tax Cost of Debt</td><td>${pct(wi.after_tax_cost_debt)}</td></tr>
+                    <tr><td>Weight of Equity</td><td>${pct(wi.weight_equity)}</td></tr>
+                    <tr><td>Weight of Debt</td><td>${pct(wi.weight_debt)}</td></tr>
+                    <tr><td>WACC</td><td>${pct(wi.wacc)}</td></tr>
+                </table>
+            </div>
+        </div>`;
     }
 
     // ─── Schedule 2: Discounted Cash Flows Schedule ──────────────────────────
@@ -817,53 +833,6 @@
         </div>`;
     }
 
-    // ─── Schedule 3: Interest Rate Schedule ──────────────────────────────────
-    function buildIrSchedule(r) {
-        const irs = r.interest_rate_schedule;
-        if (!irs) return '<p class="loading">Interest rate data not available.</p>';
-
-        const debtSection = `
-            <table>
-                <thead><tr><th>Interest-Bearing Debt</th><th>Amount</th></tr></thead>
-                <tbody>
-                    <tr><td>Current Portion of Long-Term Debt</td><td>${fmtM(irs.current_ltd)}</td></tr>
-                    <tr><td>Long-Term Debt (Loans)</td><td>${fmtM(irs.lt_debt)}</td></tr>
-                    <tr><td>LT Capital Lease Obligations</td><td>${fmtM(irs.lt_leases || 0)}</td></tr>
-                    <tr class="subtotal"><td>Total Interest-Bearing Debt</td><td>${fmtM(irs.total_debt)}</td></tr>
-                    <tr><td>(−) Cash &amp; Cash Equivalents</td><td>${fmtM(-irs.cash)}</td></tr>
-                    <tr class="subtotal"><td><strong>Net Debt</strong></td><td><strong>${fmtM(irs.net_debt)}</strong></td></tr>
-                </tbody>
-            </table>
-            <p class="ir-note">Pre-Tax Cost of Debt Used: <strong>${pct(irs.pre_tax_cost_debt_used)}</strong></p>`;
-
-        const histRows = [...(irs.history || [])].reverse().map(h => `
-            <tr>
-                <td>${h.year}</td>
-                <td>${fmtM(h.beginning_debt)}</td>
-                <td>${fmtM(h.ending_debt)}</td>
-                <td>${fmtM(h.avg_debt)}</td>
-                <td>${fmtM(h.interest_expense)}</td>
-                <td>${h.implied_rate != null ? pct(h.implied_rate) : '—'}</td>
-            </tr>`).join('');
-
-        const histSection = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Year</th>
-                        <th>Beg. Debt</th>
-                        <th>End. Debt</th>
-                        <th>Avg. Debt</th>
-                        <th>Interest Exp.</th>
-                        <th>Implied Rate</th>
-                    </tr>
-                </thead>
-                <tbody>${histRows || '<tr><td colspan="6">No historical data</td></tr>'}</tbody>
-            </table>`;
-
-        return `<div class="ir-two-col">${debtSection}${histSection}</div>`;
-    }
-
     // ─── Sensitivity Table Builder ────────────────────────────────────────────
     function buildSensTable(matrix, wacc_steps, tgr_steps, fmt_fn, base_wacc, base_tgr) {
         const tgrHeaders = tgr_steps.map(g => {
@@ -943,7 +912,6 @@
 
         document.getElementById('wacc-schedule').innerHTML = buildWaccSchedule(r);
         document.getElementById('dcf-schedule').innerHTML  = buildDcfSchedule(inputData, r);
-        document.getElementById('ir-schedule').innerHTML   = buildIrSchedule(r);
 
         const sens = r.sensitivity;
         const bw   = r.wacc_inputs.wacc;
