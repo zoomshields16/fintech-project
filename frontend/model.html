@@ -113,6 +113,42 @@
            computed: a roll-forward, a driver, or a subtotal. Historical columns are all
            actuals, so the colour would say nothing there and is not applied. */
         tr.hardcoded td.proj { color: var(--blue-input); }
+        tr.section-header td {
+            background: var(--paper-2); color: var(--blue-ink);
+            font-weight: 700; padding: 6px 12px;
+            font-size: 12px; letter-spacing: 0.04em;
+            font-family: var(--font);
+        }
+        tr.sub-header td {
+            /* Was a hardcoded slate that belonged to the old navy palette. */
+            background: #f7f5ef; color: var(--blue-d);
+            font-weight: 600; padding: 5px 12px; font-size: 12px;
+            font-family: var(--font);
+        }
+        /* Carson's percent-change rows. Deliberately quiet — they annotate the
+           subtotal above them, so they must not read as another line item. The
+           column banding is left alone so the historical/projected split stays
+           unbroken down the whole table. */
+        /* These sit on the page background with no cell borders, so they float clear
+           of the table rather than reading as another row in it — the same treatment
+           section-gap already gets. */
+        tr.pct-row td {
+            padding: 3px 10px 6px; font-size: 11px; color: var(--faint);
+            letter-spacing: 0.02em; font-weight: 600;
+            background: var(--paper);
+            /* `hidden`, not `none`. With border-collapse the table draws one shared
+               border per edge, and `none` is the LOWEST priority in that contest —
+               so the table's own outer frame still painted a line at each end of the
+               row. `hidden` is the highest priority and suppresses the segment
+               outright, which is what actually lifts the row off the table. */
+            border: hidden;
+        }
+        /* Repeated with a longer selector purely to out-rank the historical-column
+           fill further down, which is (0,3,2) and would otherwise win. */
+        table:not(.sched) tr.pct-row td:not(:first-child) { background: var(--paper); }
+        tr.pct-row td.up   { color: var(--green); }
+        tr.pct-row td.down { color: var(--red); }
+
         /* ── Supporting schedules: Excel-style formatting ──
            Sub-section labels are plain bold text (no fill), driver inputs are
            boxed, and totals get the accounting top-rule + double underline. */
