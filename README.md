@@ -59,7 +59,7 @@ FMP API  →  raw log  →  mapping engine  →  statement engines  →  project
 3. **Map** — FMP's raw fields are messy: the same concept appears under
    different names for different companies, and some values are duplicated
    across fields. A data-driven mapping engine (`mapping_engine.py` +
-   `mappings.json`, exported from Carson's Excel reference model) resolves the right
+   `mappings.json`, exported from the Excel reference model) resolves the right
    field per company using a priority/synonym system, plus per-company reclass
    rules for outliers.
 4. **Validate** — on every fetch, the app re-sums its mapped line items and
@@ -383,5 +383,5 @@ haven't noticed:
 - **Frontend** — plain HTML/CSS/JavaScript, no framework and no build step
 - **Infrastructure** — Railway (API, Postgres, cron), Cloudflare Workers (static
   frontend, DNS, TLS), GitHub Actions (CI)
-- **Spec** — Carson's Excel reference model, exported to `mappings.json` by
-  `export_mappings.py` rather than transcribed by hand
+- **Spec** — a given Excel reference model that the engines were built from,
+  exported to `mappings.json` by `export_mappings.py` rather than transcribed by hand
