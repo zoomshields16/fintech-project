@@ -19,25 +19,23 @@ pipeline treats every number it produces as a claim to be checked:
 |---|---|
 | **97.0%** | reconcile pass rate — our recomputed subtotals vs. the vendor's own reported totals |
 | **12,598** | automated checks across each company's latest complete fetch (12,214 match, 384 mismatch) |
-| **101** | Nasdaq-100 companies, ~10 fiscal years each, refreshed nightly |
+| **101** | Nasdaq-100 companies, up to 10 fiscal years each — 2,899 statement-years, refreshed nightly |
 | **93.7%** | strict pass rate (exact match, no materiality threshold) |
 | **88** | unit tests, run in CI on every push to `main` and on every pull request |
 
 <sub>Read from `GET /api/pipeline-status` on 2026-09-28. These move: checks are
 re-run on every fetch, and the count above is the current snapshot across the
-latest fetch of each company — not a running total of every check ever made.</sub>
+latest fetch of each company — not a running total of every check ever made.
+89 of the 101 carry a full ten years; the rest are recent listings with shorter
+histories (SPCX 3 years, ALAB and CRWV 4), which is why the statement-year total
+is 2,899 rather than 3,030.</sub>
 
 Every mismatch is stored with both values and the difference, so a data-quality
 problem surfaces as a row in a queue rather than a wrong valuation. Several of
 the remaining 384 are cases where **our number is right and the vendor's is
 wrong** — see [How a reclass is directed](#how-a-reclass-is-directed).
 
-<!-- TODO before calling the project done: add a screenshot of the status board.
-     Capture https://theretailanalyst.com/status.html with the tiles in frame,
-     resize to ~1400px, save as frontend/assets/screenshot-status.png (the
-     .gitignore already allows screenshot-*.png), then restore the line below.
 ![Pipeline status board](frontend/assets/screenshot-status.png)
--->
 
 
 ## How it works
