@@ -59,7 +59,7 @@ FMP API  →  raw log  →  mapping engine  →  statement engines  →  project
 3. **Map** — FMP's raw fields are messy: the same concept appears under
    different names for different companies, and some values are duplicated
    across fields. A data-driven mapping engine (`mapping_engine.py` +
-   `mappings.json`, exported from the Excel reference model) resolves the right
+   `mappings.json`, exported from Carson Adams's Excel reference model) resolves the right
    field per company using a priority/synonym system, plus per-company reclass
    rules for outliers.
 4. **Validate** — on every fetch, the app re-sums its mapped line items and
@@ -350,10 +350,11 @@ Migration to a fresh host is `backend/migrate_to_postgres.py`, which copies row
 for row rather than re-seeding: re-fetching from the vendor would collapse the
 fetch history that makes restatements detectable in the first place.
 
-## Known limitations
+## Known limitations and next steps
 
-Things I know are wrong and have chosen not to fix yet, rather than things I
-haven't noticed:
+The project is finished and deployed. What follows is what I know is imperfect
+about it, rather than what I have not noticed — each with the step I would take
+next.
 
 1. **`/api/run-dcf` trusts a client-supplied `ufcf` array.** UFCF is computed in
    Python (`dcf_engine.compute_ufcf`), but the frontend caches the result in
@@ -373,8 +374,33 @@ haven't noticed:
    tickers — but there is nothing stopping someone from looping it.
 5. **IFRS filers are structurally out of reach.** The mapping spec is built
    around US GAAP statement shapes; the disqualifier is the accounting standard,
-   not foreign domicile. Affected companies are excluded from the universe rather
-   than reported as failures.
+   not foreign domicile. Ferrovial is excluded from the universe for this reason
+   rather than reported as a failure. Supporting it would take a second mapping
+   spec, which is not built.
+6. **Statements are stored only as raw JSON.** `api_responses` keeps each vendor
+   payload verbatim, which is what makes restatement detection work, but it means
+   a question like "how many statement-years are stored" takes API calls instead
+   of a SQL count. Next step: a normalized `statements` table alongside the raw
+   log, so the log stays the source of truth and SQL can answer shape questions.
+7. **The metrics in this README were typed by hand and went stale.** They drifted
+   from the live pipeline until a check on 2026-09-28 found four of them out of
+   date. Next step: generate that table from `/api/pipeline-status` so it cannot
+   disagree with production.
+8. **The 1,678 detected restatements have not been triaged.** A 50-row sample
+   read as vendor housekeeping — reclassifications that net to zero rather than
+   corrections. The review queue and the endpoint behind it work; the backlog
+   simply has not been worked.
+9. **`/api/pipeline-status` returns only the top 12 mismatched line items.** The
+   limit is hard-coded (`pipeline_status.py:227`), so the tail of the failure
+   distribution is not reachable from the public API. Next step: accept a `limit`
+   query parameter.
+10. **Railway deploys on push without waiting for CI.** A push to `main` starts
+    the deploy and the test run at the same time, so a red build does not hold
+    back a release. Next step: turn on the wait-for-CI setting on the service.
+11. **Scope was wide from the start.** I built for all 101 companies at once. The
+    reconciliation gaps that took longest to find would have surfaced sooner on a
+    handful of companies. In a rebuild I would prove the pipeline end to end on a
+    small set before widening it.
 
 ## Tech Stack
 
@@ -383,5 +409,7 @@ haven't noticed:
 - **Frontend** — plain HTML/CSS/JavaScript, no framework and no build step
 - **Infrastructure** — Railway (API, Postgres, cron), Cloudflare Workers (static
   frontend, DNS, TLS), GitHub Actions (CI)
-- **Spec** — a given Excel reference model that the engines were built from,
-  exported to `mappings.json` by `export_mappings.py` rather than transcribed by hand
+- **Spec** — mapping rules are exported from an Excel reference model built by
+  Carson Adams. I built the exporter, the mapping engine, and everything
+  downstream of it. The export is mechanical (`export_mappings.py`), never
+  transcribed by hand
