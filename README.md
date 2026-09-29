@@ -18,14 +18,18 @@ pipeline treats every number it produces as a claim to be checked:
 | | |
 |---|---|
 | **97.0%** | reconcile pass rate — our recomputed subtotals vs. the vendor's own reported totals |
-| **12,538** | automated checks, re-graded on every fetch (12,158 match, 380 mismatch) |
+| **12,598** | automated checks across each company's latest complete fetch (12,214 match, 384 mismatch) |
 | **101** | Nasdaq-100 companies, ~10 fiscal years each, refreshed nightly |
-| **93.3%** | strict pass rate (exact match, no materiality threshold) |
-| **76** | unit tests, run in CI on every push |
+| **93.7%** | strict pass rate (exact match, no materiality threshold) |
+| **88** | unit tests, run in CI on every push to `main` and on every pull request |
+
+<sub>Read from `GET /api/pipeline-status` on 2026-09-28. These move: checks are
+re-run on every fetch, and the count above is the current snapshot across the
+latest fetch of each company — not a running total of every check ever made.</sub>
 
 Every mismatch is stored with both values and the difference, so a data-quality
 problem surfaces as a row in a queue rather than a wrong valuation. Several of
-the remaining 380 are cases where **our number is right and the vendor's is
+the remaining 384 are cases where **our number is right and the vendor's is
 wrong** — see [How a reclass is directed](#how-a-reclass-is-directed).
 
 <!-- TODO before calling the project done: add a screenshot of the status board.
@@ -49,14 +53,15 @@ FMP API  →  raw log  →  mapping engine  →  statement engines  →  project
    [Financial Modeling Prep](https://site.financialmodelingprep.com/) (FMP) API.
 2. **Store** — every response is saved verbatim to an append-only log
    (`fetches` → `api_responses`) — Postgres in production, SQLite locally, same
-   SQLAlchemy models either way. Repeat searches are served from the database
-   with zero API calls, and any past fetch can be recomputed later without
+   SQLAlchemy models either way. A repeat search inside the seven-day cache
+   window is served from the database with no API call at all; past that window
+   the next read re-fetches. Any stored fetch can be recomputed later without
    touching the network. Nothing is ever overwritten, which is what makes
    restatement detection possible at all.
 3. **Map** — FMP's raw fields are messy: the same concept appears under
    different names for different companies, and some values are duplicated
    across fields. A data-driven mapping engine (`mapping_engine.py` +
-   `mappings.json`, exported from our Excel reference model) resolves the right
+   `mappings.json`, exported from Carson's Excel reference model) resolves the right
    field per company using a priority/synonym system, plus per-company reclass
    rules for outliers.
 4. **Validate** — on every fetch, the app re-sums its mapped line items and
@@ -380,6 +385,5 @@ haven't noticed:
 - **Frontend** — plain HTML/CSS/JavaScript, no framework and no build step
 - **Infrastructure** — Railway (API, Postgres, cron), Cloudflare Workers (static
   frontend, DNS, TLS), GitHub Actions (CI)
-- **Spec** — an Excel reference model, exported to `mappings.json` by
+- **Spec** — Carson's Excel reference model, exported to `mappings.json` by
   `export_mappings.py` rather than transcribed by hand
-- Hosting (planned): Railway
